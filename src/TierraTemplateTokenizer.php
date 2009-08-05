@@ -11,11 +11,10 @@
 		const BLOCK_MODE = 3;
 		const GENERATOR_MODE = 4;
 		
-		public $src;
-		public $nextLexeme;
-		public $nextToken;
-		public $lineNumber;
-		public $columnNumber;
+		private $src;
+		private $lineNumber;
+		private $nextLexeme;
+		private $nextToken;
 		private $stream;
 		private $streamLength;
 		private $streamIndex;
@@ -38,6 +37,10 @@
 			$this->mode = self::HTML_MODE;
 			
 			$this->advance();			
+		}
+		
+		public function getLineNumber() {
+			return $this->lineNumber;
 		}
 		
 		public function match($token, $message = false) {
@@ -75,15 +78,14 @@
 		}
 		
 		public function curChar() {
-			$this->streamIndex < $this->streamLength ? $this->stream[$this->streamIndex] : "";
+			return $this->streamIndex < $this->streamLength ? $this->stream[$this->streamIndex] : "";
 		} 
 		
 		public function nextChar() {
-			$this->streamIndex + 1 < $this->streamLength ? $this->stream[$this->streamIndex + 1] : "";
+			return $this->streamIndex + 1 < $this->streamLength ? $this->stream[$this->streamIndex + 1] : "";
 		}
 		
 		public function advanceChar($count = 1) {
-			$curChar = $this->curChar();
 			for ($i = 0; ($i < $count) && !$this->eof; $i++) {
 				$this->streamIndex++;
 				$this->eof = $this->streamIndex >= $this->streamLength;
@@ -118,7 +120,7 @@
 						
 						$this->nextLexeme = implode("", $chars);
 						$this->nextToken = self::HTML_TOKEN;
-												
+						
 						if (!$this->eof) {
 							if ($nextChar == '#') {
 								$this->mode = self::COMMENT_MODE;
