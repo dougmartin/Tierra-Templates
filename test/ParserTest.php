@@ -20,7 +20,7 @@
 			catch (TierraTemplateParserException $e) {
 				$isValid = false;
 			}
-			return $this->assertTrue($isValid, $message);
+			$this->assertTrue($isValid, $message);
 		}
 		
 		public function checkAST($src, $ast, $message, $dump = false) {
@@ -33,7 +33,7 @@
 				var_dump($parser->getAST());
 				var_dump($ast);
 			}
-			return $this->assertTrue($parser->getAST() == $ast, $message);
+			$this->assertTrue($parser->getAST() == $ast, $message);
 		}
 		
 		public function makeAST($nodes=array(), $attributes=false) {

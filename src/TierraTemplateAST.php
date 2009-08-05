@@ -15,6 +15,10 @@
 		public function addNode($node) {
 			$this->nodes[] = $node;	
 		}
+		
+		public function getNodes() {
+			return $this->nodes;
+		}
 	}
 	
 	class TierraTemplateASTNode {
