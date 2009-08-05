@@ -104,7 +104,7 @@
 			self::checkSyntax($src, "Comment only is valid syntax");
 			$ast = TestHelpers::MakeAST(array(
 									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
-									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment))
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("start" => "[#", "end" => "#]", "comment" => $comment))
 								));
 			self::checkAST($src, $ast, "Comment only has correct AST");
 		}		
@@ -115,7 +115,7 @@
 			self::checkSyntax($src, "Comment with spaces is valid syntax");
 			$ast = TestHelpers::MakeAST(array(
 									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
-									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("start" => "[#", "end" => "#]", "comment" => $comment)),
 									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
 								));
 			self::checkAST($src, $ast, "Comment with spaces has correct AST");
@@ -127,9 +127,9 @@
 			self::checkSyntax($src, "Adjoining comments with spaces is valid syntax");
 			$ast = TestHelpers::MakeAST(array(
 									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
-									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("start" => "[#", "end" => "#]", "comment" => $comment)),
 									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
-									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("start" => "[#", "end" => "#]", "comment" => $comment)),
 									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
 								));
 			self::checkAST($src, $ast, "Adjoining comments with spaces has correct AST");
@@ -141,9 +141,9 @@
 			self::checkSyntax($src, "Adjoining comments with interior spaces is valid syntax");
 			$ast = TestHelpers::MakeAST(array(
 									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
-									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("start" => "[#", "end" => "#]", "comment" => $comment)),
 									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "  ")),
-									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("start" => "[#", "end" => "#]", "comment" => $comment)),
 									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
 								));
 			self::checkAST($src, $ast, "Adjoining comments with interior spaces has correct AST");

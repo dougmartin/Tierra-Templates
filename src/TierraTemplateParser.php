@@ -30,9 +30,11 @@
 						break;
 						
 					case TierraTemplateTokenizer::COMMENT_START_TOKEN:
-						$this->tokenizer->match(TierraTemplateTokenizer::COMMENT_START_TOKEN);
-						$this->ast->addNode(new TierraTemplateASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $this->tokenizer->matchElse(TierraTemplateTokenizer::COMMENT_TOKEN, false))));
-						$this->tokenizer->match(TierraTemplateTokenizer::COMMENT_END_TOKEN);
+						$node = new TierraTemplateASTNode(TierraTemplateASTNode::COMMENT_NODE);
+						$node->start = $this->tokenizer->match(TierraTemplateTokenizer::COMMENT_START_TOKEN);
+						$node->comment = $this->tokenizer->matchElse(TierraTemplateTokenizer::COMMENT_TOKEN, false);
+						$node->end = $this->tokenizer->match(TierraTemplateTokenizer::COMMENT_END_TOKEN);
+						$this->ast->addNode($node);
 						break;
 						
 					case TierraTemplateTokenizer::BLOCK_START_TOKEN:
@@ -56,6 +58,11 @@
 						break;
 				}
 			}
+/*			
+			// if the file is zero bytes create a empty html node
+			if (count($this->ast->getNodes()) == 0)
+				$this->ast->addNode(new TierraTemplateASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")));
+*/
 		}
 		
 		private function blockNode() {
