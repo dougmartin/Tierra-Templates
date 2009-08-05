@@ -103,7 +103,6 @@
 					
 				case "prepend":
 				case "append":
-				case "replace":
 					$node->blockName = $this->tokenizer->matches(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN), "Expected string or identifier for block name");
 					break;
 					

@@ -15,7 +15,7 @@
 		public function checkEmit($src, $testSrc, $message, $dump=false) {
 			$ast = TestHelpers::GetParsedAST($src);
 			$optimizedAST = TierraTemplateOptimizer::optimize($ast);
-			$emittedSrc = TierraTemplateCodeGenerator::emit($ast);
+			$emittedSrc = TierraTemplateCodeGenerator::emit($optimizedAST);
 			if ($dump) {
 				echo "\n{$message}\n";
 				echo "src:\n";
@@ -94,7 +94,20 @@ HTML;
 
 		public function testAdjoiningCommentWithInteriorSpaces() {
 			self::checkEmit(" [# this is a comment #] [# this is also a comment #] ", "   ", "Adjoining comment with interior spaces");
+		}
+
+		public function testBlockInParent() {
+			self::checkEmit("[@ start foo @] bar [@ end foo @]", "<?php if (!\$this->request->echoBlock('foo')) { ?> bar <?php }", "Block in parent");
+		}
+					
+		public function testBlocksInBlocksInParent() {
+			self::checkEmit("[@ start foo @] bar [@ start baz @] bam [@ end baz @] [@ end foo @]", "<?php if (!\$this->request->echoBlock('foo')) { ?> bar <?php if (!\$this->request->echoBlock('baz')) { ?> bam <?php } ?> <?php }", "Block in parent");
+		}
+		
+		public function testBlockInChild() {
+			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ end foo @]", "<?php if (!\$this->request->echoBlock('foo')) { ob_start(); ?> bar <?php \$this->request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Block in child");
 		}			
+		
 		
 	}
 	
