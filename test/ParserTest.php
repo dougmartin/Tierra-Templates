@@ -2,6 +2,7 @@
 
 	require_once 'PHPUnit/Framework.php';
 	require_once dirname(__FILE__) . "/../src/TierraTemplateParser.php";
+	require_once dirname(__FILE__) . "/TestHelpers.php";
 	 
 	class ParserTest extends PHPUnit_Framework_TestCase {
 		
@@ -36,29 +37,21 @@
 			$this->assertTrue($parser->getAST() == $ast, $message);
 		}
 		
-		public function makeAST($nodes=array(), $attributes=false) {
-			return new TierraTemplateAST(is_array($nodes) ? $nodes : array($nodes), $attributes);
-		}
-		
-		public function makeASTNode($type, $attributes=false) {
-			return new TierraTemplateASTNode($type, $attributes);
-		}
-		
 		public function checkBlockCommand($command, $testName, $blockName=false, $isString=false, $dump=false) {
 			$srcBlockName = $blockName !== false ? ($isString ? "'" . $blockName . "'" : $blockName) : "";
 			$src = "[@ {$command} {$srcBlockName} @]";
 			self::checkSyntax($src, "{$testName} is valid syntax");
 			if ($command == "extends") {
-				$ast = self::makeAST(array(self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => ""))), array("parentTemplateName" => $blockName));
+				$ast = TestHelpers::MakeAST(array(TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => ""))), array("parentTemplateName" => $blockName));
 			}
 			else {
 				if ($command == "include")
 					$nodeAttributes = array("command" => $command, "templateName" => $blockName);
 				else
 					$nodeAttributes = array("command" => $command, "blockName" => $blockName);
-				$ast = self::makeAST(array(
-										self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
-										self::makeASTNode(TierraTemplateASTNode::BLOCK_NODE, $nodeAttributes)
+				$ast = TestHelpers::MakeAST(array(
+										TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
+										TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, $nodeAttributes)
 									));
 			}
 			self::checkAST($src, $ast, "{$testName} has correct AST", $dump);
@@ -73,35 +66,35 @@
 		public function testSingleSpace() {
 			$src = " ";
 			self::checkSyntax($src, "Single space is valid syntax");
-			$ast = self::makeAST(self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $src)));
+			$ast = TestHelpers::MakeAST(TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $src)));
 			self::checkAST($src, $ast, "Single space is correct AST");
 		}
 			
 		public function testMultipleSpaces() {
 			$src = "     ";
 			self::checkSyntax($src, "Multiple spaces are valid syntax");
-			$ast = self::makeAST(self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $src)));
+			$ast = TestHelpers::MakeAST(TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $src)));
 			self::checkAST($src, $ast, "Multiple spaces has correct AST");
 		}	
 		
 		public function testSingleTab() {
 			$src = "	";
 			self::checkSyntax($src, "Single tab is valid syntax");
-			$ast = self::makeAST(self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $src)));
+			$ast = TestHelpers::MakeAST(TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $src)));
 			self::checkAST($src, $ast, "Single tab has correct AST");
 		}
 			
 		public function testMultipleTabs() {
 			$src = "			";
 			self::checkSyntax($src, "Multiple tabs are valid syntax");
-			$ast = self::makeAST(self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $src)));
+			$ast = TestHelpers::MakeAST(TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $src)));
 			self::checkAST($src, $ast, "Multiple tabs has correct AST");
 		}
 			
 		public function testMultipleSpacesAndTabs() {
 			$src = "  		  		  ";
 			self::checkSyntax($src, "Multiple spaces and tabs are valid syntax");
-			$ast = self::makeAST(self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $src)));
+			$ast = TestHelpers::MakeAST(TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $src)));
 			self::checkAST($src, $ast, "Multiple spaces and tabs has correct AST");
 		}	
 		
@@ -109,9 +102,9 @@
 			$comment = " this is a comment ";
 			$src = "[#{$comment}#]";
 			self::checkSyntax($src, "Comment only is valid syntax");
-			$ast = self::makeAST(array(
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
-									self::makeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment))
+			$ast = TestHelpers::MakeAST(array(
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment))
 								));
 			self::checkAST($src, $ast, "Comment only has correct AST");
 		}		
@@ -120,10 +113,10 @@
 			$comment = " this is a comment ";
 			$src = " [#{$comment}#] ";
 			self::checkSyntax($src, "Comment with spaces is valid syntax");
-			$ast = self::makeAST(array(
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
-									self::makeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
+			$ast = TestHelpers::MakeAST(array(
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
 								));
 			self::checkAST($src, $ast, "Comment with spaces has correct AST");
 		}
@@ -132,12 +125,12 @@
 			$comment = " this is a comment ";
 			$src = " [#{$comment}#][#{$comment}#] ";
 			self::checkSyntax($src, "Adjoining comments with spaces is valid syntax");
-			$ast = self::makeAST(array(
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
-									self::makeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
-									self::makeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
+			$ast = TestHelpers::MakeAST(array(
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
 								));
 			self::checkAST($src, $ast, "Adjoining comments with spaces has correct AST");
 		}
@@ -146,12 +139,12 @@
 			$comment = " this is a comment ";
 			$src = " [#{$comment}#]  [#{$comment}#] ";
 			self::checkSyntax($src, "Adjoining comments with interior spaces is valid syntax");
-			$ast = self::makeAST(array(
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
-									self::makeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "  ")),
-									self::makeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
+			$ast = TestHelpers::MakeAST(array(
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "  ")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
 								));
 			self::checkAST($src, $ast, "Adjoining comments with interior spaces has correct AST");
 		}			
@@ -180,12 +173,12 @@
 		public function testStartAndEndBlockWithHTML() {
 			$src = " [@ start test @] foo [@ end test @] ";
 			self::checkSyntax($src, "Start and end blocks with html is valid syntax");
-			$ast = self::makeAST(array(
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
-									self::makeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "start", "blockName" => "test")),
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " foo ")),
-									self::makeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "end", "blockName" => "test")),
-									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
+			$ast = TestHelpers::MakeAST(array(
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "start", "blockName" => "test")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " foo ")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "end", "blockName" => "test")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
 								));
 			self::checkAST($src, $ast, "Start and end blocks with html has correct AST");
 		}	

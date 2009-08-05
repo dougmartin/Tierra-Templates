@@ -2,7 +2,14 @@
 
 	class TierraTemplateOptimizer {
 		
-		public function __construct() {
+		private $ast;
+		
+		public function __construct($ast) {
+			$this->ast = $ast;
+		}
+		
+		public function optimize() {
+			return $this->ast;
 		}
 		
 	}
