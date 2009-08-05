@@ -28,18 +28,12 @@
 			$lastChunk = false;
 			$code = array();
 			foreach ($chunks as $chunk) {
-				if ($chunk->type == TierraTemplateCodeGenChunk::HTML_CHUNK) {
-					if (($lastChunk === false) || ($lastChunk->type == TierraTemplateCodeGenChunk::HTML_CHUNK))
-						$code[] = $chunk->contents;
-					else
-						$code[] = " ?>" . $chunk->contents;
-				}
-				else {
-					if (($lastChunk === false) || ($lastChunk->type == TierraTemplateCodeGenChunk::HTML_CHUNK))
-						$code[] = "<?php " . $chunk->contents;
-					else
-						$code[] = " " . $chunk->contents;
-				}
+				$startOfFileOrInHtml = (($lastChunk === false) || ($lastChunk->type == TierraTemplateCodeGenChunk::HTML_CHUNK));
+				if ($chunk->type == TierraTemplateCodeGenChunk::HTML_CHUNK)
+					$prefix = $startOfFileOrInHtml ? "" : " ?>";
+				else
+					$prefix = $startOfFileOrInHtml ? "<?php " : " "; 
+				$code[] = $prefix . $chunk->contents;
 				$lastChunk = $chunk;
 			}
 			
