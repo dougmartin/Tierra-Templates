@@ -18,11 +18,17 @@
 		}
 		
 		public function parse() {
-			do {			
+			while (true) {			
 				switch ($this->tokenizer->getNextToken()) {
 					
+					case TierraTemplateTokenizer::EOF_TOKEN:
+						// break out of the enclosing while loop
+						break 2;
+						
 					case TierraTemplateTokenizer::HTML_TOKEN:
-						$this->ast->addNode(new TierraTemplateASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $this->tokenizer->match(TierraTemplateTokenizer::HTML_TOKEN))));
+						$html = $this->tokenizer->match(TierraTemplateTokenizer::HTML_TOKEN);
+						if (strlen($html) > 0)
+							$this->ast->addNode(new TierraTemplateASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $html)));
 						break;
 						
 					case TierraTemplateTokenizer::COMMENT_START_TOKEN:
@@ -40,26 +46,26 @@
 					case TierraTemplateTokenizer::GENERATOR_START_TOKEN:
 						break;
 				}
-			} while (!$this->tokenizer->eof());
+			}
 		}
 		
 		private function blockNode() {
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::BLOCK_NODE);
-			$node->command = strtolower($tokenizer->match(TierraTemplateTokenizer::TEXT_TOKEN, "Expected block command"));
+			$node->command = strtolower($this->tokenizer->match(TierraTemplateTokenizer::TEXT_TOKEN, "Expected block command"));
 			
 			switch ($node->command) {
 				case "extends":
 				case "include":
-					$node->template = $this->tokenizer->matches(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN), "Expected string or identifier for template name");
+					$node->templateName = $this->tokenizer->matches(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN), "Expected string or identifier for template name");
 					break;
 					
 				case "start":
 				case "else":
 				case "end":
-					if (strtolower($tokenizer->nextLexeme) != "if")
-						$node->blockName = $this->tokenizer->matchesElse(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN), false);
-					else
+					if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN))
 						$node->blockName = false;
+					else
+						$node->blockName = $this->tokenizer->matchesElse(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN), false);
 					break;
 					
 				case "prepend":
@@ -72,11 +78,8 @@
 					$this->tokenizer->matchError("Unknown block command - '{$node->command}'");
 			}
 					
-			if (strtolower($tokenizer->nextLexeme) == "if") {
-				$this->tokenizer->advance();
-				$this->tokenizer->setMode(TierraTemplateTokenizer::BLOCK_CONDITIONAL_MODE);
+			if ($this->tokenizer->matchIf(TierraTemplateTokenizer::IF_TOKEN))
 				$node->conditional = $this->blockConditionalNode();
-			}
 			
 			return $node;
 		}

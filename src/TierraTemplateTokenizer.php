@@ -14,6 +14,7 @@
 		const TEXT_TOKEN = "TEXT_TOKEN";
 		const GENERATOR_START_TOKEN = "GENERATOR_START_TOKEN";
 		const GENERATOR_END_TOKEN = "GENERATOR_END_TOKEN";
+		const IF_TOKEN = "IF_TOKEN";
 				
 		const HTML_MODE = "HTML_MODE";
 		const COMMENT_MODE = "COMMENT_MODE";
@@ -28,6 +29,7 @@
 		private $stream;
 		private $streamLength;
 		private $streamIndex;
+		private $startStreamIndex;
 		private $mode;
 		private $eof;
 		private $commentOpener;
@@ -105,20 +107,21 @@
 		}		
 	
 		public function matchError($message, $showContext=true) {
+			$message = "{$message} on line {$this->lineNumber}.";
 			if ($showContext) {
-				if ($this->streamIndex - 100 < 0) {
+				if ($this->startStreamIndex - 100 < 0) {
 					$start = 0;
-					$offset = $this->streamIndex;
-					$length = $this->streamIndex;
+					$offset = $this->startStreamIndex;
+					$length = $this->startStreamIndex;
 				}
 				else {
-					$start = $this->streamIndex - 100;
+					$start = $this->startStreamIndex - 100;
 					$offset = 100;
 					$length = 100;
 				}
-				$message .= " <br><p>Context: <pre>" . htmlspecialchars(substr($this->src, $start, $length)) . "<font color='#ff0000'>*</font>" . htmlspecialchars(substr($this->src, $start + $offset, 100)) . "</pre></p>";
+				$message .= " <p>Context: <pre>" . htmlspecialchars(substr($this->src, $start, $length)) . "<font color='#ff0000'>*</font>" . htmlspecialchars(substr($this->src, $start + $offset, 100)) . "</pre></p>";
 			}
-			throw new TierraTemplateTokenizerException("{$message} @ line: {$this->lineNumber}");
+			throw new TierraTemplateTokenizerException($message);
 		}
 		
 		public function curChar() {
@@ -175,6 +178,9 @@
 		}
 		
 		public function advance() {
+			// save where we started for match context errors
+			$this->startStreamIndex = $this->streamIndex;
+			
 			$lexeme = $this->nextLexeme;
 			$this->nextLexeme = "";
 			
@@ -278,7 +284,13 @@
 									}
 									
 									$this->nextLexeme = $this->endSelection();
-									$this->nextToken = self::TEXT_TOKEN;
+									
+									if (strtolower($this->nextLexeme) == "if") {
+										$this->nextToken = self::IF_TOKEN;
+										$this->mode = TierraTemplateTokenizer::BLOCK_CONDITIONAL_MODE;	
+									}
+									else
+										$this->nextToken = self::TEXT_TOKEN;
 								}
 								
 								// skip to the next text or end of the block
