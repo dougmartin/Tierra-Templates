@@ -5,11 +5,12 @@
 		const UNKNOWN_TOKEN = "UNKNOWN_TOKEN";
 		const EOF_TOKEN = "EOF_TOKEN";
 		const HTML_TOKEN = "HTML_TOKEN";
+		const COMMENT_TOKEN = "COMMENT_TOKEN";
 		
-		const HTML_MODE = 1;
-		const COMMENT_MODE = 2;
-		const BLOCK_MODE = 3;
-		const GENERATOR_MODE = 4;
+		const HTML_MODE = "HTML_MODE";
+		const COMMENT_MODE = "COMMENT_MODE";
+		const BLOCK_MODE = "BLOCK_MODE";
+		const GENERATOR_MODE = "GENERATOR_MODE";
 		
 		private $src;
 		private $lineNumber;
@@ -21,6 +22,7 @@
 		private $mode;
 		private $eof;
 		private $commentCloser;
+		private $startSelectionIndices;
 				
 		public function __construct($src) {
 			$this->src = $src;
@@ -35,6 +37,8 @@
 			
 			$this->eof = false;
 			$this->mode = self::HTML_MODE;
+			
+			$this->startSelectionIndices = array();
 			
 			$this->advance();			
 		}
@@ -95,6 +99,17 @@
 			return $this->curChar();
 		}
 		
+		public function startSelection() {
+			$this->startSelectionIndices[] = $this->streamIndex;
+		}
+		
+		public function endSelection() {
+			if (count($this->startSelectionIndices) == 0)
+				throw new TierraTemplateTokenizerException("endSelection() called without matching startSelection()");
+			$startIndex = array_pop($this->startSelectionIndices);
+			return substr($this->src, $startIndex, $this->streamIndex - $startIndex);
+		} 
+		
 		public function advance() {
 			$lexeme = $this->nextLexeme;
 			$this->nextLexeme = "";
@@ -109,16 +124,16 @@
 
 				switch ($this->mode) {
 					case self::HTML_MODE:
-						$chars = array();
+						$this->startSelection();
+						
 						$curChar = $this->curChar();
 						$nextChar = $this->nextChar();
-						while ((!$this->eof) && !((($curChar == '[') || ($curChar == '{')) && (($nextChar == '#') || ($nextChar == '@')))) {
-							$chars[] = $curChar;
+						while (!$this->eof && !((($curChar == '[') || ($curChar == '{')) && (($nextChar == '#') || ($nextChar == '@')))) {
 							$curChar = $this->advanceChar();
 							$nextChar = $this->nextChar();
 						}
 						
-						$this->nextLexeme = implode("", $chars);
+						$this->nextLexeme = $this->endSelection();
 						$this->nextToken = self::HTML_TOKEN;
 						
 						if (!$this->eof) {
@@ -133,6 +148,23 @@
 								
 							$this->advanceChar(2);
 						}						
+						break;
+						
+					case self::COMMENT_MODE:
+						$this->startSelection();
+						
+						$curChar = $this->curChar();
+						$nextChar = $this->nextChar();
+						while (!$this->eof && !((($curChar == '@') || ($curChar == '#')) && ($nextChar == $this->commentCloser))) {
+							$curChar = $this->advanceChar();
+							$nextChar = $this->nextChar();
+						}
+						
+						$this->nextLexeme = $this->endSelection();
+						$this->nextToken = self::COMMENT_TOKEN;
+
+						$this->mode = self::HTML_MODE;
+						$this->advanceChar(2);
 						break;
 				}
 			}
