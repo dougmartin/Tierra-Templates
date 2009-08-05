@@ -26,9 +26,7 @@
 						break 2;
 						
 					case TierraTemplateTokenizer::HTML_TOKEN:
-						$html = $this->tokenizer->match(TierraTemplateTokenizer::HTML_TOKEN);
-						if (strlen($html) > 0)
-							$this->ast->addNode(new TierraTemplateASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $html)));
+						$this->ast->addNode(new TierraTemplateASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $this->tokenizer->match(TierraTemplateTokenizer::HTML_TOKEN))));
 						break;
 						
 					case TierraTemplateTokenizer::COMMENT_START_TOKEN:

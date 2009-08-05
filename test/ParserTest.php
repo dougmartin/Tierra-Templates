@@ -49,14 +49,17 @@
 			$src = "[@ {$command} {$srcBlockName} @]";
 			self::checkSyntax($src, "{$testName} is valid syntax");
 			if ($command == "extends") {
-				$ast = self::makeAST(array(), array("parentTemplateName" => $blockName));
+				$ast = self::makeAST(array(self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => ""))), array("parentTemplateName" => $blockName));
 			}
 			else {
 				if ($command == "include")
 					$nodeAttributes = array("command" => $command, "templateName" => $blockName);
 				else
 					$nodeAttributes = array("command" => $command, "blockName" => $blockName);
-				$ast = self::makeAST(self::makeASTNode(TierraTemplateASTNode::BLOCK_NODE, $nodeAttributes));
+				$ast = self::makeAST(array(
+										self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
+										self::makeASTNode(TierraTemplateASTNode::BLOCK_NODE, $nodeAttributes)
+									));
 			}
 			self::checkAST($src, $ast, "{$testName} has correct AST", $dump);
 		}
@@ -106,7 +109,10 @@
 			$comment = " this is a comment ";
 			$src = "[#{$comment}#]";
 			self::checkSyntax($src, "Comment only is valid syntax");
-			$ast = self::makeAST(self::makeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)));
+			$ast = self::makeAST(array(
+									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
+									self::makeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment))
+								));
 			self::checkAST($src, $ast, "Comment only has correct AST");
 		}		
 		
@@ -129,6 +135,7 @@
 			$ast = self::makeAST(array(
 									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
 									self::makeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
+									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
 									self::makeASTNode(TierraTemplateASTNode::COMMENT_NODE, array("comment" => $comment)),
 									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
 								));
@@ -184,6 +191,7 @@
 		}	
 
 		public function testDuplicateExtendsBlock() {
+			$this->setExpectedException('TierraTemplateTokenizerException');
 			$src = " [@ extends test @] foo [@ extends foo @] ";
 			self::checkSyntax($src, "Duplicate extends blocks with html is valid syntax");
 		}
