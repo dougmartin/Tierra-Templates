@@ -24,7 +24,7 @@
 				switch ($this->tokenizer->getNextToken()) {
 					
 					case TierraTemplateTokenizer::EOF_TOKEN:
-						// break out of the enclosing while loop - we don't use a check for eof() in the loop at that would make us drop trailing html
+						// break out of the enclosing while loop - we don't use a check for eof() in the loop as that would make us drop trailing html
 						break 2;
 						
 					case TierraTemplateTokenizer::HTML_TOKEN:
@@ -71,10 +71,12 @@
 						break;
 						
 					case TierraTemplateTokenizer::GENERATOR_START_TOKEN:
+						// TODO: implement
 						break;
 				}
 			}
 			
+			// check for unclosed blocks
 			$numBlocksInStack = count($this->blockStack); 
 			if ($numBlocksInStack != 0)
 				$this->tokenizer->matchError($numBlocksInStack == 1 ? "Unclosed block found" : "{$numBlocksInStack} unclosed blocks found");

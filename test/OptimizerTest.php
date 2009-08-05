@@ -64,7 +64,7 @@
 		}	
 
 		public function testExtendsWithBlockWithHTML() {
-			$astBefore = TestHelpers::GetParsedAST("[@ extends bar @] foo [@ start bam @] boom bim [@ end bam @]");
+			$astBefore = TestHelpers::GetParsedAST("[@ extends bar @] foo [@ start bam @] boom bim [@ end bam @] boom ");
 			$astAfter = TestHelpers::MakeAST(array(
 												TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "start", "blockName" => "bam")),
 												TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " boom bim ")),

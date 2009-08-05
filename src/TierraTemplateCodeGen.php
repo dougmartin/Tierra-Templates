@@ -1,15 +1,30 @@
 <?php
 
+	require_once dirname(__FILE__) . "/../src/TierraTemplateAST.php";
+	
 	class TierraTemplateCodeGen {
 		
-		private $ast;
-		
-		public function __construct($ast) {
-			$this->ast = $ast;
-		}
-		
-		public function emit() {
-			return "";
+		public static function emit($ast) {
+			
+			$code = array();
+			
+			foreach ($ast->getNodes() as $node) {
+				switch ($node->type) {
+					case TierraTemplateASTNode::HTML_NODE:
+						$code[] = $node->html;
+						break;
+						
+					case TierraTemplateASTNode::BLOCK_NODE:
+						// TODO: implement
+						break;
+						
+					case TierraTemplateASTNode::GENERATOR_NODE:
+						// TODO: implement
+						break;
+				}
+			}
+			
+			return implode("", $code);
 		}
 		
 	}	

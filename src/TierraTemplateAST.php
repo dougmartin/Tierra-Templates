@@ -26,6 +26,7 @@
 		const HTML_NODE = "HTML_NODE";
 		const COMMENT_NODE = "COMMENT_NODE";
 		const BLOCK_NODE = "BLOCK_NODE";
+		const GENERATOR_NODE = "GENERATOR_NODE";
 		
 		public $type;
 		
