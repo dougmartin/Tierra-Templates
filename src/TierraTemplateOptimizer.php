@@ -24,10 +24,19 @@
 			foreach ($ast->getNodes() as $node) {
 				if ($node->type != TierraTemplateASTNode::COMMENT_NODE) {
 					if ($isParentTemplate) {
-						if (($node->type == TierraTemplateASTNode::HTML_NODE) && ($lastNode !== false) && ($lastNode->type == TierraTemplateASTNode::HTML_NODE)) {
-							$lastNode->html .= $node->html;
+						if ($node->type == TierraTemplateASTNode::HTML_NODE) {
+							if ($node->html != "") {
+								if (($lastNode !== false) && ($lastNode->type == TierraTemplateASTNode::HTML_NODE)) {
+									$lastNode->html .= $node->html;
+								}
+								else {
+									// create new html nodes so that when we append we leave the old node the same
+									$lastNode = new TierraTemplateASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $node->html));
+									$mergedNodes[] = $lastNode;
+								}
+							}
 						}
-						else if (($node->type != TierraTemplateASTNode::HTML_NODE) || ($node->html != "")) {
+						else {
 							$mergedNodes[] = $node;
 							$lastNode = $node;
 						}
