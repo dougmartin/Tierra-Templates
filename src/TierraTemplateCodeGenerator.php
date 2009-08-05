@@ -2,7 +2,7 @@
 
 	require_once dirname(__FILE__) . "/../src/TierraTemplateAST.php";
 	
-	class TierraTemplateCodeGen {
+	class TierraTemplateCodeGenerator {
 		
 		public static function emit($ast) {
 
@@ -11,15 +11,15 @@
 			foreach ($ast->getNodes() as $node) {
 				switch ($node->type) {
 					case TierraTemplateASTNode::HTML_NODE:
-						$chunks[] = new TierraTemplateCodeGenChunk(TierraTemplateCodeGenChunk::HTML_CHUNK, $node->html);
+						$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::HTML_CHUNK, $node->html);
 						break;
 						
 					case TierraTemplateASTNode::BLOCK_NODE:
-						$chunks[] = new TierraTemplateCodeGenChunk(TierraTemplateCodeGenChunk::PHP_CHUNK, self::emitBlock($node));
+						$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, self::emitBlock($node));
 						break;
 						
 					case TierraTemplateASTNode::GENERATOR_NODE:
-						$chunks[] = new TierraTemplateCodeGenChunk(TierraTemplateCodeGenChunk::PHP_CHUNK, self::emitGenerator($node));
+						$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, self::emitGenerator($node));
 						break;
 				}
 			}
@@ -28,8 +28,8 @@
 			$lastChunk = false;
 			$code = array();
 			foreach ($chunks as $chunk) {
-				$startOfFileOrInHtml = (($lastChunk === false) || ($lastChunk->type == TierraTemplateCodeGenChunk::HTML_CHUNK));
-				if ($chunk->type == TierraTemplateCodeGenChunk::HTML_CHUNK)
+				$startOfFileOrInHtml = (($lastChunk === false) || ($lastChunk->type == TierraTemplateCodeGeneratorChunk::HTML_CHUNK));
+				if ($chunk->type == TierraTemplateCodeGeneratorChunk::HTML_CHUNK)
 					$prefix = $startOfFileOrInHtml ? "" : " ?>";
 				else
 					$prefix = $startOfFileOrInHtml ? "<?php " : " "; 
@@ -52,7 +52,7 @@
 	}	
 	
 	
-	class TierraTemplateCodeGenChunk {
+	class TierraTemplateCodeGeneratorChunk {
 		
 		const HTML_CHUNK = "HTML_CHUNK";
 		const PHP_CHUNK = "PHP_CHUNK";

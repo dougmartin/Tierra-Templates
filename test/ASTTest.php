@@ -1,7 +1,7 @@
 <?php
 
 	require_once 'PHPUnit/Framework.php';
-	require_once dirname(__FILE__) . "/../src/TierraTemplateCodeGen.php";
+	require_once dirname(__FILE__) . "/../src/TierraTemplateCodeGenerator.php";
 	 
 	class ASTTest extends PHPUnit_Framework_TestCase {
 		

@@ -1,7 +1,7 @@
 <?php
 
 	require_once 'PHPUnit/Framework.php';
-	require_once dirname(__FILE__) . "/../src/TierraTemplateCodeGen.php";
+	require_once dirname(__FILE__) . "/../src/TierraTemplateCodeGenerator.php";
 	require_once dirname(__FILE__) . "/TestHelpers.php";
 	 
 	class CodeGenTest extends PHPUnit_Framework_TestCase {
@@ -15,7 +15,7 @@
 		public function checkEmit($src, $testSrc, $message, $dump=false) {
 			$ast = TestHelpers::GetParsedAST($src);
 			$optimizedAST = TierraTemplateOptimizer::optimize($ast);
-			$emittedSrc = TierraTemplateCodeGen::emit($ast);
+			$emittedSrc = TierraTemplateCodeGenerator::emit($ast);
 			if ($dump) {
 				echo "\n{$message}\n";
 				echo "src:\n";
