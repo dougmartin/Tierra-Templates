@@ -61,6 +61,17 @@
 			$astBefore = TestHelpers::GetParsedAST("foo [@ extends bar @]");
 			$astAfter = TestHelpers::MakeAST(array(), array("parentTemplateName" => "bar"));
 			$this->assertTrue(TierraTemplateOptimizer::optimize($astBefore) == $astAfter, "Test html with extends at end");
+		}	
+
+		public function testExtendsWithBlockWithHTML() {
+			$astBefore = TestHelpers::GetParsedAST("[@ extends bar @] foo [@ start bam @] boom bim [@ end bam @]");
+			$astAfter = TestHelpers::MakeAST(array(
+												TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "start", "blockName" => "bam")),
+												TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " boom bim ")),
+												TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "end", "blockName" => "bam")),
+											), array("parentTemplateName" => "bar"));
+			$optimizedAST = TierraTemplateOptimizer::optimize($astBefore);
+			$this->assertTrue($optimizedAST == $astAfter, "Test extends with block with html");
 		}		
 		
 	}

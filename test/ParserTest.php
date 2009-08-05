@@ -31,7 +31,10 @@
 			} 
 			catch (TierraTemplateParserException $e) {}
 			if ($dump) {
+				echo "\n{$message}\n";
+				echo "parser ast:\n";
 				var_dump($parser->getAST());
+				echo "passed ast:\n";
 				var_dump($ast);
 			}
 			$this->assertTrue($parser->getAST() == $ast, $message);
@@ -150,8 +153,15 @@
 		}			
 		
 		public function testUnnamedBlockOnly() {
-			foreach (array("start", "else", "end") as $command)
-				self::checkBlockCommand($command, "Unnamed {$command} block");
+			$src = "[@ start @] bar [@ end @]";
+			self::checkSyntax($src, "Unnamed blocks is valid syntax");
+			$ast = TestHelpers::MakeAST(array(
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "start", "blockName" => false)),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " bar ")),
+									TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "end", "blockName" => false)),
+								));
+			self::checkAST($src, $ast, "Unnamed blocks has correct AST");
 		}		
 				
 		public function testUnnamedBlockOnlyForException() {
@@ -161,13 +171,31 @@
 		}
 				
 		public function testNamedBlockOnly() {
-			foreach (array("start", "else", "end", "extends", "include", "prepend", "append", "replace") as $command)
-				self::checkBlockCommand($command, "Named {$command} block", "foo");
+			foreach (array("start", "prepend", "append", "replace") as $command) {
+				$src = "[@ start foo @] bar [@ end foo @]";
+				self::checkSyntax($src, "Unnamed blocks is valid syntax");
+				$ast = TestHelpers::MakeAST(array(
+										TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
+										TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "start", "blockName" => "foo")),
+										TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " bar ")),
+										TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "end", "blockName" => "foo")),
+									));
+				self::checkAST($src, $ast, "Unnamed blocks has correct AST");
+			}
 		}		
 				
 		public function testNamedStringBlockOnly() {
-			foreach (array("start", "else", "end", "extends", "include", "prepend", "append", "replace") as $command)
-				self::checkBlockCommand($command, "Named string {$command} block", "foo", true);
+			foreach (array("start", "prepend", "append", "replace") as $command) {
+				$src = "[@ start 'foo' @] bar [@ end 'foo' @]";
+				self::checkSyntax($src, "Unnamed blocks is valid syntax");
+				$ast = TestHelpers::MakeAST(array(
+										TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")),
+										TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "start", "blockName" => "foo")),
+										TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " bar ")),
+										TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "end", "blockName" => "foo")),
+									));
+				self::checkAST($src, $ast, "Unnamed blocks has correct AST");
+			}
 		}	
 
 		public function testStartAndEndBlockWithHTML() {

@@ -7,10 +7,12 @@
 		
 		private $tokenizer;
 		private $ast;
+		private $blockStack;
 		
 		public function __construct($src) {
 			$this->tokenizer = new TierraTemplateTokenizer($src);
 			$this->ast = new TierraTemplateAST();
+			$this->blockStack = array();
 		}
 		
 		public function getAST() {
@@ -48,8 +50,22 @@
 							else
 								$this->tokenizer->matchError("Multiple extends blocks found", $steamIndex);
 						}
-						else
+						else {
+							if ($node->command == "end") {
+								if (count($this->blockStack) == 0)
+									$this->tokenizer->matchError("Unmatched end block found", $steamIndex);
+								else {
+									$openingBlock = array_pop($this->blockStack);
+									if ($openingBlock->blockName != $node->blockName) 
+										$this->tokenizer->matchError("End block does not match opening block name", $steamIndex);
+								}
+							}
+							else if (in_array($node->command, array("start", "prepend", "append", "replace"))) {
+								$this->blockStack[] = $node;
+							}
+							
 							$this->ast->addNode($node);
+						}
 							
 						$this->tokenizer->match(TierraTemplateTokenizer::BLOCK_END_TOKEN);
 						break;
@@ -58,11 +74,10 @@
 						break;
 				}
 			}
-/*			
-			// if the file is zero bytes create a empty html node
-			if (count($this->ast->getNodes()) == 0)
-				$this->ast->addNode(new TierraTemplateASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => "")));
-*/
+			
+			$numBlocksInStack = count($this->blockStack); 
+			if ($numBlocksInStack != 0)
+				$this->tokenizer->matchError($numBlocksInStack == 1 ? "Unclosed block found" : "{$numBlocksInStack} unclosed blocks found");
 		}
 		
 		private function blockNode() {
@@ -95,12 +110,12 @@
 			}
 					
 			if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN)) {
-				if ($node->command != "extends") {
+				if (($node->command != "extends") && ($node->command != "end")) {
 					$this->tokenizer->match(TierraTemplateTokenizer::IF_TOKEN);
 					$node->conditional = $this->blockConditionalNode();
 				}
 				else
-					$this->tokenizer->matchError("Extends blocks cannot have conditionals");
+					$this->tokenizer->matchError(ucfirst($node->command) . " blocks cannot have conditionals");
 			}
 			
 			return $node;
