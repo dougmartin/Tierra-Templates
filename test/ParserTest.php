@@ -36,8 +36,8 @@
 			return $this->assertTrue($parser->getAST() == $ast, $message);
 		}
 		
-		public function makeAST($nodes) {
-			return new TierraTemplateAST(is_array($nodes) ? $nodes : array($nodes));
+		public function makeAST($nodes=array(), $attributes=false) {
+			return new TierraTemplateAST(is_array($nodes) ? $nodes : array($nodes), $attributes);
 		}
 		
 		public function makeASTNode($type, $attributes=false) {
@@ -48,11 +48,16 @@
 			$srcBlockName = $blockName !== false ? ($isString ? "'" . $blockName . "'" : $blockName) : "";
 			$src = "[@ {$command} {$srcBlockName} @]";
 			self::checkSyntax($src, "{$testName} is valid syntax");
-			if (($command == "extends") || ($command == "include"))
-				$attributes = array("command" => $command, "templateName" => $blockName);
-			else
-				$attributes = array("command" => $command, "blockName" => $blockName);
-			$ast = self::makeAST(self::makeASTNode(TierraTemplateASTNode::BLOCK_NODE, $attributes));
+			if ($command == "extends") {
+				$ast = self::makeAST(array(), array("parentTemplateName" => $blockName));
+			}
+			else {
+				if ($command == "include")
+					$nodeAttributes = array("command" => $command, "templateName" => $blockName);
+				else
+					$nodeAttributes = array("command" => $command, "blockName" => $blockName);
+				$ast = self::makeAST(self::makeASTNode(TierraTemplateASTNode::BLOCK_NODE, $nodeAttributes));
+			}
 			self::checkAST($src, $ast, "{$testName} has correct AST", $dump);
 		}
 		
@@ -163,6 +168,24 @@
 		public function testNamedStringBlockOnly() {
 			foreach (array("start", "else", "end", "extends", "include", "prepend", "append", "replace") as $command)
 				self::checkBlockCommand($command, "Named string {$command} block", "foo", true);
-		}		
+		}	
+
+		public function testStartAndEndBlockWithHTML() {
+			$src = " [@ start test @] foo [@ end test @] ";
+			self::checkSyntax($src, "Start and end blocks with html is valid syntax");
+			$ast = self::makeAST(array(
+									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
+									self::makeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "start", "blockName" => "test")),
+									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " foo ")),
+									self::makeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "end", "blockName" => "test")),
+									self::makeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " ")),
+								));
+			self::checkAST($src, $ast, "Start and end blocks with html has correct AST");
+		}	
+
+		public function testDuplicateExtendsBlock() {
+			$src = " [@ extends test @] foo [@ extends foo @] ";
+			self::checkSyntax($src, "Duplicate extends blocks with html is valid syntax");
+		}
 		
 	}

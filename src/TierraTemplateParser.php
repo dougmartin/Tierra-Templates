@@ -39,7 +39,18 @@
 						
 					case TierraTemplateTokenizer::BLOCK_START_TOKEN:
 						$this->tokenizer->match(TierraTemplateTokenizer::BLOCK_START_TOKEN);
-						$this->ast->addNode($this->blockNode());
+						
+						$steamIndex = $this->tokenizer->getStreamIndex();
+						$node = $this->blockNode();
+						if ($node->command == "extends") {
+							if (!isset($this->ast->parentTemplateName))
+								$this->ast->parentTemplateName = $node->templateName;
+							else
+								$this->tokenizer->matchError("Multiple extends blocks found", $steamIndex);
+						}
+						else
+							$this->ast->addNode($node);
+							
 						$this->tokenizer->match(TierraTemplateTokenizer::BLOCK_END_TOKEN);
 						break;
 						

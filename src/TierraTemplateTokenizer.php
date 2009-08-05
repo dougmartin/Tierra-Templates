@@ -63,6 +63,10 @@
 			return $this->nextToken;
 		}
 		
+		public function getStreamIndex() {
+			return $this->streamIndex;
+		}
+		
 		public function eof() {
 			return $this->eof;
 		}
@@ -106,21 +110,21 @@
 			return $elseLexeme;
 		}		
 	
-		public function matchError($message, $showContext=true) {
+		public function matchError($message, $streamIndex=false) {
 			$message = "{$message} on line {$this->lineNumber}.";
-			if ($showContext) {
-				if ($this->startStreamIndex - 100 < 0) {
-					$start = 0;
-					$offset = $this->startStreamIndex;
-					$length = $this->startStreamIndex;
-				}
-				else {
-					$start = $this->startStreamIndex - 100;
-					$offset = 100;
-					$length = 100;
-				}
-				$message .= " <p>Context: <pre>" . htmlspecialchars(substr($this->src, $start, $length)) . "<font color='#ff0000'>*</font>" . htmlspecialchars(substr($this->src, $start + $offset, 100)) . "</pre></p>";
+			
+			$streamIndex = ($streamIndex !== false ? $streamIndex: $this->startStreamIndex);
+			if ($streamIndex - 100 < 0) {
+				$start = 0;
+				$offset = $streamIndex;
+				$length = $streamIndex;
 			}
+			else {
+				$start = $streamIndex - 100;
+				$offset = 100;
+				$length = 100;
+			}
+			$message .= " <p>Context: <pre>" . htmlspecialchars(substr($this->src, $start, $length)) . "<font color='#ff0000'>*</font>" . htmlspecialchars(substr($this->src, $start + $offset, 100)) . "</pre></p>";
 			throw new TierraTemplateTokenizerException($message);
 		}
 		

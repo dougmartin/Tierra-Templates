@@ -4,8 +4,12 @@
 		
 		private $nodes;
 		
-		public function __construct($nodes = array()) {
+		public function __construct($nodes = array(), $attributes=false) {
 			$this->nodes = $nodes;
+			if ($attributes !== false) {
+				foreach ($attributes as $name => $value)
+					$this->$name = $value;
+			}			
 		}
 		
 		public function addNode($node) {
