@@ -97,43 +97,43 @@ HTML;
 		public function testCommentBlockOnly() {
 			$comment = " this is a comment ";
 			$src = "[#{$comment}#]";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Comment block only is HTML + COMMENT + EOF");
-			self::checkLexemes($src, array("", $comment, ""), "Comment block only lexeme check");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::COMMENT_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Comment block only is HTML + COMMENT + EOF");
+			self::checkLexemes($src, array("", "[#", $comment, "#]", ""), "Comment block only lexeme check");
 		}
 
 		public function testCommentGeneratorOnly() {
 			$comment = "@ this is a comment ";
 			$src = "{#{$comment}@}";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Commented generator only is HTML + COMMENT + EOF");
-			self::checkLexemes($src, array("", $comment, ""), "Commented generator only lexeme check");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::COMMENT_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Commented generator only is HTML + COMMENT + EOF");
+			self::checkLexemes($src, array("", "{#", $comment, "@}", ""), "Commented generator only lexeme check");
 		}
 
 		public function testEmptyCommentBlock() {
 			$comment = "";
 			$src = "[#{$comment}#]";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Empty comment block is HTML + COMMENT + EOF");
-			self::checkLexemes($src, array("", $comment, ""), "Empty comment block lexeme check");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Empty comment block is HTML + COMMENT + EOF");
+			self::checkLexemes($src, array("", "[#", "#]", ""), "Empty comment block lexeme check");
 		}
 		
 		public function testEmptyCommentGenerator() {
 			$comment = "";
 			$src = "{#{$comment}@}";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Empty commented generator is HTML + COMMENT + EOF");
-			self::checkLexemes($src, array("", $comment, ""), "Empty commented generator lexeme check");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Empty commented generator is HTML + COMMENT + EOF");
+			self::checkLexemes($src, array("", "{#", "@}", ""), "Empty commented generator lexeme check");
 		}		
 		
 		public function testUnterminatedCommentBlock() {
 			$comment = " this is a comment ";
 			$src = "[#{$comment}";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Unterminated comment block is HTML + COMMENT + EOF");
-			self::checkLexemes($src, array("", $comment, ""), "Unterminated comment block lexeme check");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Unterminated comment block is HTML + COMMENT + EOF");
+			self::checkLexemes($src, array("", "[#", $comment, ""), "Unterminated comment block lexeme check");
 		}
 
 		public function testUnterminatedCommentGenerator() {
 			$comment = " this is a comment ";
 			$src = "{#{$comment}";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Unterminated commented generator is HTML + COMMENT + EOF");
-			self::checkLexemes($src, array("", $comment, ""), "Unterminated commented generator lexeme check");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Unterminated commented generator is HTML + COMMENT + EOF");
+			self::checkLexemes($src, array("", "{#", $comment, ""), "Unterminated commented generator lexeme check");
 		}		
 
 		public function testCommentBlockWithHTML() {
@@ -141,8 +141,8 @@ HTML;
 			$after = " this is after ";
 			$comment = " this is a comment ";
 			$src = "{$before}[#{$comment}#]{$after}";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Comment block with html is HTML + COMMENT + HTML + EOF");
-			self::checkLexemes($src, array($before, $comment, $after, ""), "Comment block with html lexeme check");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::COMMENT_END_TOKEN, TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Comment block with html is HTML + COMMENT + HTML + EOF");
+			self::checkLexemes($src, array($before, "[#", $comment, "#]", $after, ""), "Comment block with html lexeme check");
 		}		
 		
 		public function testCommentBlockWithBracketsInHTML() {
@@ -150,8 +150,8 @@ HTML;
 			$after = " [this is after] ";
 			$comment = " this is a comment ";
 			$src = "{$before}[#{$comment}#]{$after}";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Comment block with brackets in html is HTML + COMMENT + HTML + EOF");
-			self::checkLexemes($src, array($before, $comment, $after, ""), "Comment block with brackets in html lexeme check");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::COMMENT_END_TOKEN, TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Comment block with brackets in html is HTML + COMMENT + HTML + EOF");
+			self::checkLexemes($src, array($before, "[#", $comment, "#]", $after, ""), "Comment block with brackets in html lexeme check");
 		}
 
 		public function testCommentBlockWithBracketsAndSpaceBeforeSigilsInHTML() {
@@ -159,7 +159,14 @@ HTML;
 			$after = " { @ this is after @ } ";
 			$comment = " this is a comment ";
 			$src = "{$before}[#{$comment}#]{$after}";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Comment block with brackets with space before sigils in html is HTML + COMMENT + HTML + EOF");
-			self::checkLexemes($src, array($before, $comment, $after, ""), "Comment block with brackets with space before sigils in html lexeme check");
-		}			
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::COMMENT_END_TOKEN, TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Comment block with brackets with space before sigils in html is HTML + COMMENT + HTML + EOF");
+			self::checkLexemes($src, array($before, "[#", $comment, "#]", $after, ""), "Comment block with brackets with space before sigils in html lexeme check");
+		}
+
+		public function testEmptyBlock() {
+			$commands = "";
+			$src = "[@{$commands}@]";
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Empty block is HTML + BLOCK_START + BLOCK_END + EOF");
+			self::checkLexemes($src, array("", "[@", "@]", ""), "Empty block lexeme check");
+		}		
 	}

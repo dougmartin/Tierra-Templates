@@ -6,6 +6,10 @@
 		const EOF_TOKEN = "EOF_TOKEN";
 		const HTML_TOKEN = "HTML_TOKEN";
 		const COMMENT_TOKEN = "COMMENT_TOKEN";
+		const COMMENT_START_TOKEN = "COMMENT_START_TOKEN";
+		const COMMENT_END_TOKEN = "COMMENT_END_TOKEN";
+		const BLOCK_START_TOKEN = "BLOCK_START_TOKEN";
+		const BLOCK_END_TOKEN = "BLOCK_END_TOKEN";
 		const STRING_TOKEN = "STRING_TOKEN";
 		const TEXT_TOKEN = "TEXT_TOKEN";
 		
@@ -23,6 +27,7 @@
 		private $streamIndex;
 		private $mode;
 		private $eof;
+		private $commentOpener;
 		private $commentCloser;
 		private $startSelectionIndices;
 				
@@ -165,14 +170,13 @@
 						if (!$this->eof) {
 							if ($nextChar == '#') {
 								$this->mode = self::COMMENT_MODE;
+								$this->commentOpener = $curChar;
 								$this->commentCloser = $curChar == "[" ? "]" : "}";
 							}
 							else if ($curChar == '[')
 								$this->mode = self::BLOCK_MODE;
 							else if ($curChar == '{')
 								$this->mode = self::GENERATOR_MODE;
-								
-							$this->advanceChar(2);
 						}						
 						break;
 						
@@ -181,40 +185,68 @@
 						
 						$curChar = $this->curChar();
 						$nextChar = $this->nextChar();
-						while (!$this->eof && !((($curChar == '@') || ($curChar == '#')) && ($nextChar == $this->commentCloser))) {
-							$curChar = $this->advanceChar();
-							$nextChar = $this->nextChar();
-						}
 						
-						$this->nextLexeme = $this->endSelection();
-						$this->nextToken = self::COMMENT_TOKEN;
-
-						$this->mode = self::HTML_MODE;
-						$this->advanceChar(2);
+						if ($curChar == $this->commentOpener) {
+							$this->advanceChar(2);
+							$this->nextLexeme = $this->endSelection();
+							$this->nextToken = self::COMMENT_START_TOKEN;
+						}
+						else if ($nextChar == $this->commentCloser) {
+							$this->advanceChar(2);
+							$this->nextLexeme = $this->endSelection();
+							$this->nextToken = self::COMMENT_END_TOKEN;
+							
+							$this->mode = self::HTML_MODE;
+						}
+						else {
+							while (!$this->eof && !((($curChar == '@') || ($curChar == '#')) && ($nextChar == $this->commentCloser))) {
+								$curChar = $this->advanceChar();
+								$nextChar = $this->nextChar();
+							}
+						
+							$this->nextLexeme = $this->endSelection();
+							$this->nextToken = self::COMMENT_TOKEN;
+						}
 						break;
 						
 					case self::BLOCK_MODE:
-						$curChar = $this->skipWhitespace();
+						$this->startSelection();
 						
-						if (!$this->eof) {
-							if (($curChar == '"') || ($curChar == "'")) {
-								$this->nextLexeme = $this->advanceString($curChar);
-								$this->nextToken = self::STRING_TOKEN;
-							}
-							else {
-								$this->startSelection();
-								$curChar = $this->curChar();
-								while (!$this->eof && !(($curChar == ' ') || ($curChar == "\t") || ($curChar == "\r") || ($curChar == "\n"))) {
-									$curChar = $this->advanceChar();
-								}
-								$this->nextLexeme = $this->endSelection();
-								$this->nextToken = self::TEXT_TOKEN;
-							}
-						}
+						$curChar = $this->curChar();
+						$nextChar = $this->nextChar();
 						
-						if (($curChar == "@") && ($this->nextChar() == "]")) {
-							$this->mode = self::HTML_MODE;
+						if (($curChar == "[") && ($nextChar == "@")) {
 							$this->advanceChar(2);
+							$this->nextLexeme = $this->endSelection();
+							$this->nextToken = self::BLOCK_START_TOKEN;
+						}
+						else if (($curChar == "@") && ($nextChar == "]")) {
+							$this->advanceChar(2);
+							$this->nextLexeme = $this->endSelection();
+							$this->nextToken = self::BLOCK_END_TOKEN;
+							
+							$this->mode = self::HTML_MODE;
+						}
+						else {						
+							$curChar = $this->skipWhitespace();
+							
+							if (!$this->eof) {
+								if (($curChar == '"') || ($curChar == "'")) {
+									$this->nextLexeme = $this->advanceString($curChar);
+									$this->nextToken = self::STRING_TOKEN;
+								}
+								else {
+									$this->startSelection();
+									
+									$curChar = $this->curChar();
+									while (!$this->eof && !(($curChar == ' ') || ($curChar == "\t") || ($curChar == "\r") || ($curChar == "\n"))) {
+										$curChar = $this->advanceChar();
+									}
+									
+									$this->nextLexeme = $this->endSelection();
+									$this->nextToken = self::TEXT_TOKEN;
+								}
+							}
 						}
 						break;
 						
