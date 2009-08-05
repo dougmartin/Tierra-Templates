@@ -6,6 +6,8 @@
 		const EOF_TOKEN = "EOF_TOKEN";
 		const HTML_TOKEN = "HTML_TOKEN";
 		const COMMENT_TOKEN = "COMMENT_TOKEN";
+		const STRING_TOKEN = "STRING_TOKEN";
+		const TEXT_TOKEN = "TEXT_TOKEN";
 		
 		const HTML_MODE = "HTML_MODE";
 		const COMMENT_MODE = "COMMENT_MODE";
@@ -110,6 +112,30 @@
 			return substr($this->src, $startIndex, $this->streamIndex - $startIndex);
 		} 
 		
+		public function skipWhitespace() {
+			$curChar = $this->curChar();
+			while (!$this->eof && (($curChar == ' ') || ($curChar == "\t") || ($curChar == "\r") || ($curChar == "\n"))) {
+				$curChar = $this->advanceChar();
+			}
+			return $curChar;			
+		}
+		
+		public function advanceString($quoteDelimiter) {
+			$curChar = $this->advanceChar();
+			$this->startSelection();
+			while (!$this->eof && ($curChar != $quoteDelimiter)) {
+				if ($curChar == "\\")
+					$this->advanceChar();
+				$curChar = $this->advanceChar();
+			}
+			$string = $this->endSelection();
+			
+			// get past the closing quote
+			$this->advanceChar();
+			
+			return $string;
+		}
+		
 		public function advance() {
 			$lexeme = $this->nextLexeme;
 			$this->nextLexeme = "";
@@ -144,7 +170,7 @@
 							else if ($curChar == '[')
 								$this->mode = self::BLOCK_MODE;
 							else if ($curChar == '{')
-								$this->mode = self::BLOCK_MODE;
+								$this->mode = self::GENERATOR_MODE;
 								
 							$this->advanceChar(2);
 						}						
@@ -165,6 +191,34 @@
 
 						$this->mode = self::HTML_MODE;
 						$this->advanceChar(2);
+						break;
+						
+					case self::BLOCK_MODE:
+						$curChar = $this->skipWhitespace();
+						
+						if (!$this->eof) {
+							if (($curChar == '"') || ($curChar == "'")) {
+								$this->nextLexeme = $this->advanceString($curChar);
+								$this->nextToken = self::STRING_TOKEN;
+							}
+							else {
+								$this->startSelection();
+								$curChar = $this->curChar();
+								while (!$this->eof && !(($curChar == ' ') || ($curChar == "\t") || ($curChar == "\r") || ($curChar == "\n"))) {
+									$curChar = $this->advanceChar();
+								}
+								$this->nextLexeme = $this->endSelection();
+								$this->nextToken = self::TEXT_TOKEN;
+							}
+						}
+						
+						if (($curChar == "@") && ($this->nextChar() == "]")) {
+							$this->mode = self::HTML_MODE;
+							$this->advanceChar(2);
+						}
+						break;
+						
+					case self::GENERATOR_MODE:
 						break;
 				}
 			}
