@@ -239,13 +239,16 @@
 									$this->startSelection();
 									
 									$curChar = $this->curChar();
-									while (!$this->eof && !(($curChar == ' ') || ($curChar == "\t") || ($curChar == "\r") || ($curChar == "\n"))) {
+									while (!$this->eof && !(($curChar == '@') || ($curChar == ' ') || ($curChar == "\t") || ($curChar == "\r") || ($curChar == "\n"))) {
 										$curChar = $this->advanceChar();
 									}
 									
 									$this->nextLexeme = $this->endSelection();
 									$this->nextToken = self::TEXT_TOKEN;
 								}
+								
+								// skip to the next text or end of the block
+								$this->skipWhitespace();
 							}
 						}
 						break;
