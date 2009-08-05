@@ -22,7 +22,7 @@
 				switch ($this->tokenizer->getNextToken()) {
 					
 					case TierraTemplateTokenizer::EOF_TOKEN:
-						// break out of the enclosing while loop
+						// break out of the enclosing while loop - we don't use a check for eof() in the loop at that would make us drop trailing html
 						break 2;
 						
 					case TierraTemplateTokenizer::HTML_TOKEN:
@@ -89,10 +89,20 @@
 					$this->tokenizer->matchError("Unknown block command - '{$node->command}'");
 			}
 					
-			if ($this->tokenizer->matchIf(TierraTemplateTokenizer::IF_TOKEN))
-				$node->conditional = $this->blockConditionalNode();
+			if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN)) {
+				if ($node->command != "extends") {
+					$this->tokenizer->match(TierraTemplateTokenizer::IF_TOKEN);
+					$node->conditional = $this->blockConditionalNode();
+				}
+				else
+					$this->tokenizer->matchError("Extends blocks cannot have conditionals");
+			}
 			
 			return $node;
+		}
+		
+		private function blockConditionalNode() {
+			
 		}
 	}
 	
