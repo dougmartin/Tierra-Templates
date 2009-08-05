@@ -12,10 +12,13 @@
 		const BLOCK_END_TOKEN = "BLOCK_END_TOKEN";
 		const STRING_TOKEN = "STRING_TOKEN";
 		const TEXT_TOKEN = "TEXT_TOKEN";
-		
+		const GENERATOR_START_TOKEN = "GENERATOR_START_TOKEN";
+		const GENERATOR_END_TOKEN = "GENERATOR_END_TOKEN";
+				
 		const HTML_MODE = "HTML_MODE";
 		const COMMENT_MODE = "COMMENT_MODE";
 		const BLOCK_MODE = "BLOCK_MODE";
+		const BLOCK_CONDITIONAL_MODE = "BLOCK_CONDITIONAL_MODE";
 		const GENERATOR_MODE = "GENERATOR_MODE";
 		
 		private $src;
@@ -35,11 +38,11 @@
 			$this->src = $src;
 			$this->stream = str_split($src);
 			$this->streamIndex = 0;
-			$this->streamLength = count($this->stream);
+			$this->streamLength = $src != "" ? count($this->stream) : 0;
 					
 			$this->lineNumber = 1;
 			
-			$this->nextLexeme = false;
+			$this->nextLexeme = "";
 			$this->nextToken = self::UNKNOWN_TOKEN;
 			
 			$this->eof = false;
@@ -54,12 +57,55 @@
 			return $this->lineNumber;
 		}
 		
+		public function getNextToken() {
+			return $this->nextToken;
+		}
+		
+		public function eof() {
+			return $this->eof;
+		}
+		
 		public function match($token, $message = false) {
 			if ($token != $this->nextToken) {
 				if (!$message)
 					$message = "Expected {$token} found {$this->nextToken}";
-					
-				// build context around the error
+				$this->matchError($message);
+			}
+			return $this->advance();	
+		}
+		
+		public function matches($tokens, $message = false) {
+			foreach ($tokens as $token) {
+				if ($token == $this->nextToken)
+					return $this->advance();
+			}
+			if (!$message)
+				$message = "Expected " . implode(" or ", $tokens) . " found {$this->nextToken}";
+			$this->matchError($message);			
+		}
+		
+		public function nextIs($token) {
+			return ($token == $this->nextToken);
+		}
+	
+		public function matchIf($token) {
+			return $token == $this->nextToken ? $this->advance() : false;
+		}
+		
+		public function matchElse($token, $elseLexeme=false) {
+			return $token == $this->nextToken ? $this->advance() : $elseLexeme;
+		}		
+	
+		public function matchesElse($tokens, $elseLexeme=false) {
+			foreach ($tokens as $token) {
+				if ($token == $this->nextToken)
+					return $this->advance();
+			}
+			return $elseLexeme;
+		}		
+	
+		public function matchError($message, $showContext=true) {
+			if ($showContext) {
 				if ($this->streamIndex - 100 < 0) {
 					$start = 0;
 					$offset = $this->streamIndex;
@@ -71,20 +117,7 @@
 					$length = 100;
 				}
 				$message .= " <br><p>Context: <pre>" . htmlspecialchars(substr($this->src, $start, $length)) . "<font color='#ff0000'>*</font>" . htmlspecialchars(substr($this->src, $start + $offset, 100)) . "</pre></p>";
-				$this->matchError($message);
 			}
-			return $this->advance();	
-		}
-		
-		public function nextIs($token) {
-			return ($token == $this->nextToken);
-		}
-	
-		public function matchIf($token) {
-			return $token == $this->nextToken ? $this->advance() : false;
-		}
-	
-		public function matchError($message) {
 			throw new TierraTemplateTokenizerException("{$message} @ line: {$this->lineNumber}");
 		}
 		
@@ -147,6 +180,7 @@
 			
 			$this->eof = $this->streamIndex >= $this->streamLength;
 			if ($this->eof) {
+				$this->nextLexeme = "";
 				$this->nextToken = self::EOF_TOKEN;
 			}
 			else {
@@ -251,6 +285,9 @@
 								$this->skipWhitespace();
 							}
 						}
+						break;
+						
+					case self::BLOCK_CONDITIONAL_MODE:
 						break;
 						
 					case self::GENERATOR_MODE:
