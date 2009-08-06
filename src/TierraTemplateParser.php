@@ -44,27 +44,37 @@
 						
 						$steamIndex = $this->tokenizer->getStreamIndex();
 						$node = $this->blockNode();
-						if ($node->command == "extends") {
-							if (!isset($this->ast->parentTemplateName))
-								$this->ast->parentTemplateName = $node->templateName;
-							else
-								$this->tokenizer->matchError("Multiple extends blocks found", $steamIndex);
-						}
-						else {
-							if ($node->command == "end") {
-								if (count($this->blockStack) == 0)
-									$this->tokenizer->matchError("Unmatched end block found", $steamIndex);
-								else {
-									$openingBlock = array_pop($this->blockStack);
-									if ($openingBlock->blockName != $node->blockName) 
-										$this->tokenizer->matchError("End block does not match opening block name", $steamIndex);
+						switch ($node->command) {
+							case "extends":
+								if (!isset($this->ast->parentTemplateName))
+									$this->ast->parentTemplateName = $node->templateName;
+								else
+									$this->tokenizer->matchError("Multiple extends blocks found", $steamIndex);
+								break;
+								
+							case "page":
+								if (!isset($this->ast->decorators))
+									$this->ast->decorators = isset($node->decorators) ? $node->decorators : array();
+								else
+									$this->tokenizer->matchError("Multiple page blocks found", $steamIndex);
+								break;
+								
+							default:
+								if ($node->command == "end") {
+									if (count($this->blockStack) == 0)
+										$this->tokenizer->matchError("Unmatched end block found", $steamIndex);
+									else {
+										$openingBlock = array_pop($this->blockStack);
+										if ($openingBlock->blockName != $node->blockName) 
+											$this->tokenizer->matchError("End block does not match opening block name", $steamIndex);
+									}
 								}
-							}
-							else if (in_array($node->command, array("start", "prepend", "append", "replace"))) {
-								$this->blockStack[] = $node;
-							}
-							
-							$this->ast->addNode($node);
+								else if (in_array($node->command, array("start", "prepend", "append", "replace"))) {
+									$this->blockStack[] = $node;
+								}
+								
+								$this->ast->addNode($node);
+								break;
 						}
 							
 						$this->tokenizer->match(TierraTemplateTokenizer::BLOCK_END_TOKEN);
@@ -106,25 +116,71 @@
 					$node->blockName = $this->tokenizer->matches(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN), "Expected string or identifier for block name");
 					break;
 					
+				case "page":
+					// nothing to do here, no parameters to page
+					break;
+					
 				default:
 					$this->tokenizer->matchError("Unknown block command - '{$node->command}'");
 			}
 					
+			// get the conditionals
 			if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN)) {
 				if (($node->command != "extends") && ($node->command != "end")) {
 					$this->tokenizer->match(TierraTemplateTokenizer::IF_TOKEN);
-					$node->conditional = $this->blockConditionalNode();
+					$node->conditional = $this->expressionNode();
+					if ($node->conditional === false) 
+						$this->tokenizer->matchError("Block conditional is empty");
 				}
 				else
 					$this->tokenizer->matchError(ucfirst($node->command) . " blocks cannot have conditionals");
+			}
+
+			// get the decorators
+			if ($this->tokenizer->nextIs(TierraTemplateTokenizer::DO_TOKEN)) {
+				$this->tokenizer->match(TierraTemplateTokenizer::DO_TOKEN);
+				$this->decorators = array();
+				while (!$this->tokenizer->nextIs(TierraTemplateTokenizer::BLOCK_END_TOKEN)) {
+					$this->decorators[] = $this->blockDecoratorNode();
+					$this->tokenizer->matchIf(TierraTemplateTokenizer::COMMA_TOKEN);
+				}
 			}
 			
 			return $node;
 		}
 		
-		private function blockConditionalNode() {
+		private function blockDecoratorNode() {
+			$node = new TierraTemplateASTNode(TierraTemplateASTNode::DECORATOR_NODE);
 			
+			$node->method = $this->tokenizer->match(TierraTemplateTokenizer::FUNCTION_CALL_TOKEN, "Expected function call for block decorator");
+			$this->tokenizer->match(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
+			$node->params = array();
+			while (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN)) {
+				$param =  $this->expressionNode();
+				if ($param !== false)
+					$node->params[] = $param;
+				$this->tokenizer->matchIf(TierraTemplateTokenizer::COMMA_TOKEN);
+			}
+			$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
+			
+			return $node;
+			// TODO: implement
 		}
+
+		private function expressionNode() {
+			if ($this->tokenizer->matchIf(TierraTemplateTokenizer::LEFT_PAREN_TOKEN)) {
+				$node = $this->expressionNode();
+				$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
+				return $node;
+			}
+			else {
+				
+			}
+			
+			return false;
+		}
+		
+		
 	}
 	
 	class TierraTemplateParserException extends Exception {
