@@ -9,6 +9,7 @@
 		private static $isChildTemplate = false;
 		private static $decorators = array();
 		private static $returnIdentifierName = false;
+		private static $returnIdentifierNameStack = array();
 		
 		public static function addDecorator($name, $method) {
 			self::$decorators[$name] = $method;
@@ -216,15 +217,17 @@
 							break;
 							
 						case TierraTemplateTokenizer::EQUAL_TOKEN:
-							$code[] = "\$this->runtime->assign(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
+							self::setReturnIdentifierName(true);
+							$var = self::emitExpression($node->leftNode);
+							self::resetReturnIdentifierName();
+							$code[] = "\$this->runtime->assign({$var}, " . self::emitExpression($node->rightNode) . ")";
 							break;
 							
 						case TierraTemplateTokenizer::LEFT_BRACKET_TOKEN:
 						case TierraTemplateTokenizer::DOT_TOKEN:
-							$savedValue = self::$returnIdentifierName;
-							self::$returnIdentifierName = true;
+							self::setReturnIdentifierName(true);
 							$code[] = "\$this->runtime->attr(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
-							self::$returnIdentifierName = $savedValue;
+							self::resetReturnIdentifierName();
 							break;
 							
 						case TierraTemplateTokenizer::COLON_TOKEN:
@@ -271,6 +274,16 @@
 			// TODO: add code generator decorator calls
 			return "";
 		}
+		
+		public static function setReturnIdentifierName($value) {
+			self::$returnIdentifierNameStack[] = self::$returnIdentifierName;
+			self::$returnIdentifierName = $value;	
+		}
+		
+		public static function resetReturnIdentifierName() {
+			self::$returnIdentifierName = array_pop(self::$returnIdentifierNameStack);	
+		}
+		
 	}	
 	
 	

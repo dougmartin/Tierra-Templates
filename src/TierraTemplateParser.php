@@ -226,13 +226,16 @@
 				$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
 				return $node;
 			}
-			else if ($identifier = $this->tokenizer->matchIf(TierraTemplateTokenizer::IDENTIFIER_TOKEN)) {
-				$node = new TierraTemplateASTNode(TierraTemplateASTNode::IDENTIFIER_NODE);
-				$node->identifier = $identifier;
-				return $node;
-			}
+			else if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IDENTIFIER_TOKEN))
+				return $this->identifierNode();
 			else
 				return $this->valueNode();
+		}
+		
+		private function identifierNode() {
+			$node = new TierraTemplateASTNode(TierraTemplateASTNode::IDENTIFIER_NODE);
+			$node->identifier = $this->tokenizer->match(TierraTemplateTokenizer::IDENTIFIER_TOKEN);
+			return $node;
 		}
 		
 		private function jsonAttributeNode() {
@@ -250,19 +253,19 @@
 		private function valueNode() {
 			switch ($this->tokenizer->getNextToken()) {
 				case TierraTemplateTokenizer::LEFT_BRACKET_TOKEN:
-					$value = new TierraTemplateASTNode(TierraTemplateASTNode::ARRAY_NODE);
-					$value->statements = array();
+					$node = new TierraTemplateASTNode(TierraTemplateASTNode::ARRAY_NODE);
+					$node->statements = array();
 					$this->tokenizer->match(TierraTemplateTokenizer::LEFT_BRACKET_TOKEN);
 					if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_BRACKET_TOKEN)) {
-						$value->statements[] = $this->statementNode();
+						$node->statements[] = $this->statementNode();
 						while ($this->tokenizer->matchIf(TierraTemplateTokenizer::COMMA_TOKEN))
-							$value->statements[] = $this->statementNode();
+							$node->statements[] = $this->statementNode();
 					}
 					$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_BRACKET_TOKEN);
 					break;
 					
 				case TierraTemplateTokenizer::LEFT_BRACE_TOKEN:
-					$value = new TierraTemplateASTNode(TierraTemplateASTNode::JSON_NODE);
+					$node = new TierraTemplateASTNode(TierraTemplateASTNode::JSON_NODE);
 					$attributes = array();
 					$this->tokenizer->match(TierraTemplateTokenizer::LEFT_BRACE_TOKEN);
 					if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_BRACE_TOKEN)) {
@@ -277,24 +280,23 @@
 						foreach ($attributes as $attribute)
 							$namedAttributes[$attribute->name] = $attribute->value;
 					}
-					$value->attributes = $namedAttributes;
+					$node->attributes = $namedAttributes;
 					break;
 					
 				case TierraTemplateTokenizer::IDENTIFIER_TOKEN:
-					$value = new TierraTemplateASTNode(TierraTemplateASTNode::IDENTIFIER_NODE);
-					$value->identifier = $this->tokenizer->advance();
+					$node = $this->identifierNode();
 					break;
 					
 				case TierraTemplateTokenizer::STRING_TOKEN:
 				case TierraTemplateTokenizer::INTEGER_TOKEN:
 				case TierraTemplateTokenizer::FLOAT_TOKEN:
-					$value = new TierraTemplateASTNode(TierraTemplateASTNode::LITERAL_NODE);
-					$value->tokenType = $this->tokenizer->getNextToken();
-					$value->value = $this->tokenizer->advance();
+					$node = new TierraTemplateASTNode(TierraTemplateASTNode::LITERAL_NODE);
+					$node->tokenType = $this->tokenizer->getNextToken();
+					$node->value = $this->tokenizer->advance();
 					break;
 					
 				case TierraTemplateTokenizer::FUNCTION_CALL_TOKEN:
-					$value = $this->functionCallNode();
+					$node = $this->functionCallNode();
 					break;
 					
 				default:
@@ -302,7 +304,7 @@
 					break;
 			}
 			
-			return $value;
+			return $node;
 		}
 		
 		private function functionCallNode() {

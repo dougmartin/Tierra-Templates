@@ -153,7 +153,7 @@ HTML;
 		}
 
 		public function testBlockWithAssign() {
-			self::checkEmit("[@ include foo if x = 1 < 3 @]", "<?php if (\$this->runtime->assign(\$this->runtime->identifier('x'), 1 < 3)) { \$this->includeTemplate('foo'); }", "Block with assignment");
+			self::checkEmit("[@ include foo if x = 1 < 3 @]", "<?php if (\$this->runtime->assign('x', 1 < 3)) { \$this->includeTemplate('foo'); }", "Block with assignment");
 		}
 
 		public function testBlockWithIndex() {
