@@ -1,23 +1,42 @@
 <?php
 
 	require_once dirname(__FILE__) . "/../src/TierraTemplateAST.php";
+	require_once dirname(__FILE__) . "/../src/TierraTemplateException.php";
 	
 	class TierraTemplateCodeGenerator {
 		
-		private static $blockStack;
-		private static $isChildTemplate;
+		private static $blockStack = array();
+		private static $isChildTemplate = false;
+		private static $decorators = array();
+		
+		public static function addDecorator($name, $method) {
+			self::$decorators[$name] = $method;
+		}
 		
 		public static function emit($ast) {
 			
 			self::$isChildTemplate = isset($ast->parentTemplateName);
 			self::$blockStack = array();
-
-			// get the html and code chunks
+			
 			$chunks = array();
+
+			// call the decorators in reverse order at the start of the root page
+			if (!self::$isChildTemplate && isset($ast->decorators)) {
+				foreach (array_reverse($ast->decorators) as $decorator) {
+					if (isset(self::$decorators[$decorator->name])) {
+						$params = array_merge(array(array("start" => true, "page" => true)), $decorator->params);
+						$code = call_user_func_array(self::$decorators[$decorator->name], $params);
+					}
+				}
+			}
+			
+			// get the html and code chunks
 			foreach ($ast->getNodes() as $node) {
 				switch ($node->type) {
 					case TierraTemplateASTNode::HTML_NODE:
-						$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::HTML_CHUNK, $node->html);
+						// this is taken care of in the optimizer but in case it isn't called first don't output html not in blocks in child templates
+						if (!self::$isChildTemplate || (count(self::$blockStack) > 0))
+							$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::HTML_CHUNK, $node->html);
 						break;
 						
 					case TierraTemplateASTNode::BLOCK_NODE:
@@ -31,8 +50,17 @@
 			}
 			
 			// add the parent template include at the end
-			if (self::$isChildTemplate)
+			if (self::$isChildTemplate) {
 				$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, "\$this->includeTemplate('{$ast->parentTemplateName}');");
+			}
+			else if (isset($ast->decorators)) {
+				foreach ($ast->decorators as $decorator) {
+					if (isset(self::$decorators[$decorator->name])) {
+						$params = array_merge(array(array("start" => false, "page" => true)), $decorator->params);
+						$code = call_user_func_array(self::$decorators[$decorator->name], $params);
+					}
+				}
+			}
 				
 			// merge the like chunks together and add the php start/end tags
 			$lastChunk = false;
@@ -52,6 +80,16 @@
 		
 		private static function emitBlock($node) {
 			$code = array();
+			
+			// call the decorators in reverse order at the start of the block
+			if (($node->command != "end") && isset($node->decorators)) {
+				foreach (array_reverse($node->decorators) as $decorator) {
+					if (isset(self::$decorators[$decorator->name])) {
+						$params = array_merge(array(array("start" => true, "page" => false)), $decorator->params);
+						$code[] = call_user_func_array(self::$decorators[$decorator->name], $params);
+					}
+				}
+			}
 			
 			// emit the opening common code by command
 			switch ($node->command) {
@@ -113,7 +151,7 @@
 							if (self::$isChildTemplate) {
 								$code[] = "\$this->request->setBlock('{$node->blockName}', ob_get_contents()); ob_end_clean();";
 								// output blocks within blocks so it is buffered in the outer block
-								if (count(self::$blockStack) > 1)
+								if (count(self::$blockStack) > 0)
 									$code[] = "\$this->request->echoBlock('{$node->blockName}');";
 							}
 							$code[] = "}";
@@ -122,13 +160,21 @@
 						
 					case "prepend":
 					case "append":
-						$code[] = "\$this->request->{$node->command}Block('{$node->blockName}', ob_get_contents()); ob_end_clean();";
+						$code[] = "\$this->request->{$openingBlock->command}Block('{$node->blockName}', ob_get_contents()); ob_end_clean();";
 						break;
 				}
+				
+				// add code generator decorator calls after the block is closed
+				if (isset($openingBlock->decorators)) {
+					foreach ($openingBlock->decorators as $decorator) {
+						if (isset(self::$decorators[$decorator->name])) {
+							$params = array_merge(array(array("start" => false, "page" => false)), $decorator->params);
+							$code[] = call_user_func_array(self::$decorators[$decorator->name], $params);
+						}
+					}
+				}
+				
 			}
-			
-			// TODO: implement
-			// TODO: add code generator decorator calls
 			
 			return implode(" ", $code);
 		}

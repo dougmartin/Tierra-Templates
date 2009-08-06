@@ -100,6 +100,10 @@ HTML;
 			self::checkEmit("[@ start foo @] bar [@ end foo @]", "<?php if (!\$this->request->echoBlock('foo')) { ?> bar <?php }", "Block in parent");
 		}
 					
+		public function testBlockInParentWithSpaces() {
+			self::checkEmit(" [@ start foo @] bar [@ end foo @] ", " <?php if (!\$this->request->echoBlock('foo')) { ?> bar <?php } ?> ", "Block in parent with spaces");
+		}
+					
 		public function testBlocksInBlocksInParent() {
 			self::checkEmit("[@ start foo @] bar [@ start baz @] bam [@ end baz @] [@ end foo @]", "<?php if (!\$this->request->echoBlock('foo')) { ?> bar <?php if (!\$this->request->echoBlock('baz')) { ?> bam <?php } ?> <?php }", "Block in parent");
 		}
@@ -107,7 +111,26 @@ HTML;
 		public function testBlockInChild() {
 			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ end foo @]", "<?php if (!\$this->request->echoBlock('foo')) { ob_start(); ?> bar <?php \$this->request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Block in child");
 		}			
+
+		public function testBlocksInBlocksInChild() {
+			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ start baz @] bam [@ end baz @] [@ end foo @]", "<?php if (!\$this->request->echoBlock('foo')) { ob_start(); ?> bar <?php if (!\$this->request->echoBlock('baz')) { ob_start(); ?> bam <?php \$this->request->setBlock('baz', ob_get_contents()); ob_end_clean(); \$this->request->echoBlock('baz'); } ?> <?php \$this->request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Blocks in block in child");
+		}
 		
+		public function testAppendInParent() {
+			self::checkEmit("[@ append foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->request->appendBlock('foo', ob_get_contents()); ob_end_clean();", "Append in parent");
+		}
+				
+		public function testAppendInChild() {
+			self::checkEmit("[@ extends bam @] [@ append foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->request->appendBlock('foo', ob_get_contents()); ob_end_clean(); \$this->includeTemplate('bam');", "Append in child");
+		}
+
+		public function testPrependInParent() {
+			self::checkEmit("[@ prepend foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->request->prependBlock('foo', ob_get_contents()); ob_end_clean();", "Append in parent");
+		}
+				
+		public function testPrependInChild() {
+			self::checkEmit("[@ extends bam @] [@ prepend foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->request->prependBlock('foo', ob_get_contents()); ob_end_clean(); \$this->includeTemplate('bam');", "Append in child");
+		}		
 		
 	}
 	
