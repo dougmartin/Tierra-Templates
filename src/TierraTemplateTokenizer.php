@@ -140,7 +140,7 @@
 				self::XOR_TOKEN => '/(' . self::XOR_TOKEN . ')/',
 				self::OR_TOKEN => '/(' . self::OR_TOKEN . ')/',
 				self::AND_TOKEN => '/(' . self::AND_TOKEN . ')/',			
-				self::FUNCTION_CALL_TOKEN => '/([A-Za-z_:\/])\(/',
+				self::FUNCTION_CALL_TOKEN => '/([A-Za-z_\/]([A-Za-z_\:\/]*)?)\(/',
 				self::IDENTIFIER_TOKEN => '/([$A-Za-z_]([.A-Za-z_0-9]*)?)/',
 				self::FLOAT_TOKEN => '/((\d+\.\d+))/',
 				self::INTEGER_TOKEN => '/(\d+)/',
@@ -201,6 +201,10 @@
 		public function nextIs($token) {
 			return ($token == $this->nextToken);
 		}
+		
+		public function nextIn($tokens) {
+			return in_array($this->nextToken, $tokens);
+		}		
 	
 		public function matchIf($token) {
 			return $token == $this->nextToken ? $this->advance() : false;

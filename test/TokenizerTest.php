@@ -13,11 +13,22 @@
 		protected function tearDown() {
 		}
 		
-		public function checkMatches($src, $tokens, $testMessage) {
+		public function checkMatches($src, $tokens, $testMessage, $dump=false) {
+			if ($dump) {
+				echo "\n{$testMessage}\n";
+				echo "src:\n";
+				var_dump($src);
+				echo "tokens:\n";
+				var_dump($tokens);
+				echo "found tokens:\n";
+			}
 			$tokenizer = new TierraTemplateTokenizer($src);
 			try {
-				foreach ($tokens as $token)
+				foreach ($tokens as $token) {
+					if ($dump)
+						var_dump($tokenizer->getNextToken());
 					$tokenizer->match($token);
+				}
 			}
 			catch (TierraTemplateTokenizerException $e) {
 				$this->assertTrue(false, $testMessage . " / " . $e->getMessage());
@@ -252,5 +263,11 @@ HTML;
 			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with simple conditional");
 			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "true", "@]", ""), "Block with simple conditional lexeme check");
 		}
+		
+		public function testBlockWithFunctionCallNoParams() {
+			$src = "[@ include foo if foo() @]";	
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::FUNCTION_CALL_TOKEN, TierraTemplateTokenizer::LEFT_PAREN_TOKEN, TierraTemplateTokenizer::RIGHT_PAREN_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Function call no params");
+			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "foo", "(", ")", "@]", ""), "Function call no params lexeme check");
+		}				
 		
 	}

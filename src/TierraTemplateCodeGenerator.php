@@ -96,7 +96,7 @@
 				case "include":
 					if (isset($node->conditional))
 						$code[] = "if (" . self::emitExpression($node->conditional) . ") {";
-					$code[] = "\$this->includeTemplate(\"{$node->templateName}\");";
+					$code[] = "\$this->includeTemplate('{$node->templateName}');";
 					if (isset($node->conditional))
 						$code[] = "}";
 					break;
@@ -179,6 +179,79 @@
 			return implode(" ", $code);
 		}
 		
+		public static function emitExpression($node) {
+			$code = array();
+			
+			switch ($node->type) {
+				case TierraTemplateASTNode::FUNCTION_CALL_NODE:
+					$params = self::emitArray($node->params);
+					if (function_exists($node->method))
+						$code[] = "call_user_func_array('{$node->method}', {$params})";
+					else
+						$code[] = "\$this->runtime->call('{$node->method}', {$params})";
+					break;		
+
+				case TierraTemplateASTNode::LITERAL_NODE:
+					if ($node->tokenType == TierraTemplateTokenizer::STRING_TOKEN)
+						$code[] = "'" . addcslashes($node->value, "'") . "'";
+					else
+						$code[] = $node->value;
+					break;
+					
+				case TierraTemplateASTNode::IDENTIFIER_NODE:
+					if (in_array(strtolower($node->identifier), array("true", "false"))) {
+						$code[] = $node->identifier;
+					}
+					else if (strpos($node->identifier, ".") !== false) {
+						$parts = explode(".", $node->identifier);
+						$var = array_shift($parts);
+						$attr = array_shift($parts);
+						array_unshift($parts, "\$this->runtime->attr(\$this->runtime->identifier('{$var}'), '{$attr}')");
+						while (count($parts) > 1) {
+							$var = array_shift($parts);
+							$attr = array_shift($parts);
+							array_unshift($parts, "\$this->runtime->attr({$var}, '{$attr}')");
+						}
+						$code[] = array_pop($parts);
+					}
+					else {
+						$code[] = "\$this->runtime->identifier('" . str_replace("\$", "\\\$", $node->identifier) . "')";
+					}					
+					break;
+					
+				case TierraTemplateASTNode::OPERATOR_NODE:
+					switch ($node->op) {
+						case TierraTemplateTokenizer::COMMA_TOKEN:
+							break;
+							
+						case TierraTemplateTokenizer::EQUAL_TOKEN:
+							$code[] = "\$this->runtime->assign(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
+							break;
+							
+						default:
+							if ($node->binary)
+								$code[] = self::emitExpression($node->leftNode) . " " . $node->op . " " . self::emitExpression($node->rightNode);
+							else  
+								$code[] = $node->op . self::emitExpression($node->rightNode);
+							break;
+					}
+					break;
+					
+				default:
+					throw new TierraTemplateException("Unknown node type in expression: '{$node->type}'");
+			}
+			
+			return implode(" ", $code);
+		}
+		
+		private function emitArray($a) {
+			$code = array();
+			$numElements = count($a);
+			for ($i=0; $i<$numElements; $i++)
+				$code[] = self::emitExpression($a[$i]);
+			return "array(" . implode(", ", $code) . ")";
+		}
+				
 		public static function emitGenerator($node) {
 			// TODO: implement
 			// TODO: add code generator decorator calls

@@ -257,6 +257,51 @@
 		public function testBlockWithSimpleNotConditionalPlusOperator() {
 			$src = "[@ include foo if !x != 3 @]";	
 			self::checkSyntax($src, "Block with simple not conditional plus operator");
+		}	
+
+		public function testBlockWithArrayIndex() {
+			$src = "[@ include foo if x[3] @]";	
+			self::checkSyntax($src, "Block with array index");
+		}
+		
+		public function testBlockWithTwoArrayIndicies() {
+			$src = "[@ include foo if x[3][4] @]";	
+			self::checkSyntax($src, "Block with array two array indicies");
+		}		
+		
+		public function testBlockWithArrayIndexExpression() {
+			$src = "[@ include foo if x[3 + 1 * 55] @]";	
+			self::checkSyntax($src, "Block with array index expression");
+		}
+		
+		public function testBlockWithArrayIndexAndSingleLimit() {
+			$src = "[@ include foo if x[3]:1 @]";	
+			self::checkSyntax($src, "Block with array index and single limit");
+		}
+				
+		public function testBlockWithFunctionCallNoParams() {
+			$src = "[@ include foo if foo() @]";	
+			self::checkSyntax($src, "Block with function call and no params");
+		}
+
+		public function testBlockWithFunctionOneSimpleParam() {
+			$src = "[@ include foo if foo(1) @]";	
+			self::checkSyntax($src, "Block with function call with one simple param");
+		}			
+
+		public function testBlockWithFunctionExpessionParam() {
+			$src = "[@ include foo if foo((x * 3) + 4 / 5) @]";	
+			self::checkSyntax($src, "Block with function call with expression param");
+		}				
+		
+		public function testBlockWithDecorator() {
+			$src = "[@ include foo do memcache({for: '2 days', port: 12000, password: 'test'}) @]";	
+			self::checkSyntax($src, "Block with decorator");
+		}
+
+		public function testBlockWithDecorators() {
+			$src = "[@ include foo do gzip(), memcache({for: '2 days', port: 12000, password: 'test'}) @]";	
+			self::checkSyntax($src, "Block with decorators");
 		}		
 		
 	}

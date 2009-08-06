@@ -130,7 +130,34 @@ HTML;
 				
 		public function testPrependInChild() {
 			self::checkEmit("[@ extends bam @] [@ prepend foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->request->prependBlock('foo', ob_get_contents()); ob_end_clean(); \$this->includeTemplate('bam');", "Append in child");
+		}
+
+		public function testBlockWithFunctionCallNoParams() {
+			self::checkEmit("[@ include foo if foo() @]", "<?php if (\$this->runtime->call('foo', array())) { \$this->includeTemplate('foo'); }", "Block with function call and no params");
+		}
+			
+		public function testBlockWithFunctionCallOneParam() {
+			self::checkEmit("[@ include foo if foo(2) @]", "<?php if (\$this->runtime->call('foo', array(2))) { \$this->includeTemplate('foo'); }", "Block with function call with one param");
+		}
+
+		public function testBlockWithFunctionCallVarParam() {
+			self::checkEmit("[@ include foo if foo(bar) @]", "<?php if (\$this->runtime->call('foo', array(\$this->runtime->identifier('bar')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var param");
+		}
+
+		public function testBlockWithFunctionCallVarWithDotParam() {
+			self::checkEmit("[@ include foo if foo(bar.bam) @]", "<?php if (\$this->runtime->call('foo', array(\$this->runtime->attr(\$this->runtime->identifier('bar'), 'bam')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var with dot param");
 		}		
 		
+		public function testBlockWithOperator() {
+			self::checkEmit("[@ include foo if x < 3 @]", "<?php if (\$this->runtime->identifier('x') < 3) { \$this->includeTemplate('foo'); }", "Block with operator");
+		}
+
+		public function testBlockWithAssign() {
+			self::checkEmit("[@ include foo if x = 1 < 3 @]", "<?php if (\$this->runtime->assign(\$this->runtime->identifier('x'), 1 < 3)) { \$this->includeTemplate('foo'); }", "Block with assignment");
+		}
+
+		public function testBlockWithIndex() {
+			self::checkEmit("[@ include foo if x[1] @]", "", "Block with index");
+		}			
 	}
 	
