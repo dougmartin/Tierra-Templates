@@ -29,7 +29,7 @@
 				echo "testSrc:\n";
 				var_dump($testSrc);
 			}
-			$this->assertTrue($emittedSrc == $testSrc, $message);
+			$this->assertEquals($emittedSrc, $testSrc, $message);
 		}
 		
 		public function testEmpty() {

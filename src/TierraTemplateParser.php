@@ -112,12 +112,12 @@
 		
 		private function blockNode() {
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::BLOCK_NODE);
-			$node->command = strtolower($this->tokenizer->match(TierraTemplateTokenizer::TEXT_TOKEN, "Expected block command"));
+			$node->command = strtolower($this->tokenizer->match(TierraTemplateTokenizer::IDENTIFIER_TOKEN, "Expected block command"));
 			
 			switch ($node->command) {
 				case "extends":
 				case "include":
-					$node->templateName = $this->tokenizer->matches(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN), "Expected string or identifier for template name");
+					$node->templateName = $this->tokenizer->matches(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN), "Expected string or identifier for template name");
 					break;
 					
 				case "start":
@@ -126,12 +126,12 @@
 					if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN))
 						$node->blockName = false;
 					else
-						$node->blockName = $this->tokenizer->matchesElse(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN), false);
+						$node->blockName = $this->tokenizer->matchesElse(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN), false);
 					break;
 					
 				case "prepend":
 				case "append":
-					$node->blockName = $this->tokenizer->matches(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN), "Expected string or identifier for block name");
+					$node->blockName = $this->tokenizer->matches(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN), "Expected string or identifier for block name");
 					break;
 					
 				case "page":
@@ -163,7 +163,7 @@
 					$this->tokenizer->matchIf(TierraTemplateTokenizer::COMMA_TOKEN);
 				}
 			}
-			
+
 			return $node;
 		}
 		

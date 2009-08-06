@@ -37,7 +37,7 @@
 				echo "passed ast:\n";
 				var_dump($ast);
 			}
-			$this->assertTrue($parser->getAST() == $ast, $message);
+			$this->assertEquals($parser->getAST(), $ast, $message);
 		}
 		
 		public function checkBlockCommand($command, $testName, $blockName=false, $isString=false, $dump=false) {

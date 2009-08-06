@@ -13,7 +13,7 @@
 		
 		public function testEmptyAST() {
 			$ast = new TierraTemplateAST();
-			$this->assertTrue(count($ast->getNodes()) == 0);
+			$this->assertEquals(count($ast->getNodes()), 0);
 		}
 		
 		public function testASTWithNodes() {
@@ -22,12 +22,12 @@
 				"bar" => new TierraTemplateASTNode("bar")
 			);
 			$ast = new TierraTemplateAST($nodes);
-			$this->assertTrue($ast->getNodes() == $nodes);
+			$this->assertEquals($ast->getNodes(), $nodes);
 		}
 		
 		public function testEmptyASTNode() {
 			$node = new TierraTemplateASTNode("foo");
-			$this->assertTrue($node->type == "foo");
+			$this->assertEquals($node->type, "foo");
 		}
 		
 		public function testEmptyASTWithAttributes() {
@@ -37,7 +37,7 @@
 			);
 			$ast = new TierraTemplateAST(array(), $attributes);
 			foreach ($attributes as $name => $value)
-				$this->assertTrue($ast->$name == $value);
+				$this->assertEquals($ast->$name, $value);
 		}
 
 		public function testEmptyASTWithAstNodeAttributes() {
@@ -47,7 +47,7 @@
 			);
 			$ast = new TierraTemplateAST(array(), $attributes);
 			foreach ($attributes as $name => $value)
-				$this->assertTrue($ast->$name == $value);
+				$this->assertEquals($ast->$name, $value);
 		}
 
 		public function testASTWithNodesAndAttributes() {
@@ -60,9 +60,9 @@
 				"bar" => 2
 			);
 			$ast = new TierraTemplateAST($nodes, $attributes);
-			$this->assertTrue($ast->getNodes() == $nodes);
+			$this->assertEquals($ast->getNodes(), $nodes);
 			foreach ($attributes as $name => $value)
-				$this->assertTrue($ast->$name == $value);
+				$this->assertEquals($ast->$name, $value);
 		}
 		
 	}

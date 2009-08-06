@@ -29,7 +29,7 @@
 			$tokenizer = new TierraTemplateTokenizer($src);
 			foreach ($lexemes as $lexeme) {
 				$actualLexeme = $tokenizer->advance();
-				$this->assertTrue($lexeme === $actualLexeme, $testMessage . " / Expected '{$lexeme}' found '{$actualLexeme}'");
+				$this->assertEquals($lexeme, $actualLexeme, $testMessage . " / Expected '{$lexeme}' found '{$actualLexeme}'");
 			} 
 			$this->assertTrue(true, $testMessage);
 			return $tokenizer;
@@ -39,7 +39,7 @@
 			$src = "";
 			self::checkMatches($src, array(TierraTemplateTokenizer::EOF_TOKEN), "Empty string is HTML + EOF");
 			$tokenizer = self::checkLexemes($src, array(""), "Empty string lexeme check");
-			$this->assertTrue($tokenizer->getLineNumber() == 1, "Empty string line number");
+			$this->assertEquals($tokenizer->getLineNumber(), 1, "Empty string line number");
 		}
 	
 		public function testSingleSpace() {
@@ -91,7 +91,7 @@
 HTML;
 			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Only HTML is HTML + EOF");
 			$tokenizer = self::checkLexemes($src, array($src), "Muliline HTML only lexeme check");
-			$this->assertTrue($tokenizer->getLineNumber() == 8, "Muliline HTML line number");
+			$this->assertEquals($tokenizer->getLineNumber(), 8, "Muliline HTML line number");
 		}
 		
 		public function testCommentBlockOnly() {
@@ -173,21 +173,21 @@ HTML;
 		public function testBlockWithOneIdentifierNoSpaces() {
 			$commands = "command";
 			$src = "[@{$commands}@]";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with 1 identifier with no spaces is HTML + BLOCK_START + TEXT + BLOCK_END + EOF");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with 1 identifier with no spaces is HTML + BLOCK_START + TEXT + BLOCK_END + EOF");
 			self::checkLexemes($src, array("", "[@", $commands, "@]", ""), "Block with 1 identifier with no spaces lexeme check");
 		}
 
 		public function testBlockWithOneIdentifierWithSpaces() {
 			$commands = "command";
 			$src = "[@ {$commands} @]";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with 1 identifier with spaces is HTML + BLOCK_START + TEXT + BLOCK_END + EOF");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with 1 identifier with spaces is HTML + BLOCK_START + TEXT + BLOCK_END + EOF");
 			self::checkLexemes($src, array("", "[@", $commands, "@]", ""), "Block with 1 identifier with spaces lexeme check");
 		}
 
 		public function testBlockWithTwoIdentifiersWithSpaces() {
 			$commands = "command1 command2";
 			$src = "[@ {$commands} @]";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with 2 identifiers with spaces is HTML + BLOCK_START + TEXT + TEXT + BLOCK_END + EOF");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with 2 identifiers with spaces is HTML + BLOCK_START + TEXT + TEXT + BLOCK_END + EOF");
 			self::checkLexemes($src, array("", "[@", "command1", "command2", "@]", ""), "Block with 2 identifiers with spaces lexeme check");
 		}	
 
@@ -236,14 +236,14 @@ HTML;
 		public function testBlockWithIdentifierAndDoubleQuotedString() {
 			$commands = "command1 \"command2\"";
 			$src = "[@ {$commands} @]";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with identifier and double quoted string is HTML + BLOCK_START + TEXT + STRING + BLOCK_END + EOF");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with identifier and double quoted string is HTML + BLOCK_START + TEXT + STRING + BLOCK_END + EOF");
 			self::checkLexemes($src, array("", "[@", "command1", "command2", "@]", ""), "Block with identifier and double quoted string lexeme check");
 		}
 
 		public function testBlockWithDoubleQuotedStringAndIdentifier() {
 			$commands = "\"command1\" command2";
 			$src = "[@ {$commands} @]";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::TEXT_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with double quoted string and identifier is HTML + BLOCK_START + STRING + TEXT + BLOCK_END + EOF");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with double quoted string and identifier is HTML + BLOCK_START + STRING + TEXT + BLOCK_END + EOF");
 			self::checkLexemes($src, array("", "[@", "command1", "command2", "@]", ""), "Block with double quoted string and identifier lexeme check");
 		}			
 		
