@@ -184,5 +184,16 @@ HTML;
 			self::checkEmit("[@ include foo if x:bar\\bam() @]", "<?php if (\$this->runtime->call('bar\\\\bam', array(\$this->runtime->identifier('x')))) { \$this->includeTemplate('foo'); }", "Block with built in filter");
 		}
 		
+		public function testPageBlockWithDecorator() {
+			$code = <<<CODE
+<?php header("Expires: Sun, 03 Oct 1971 00:00:00 GMT");
+header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache"); ?> foo
+CODE;
+			$src = "[@ page do nocache({foo: 1}, 2, 3) @] foo";	
+			self::checkEmit($src, $code, "Block with decorator");
+		}			
+		
 	}
 	

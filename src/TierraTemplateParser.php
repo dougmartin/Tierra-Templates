@@ -2,6 +2,7 @@
 
 	require_once dirname(__FILE__) . "/TierraTemplateTokenizer.php";
 	require_once dirname(__FILE__) . "/TierraTemplateAST.php";
+	require_once dirname(__FILE__) . "/TierraTemplateCodeGenerator.php";
 
 	class TierraTemplateParser {
 		
@@ -162,7 +163,9 @@
 				$this->tokenizer->match(TierraTemplateTokenizer::DO_TOKEN);
 				$node->decorators = array();
 				while (!$this->tokenizer->nextIs(TierraTemplateTokenizer::BLOCK_END_TOKEN)) {
-					$node->decorators[] = $this->functionCallNode();
+					$decorator = $this->functionCallNode();
+					$decorator->evaledParams = @eval("return " . TierraTemplateCodeGenerator::emitArray($decorator->params) . ";"); 
+					$node->decorators[] = $decorator;
 					$this->tokenizer->matchIf(TierraTemplateTokenizer::COMMA_TOKEN);
 				}
 			}
@@ -313,13 +316,10 @@
 			$node->method = $this->tokenizer->match(TierraTemplateTokenizer::FUNCTION_CALL_TOKEN);
 			$node->params = array();
 			
-			if ($this->tokenizer->matchIf(TierraTemplateTokenizer::LEFT_PAREN_TOKEN)) {
-				if (!$this->tokenizer->nextIs((TierraTemplateTokenizer::RIGHT_PAREN_TOKEN)))
-					$node->params[] = $this->expressionNode();
-				while ($this->tokenizer->matchIf(TierraTemplateTokenizer::COMMA_TOKEN))
-					$node->params[] = $this->expressionNode();
-				$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
-			}
+			$this->tokenizer->match(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
+			if (!$this->tokenizer->nextIs((TierraTemplateTokenizer::RIGHT_PAREN_TOKEN)))
+				$node->params[] = $this->expressionNode();
+			$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
 
 			return $node;
 		}

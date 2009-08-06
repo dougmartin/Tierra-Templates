@@ -7,12 +7,24 @@
 		
 		private static $blockStack = array();
 		private static $isChildTemplate = false;
-		private static $decorators = array();
+		private static $decorators = array("nocache" => array("self", "noCacheDecorator"));
 		private static $returnIdentifierName = false;
 		private static $returnIdentifierNameStack = array();
 		
 		public static function addDecorator($name, $method) {
 			self::$decorators[$name] = $method;
+		}
+		
+		public static function noCacheDecorator($generatorParams, $blockParams) {
+			if ($generatorParams["start"] && $generatorParams["page"]) {
+				return <<<CODE
+header("Expires: Sun, 03 Oct 1971 00:00:00 GMT");
+header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+CODE;
+			}
+			return false;
 		}
 		
 		public static function emit($ast) {
@@ -25,9 +37,11 @@
 			// call the decorators in reverse order at the start of the root page
 			if (!self::$isChildTemplate && isset($ast->decorators)) {
 				foreach (array_reverse($ast->decorators) as $decorator) {
-					if (isset(self::$decorators[$decorator->name])) {
-						$params = array_merge(array(array("start" => true, "page" => true)), $decorator->params);
-						$code = call_user_func_array(self::$decorators[$decorator->name], $params);
+					if (isset(self::$decorators[$decorator->method])) {
+						$params = array(array("start" => true, "page" => true), $decorator->evaledParams);
+						$code = call_user_func_array(self::$decorators[$decorator->method], $params);
+						if ($code)
+							$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $code);
 					}
 				}
 			}
@@ -57,13 +71,15 @@
 			}
 			else if (isset($ast->decorators)) {
 				foreach ($ast->decorators as $decorator) {
-					if (isset(self::$decorators[$decorator->name])) {
-						$params = array_merge(array(array("start" => false, "page" => true)), $decorator->params);
-						$code = call_user_func_array(self::$decorators[$decorator->name], $params);
+					if (isset(self::$decorators[$decorator->method])) {
+						$params = array(array("start" => false, "page" => true), $decorator->evaledParams);
+						$code = call_user_func_array(self::$decorators[$decorator->method], $params);
+						if ($code)
+							$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $code);
 					}
 				}
 			}
-				
+			
 			// merge the like chunks together and add the php start/end tags
 			$lastChunk = false;
 			$code = array();
@@ -86,9 +102,11 @@
 			// call the decorators in reverse order at the start of the block
 			if (($node->command != "end") && isset($node->decorators)) {
 				foreach (array_reverse($node->decorators) as $decorator) {
-					if (isset(self::$decorators[$decorator->name])) {
-						$params = array_merge(array(array("start" => true, "page" => false)), $decorator->params);
-						$code[] = call_user_func_array(self::$decorators[$decorator->name], $params);
+					if (isset(self::$decorators[$decorator->method])) {
+						$params = array(array("start" => true, "page" => false), $decorator->evaledParams);
+						$decoratorCode = call_user_func_array(self::$decorators[$decorator->method], $params);
+						if ($decoratorCode)
+							$code[] = $decoratorCode;
 					}
 				}
 			}
@@ -169,9 +187,11 @@
 				// add code generator decorator calls after the block is closed
 				if (isset($openingBlock->decorators)) {
 					foreach ($openingBlock->decorators as $decorator) {
-						if (isset(self::$decorators[$decorator->name])) {
-							$params = array_merge(array(array("start" => false, "page" => false)), $decorator->params);
-							$code[] = call_user_func_array(self::$decorators[$decorator->name], $params);
+						if (isset(self::$decorators[$decorator->method])) {
+							$params = array(array("start" => false, "page" => false), $decorator->evaledParams);
+							$decoratorCode = call_user_func_array(self::$decorators[$decorator->method], $params);
+							if ($decoratorCode)
+								$code[] = $decoratorCode;
 						}
 					}
 				}
@@ -254,6 +274,14 @@
 					}
 					break;
 					
+				case TierraTemplateASTNode::JSON_NODE:
+					$code[] = self::emitNamedArray($node->attributes);
+					break;
+					
+				case TierraTemplateASTNode::JSON_ATTRIBUTE_NODE:
+					$code[] = $node->name . ": " . self::emitExpression($node->value);
+					break;					
+					
 				default:
 					throw new TierraTemplateException("Unknown node type in expression: '{$node->type}'");
 			}
@@ -261,13 +289,20 @@
 			return implode(" ", $code);
 		}
 		
-		private function emitArray($a) {
+		public function emitArray($a) {
 			$code = array();
 			$numElements = count($a);
 			for ($i=0; $i<$numElements; $i++)
 				$code[] = self::emitExpression($a[$i]);
 			return "array(" . implode(", ", $code) . ")";
 		}
+		
+		private function emitNamedArray($a) {
+			$code = array();
+			foreach ($a as $name => $value)
+				$code[] = "\"{$name}\" => " . self::emitExpression($value);
+			return "array(" . implode(", ", $code) . ")";
+		}		
 				
 		public static function emitGenerator($node) {
 			// TODO: implement
