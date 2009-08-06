@@ -9,10 +9,28 @@
 		private $ast;
 		private $blockStack;
 		
+		private $operatorTable;
+		
 		public function __construct($src) {
 			$this->tokenizer = new TierraTemplateTokenizer($src);
 			$this->ast = new TierraTemplateAST();
 			$this->blockStack = array();
+			
+			$this->operatorTable = array(
+				array("operators" => array(","), "associative" => "left", "binary" => true),
+				array("operators" => array("or"), "associative" => "left", "binary" => true),
+				array("operators" => array("xor"), "associative" => "left", "binary" => true),
+				array("operators" => array("and"), "associative" => "left", "binary" => true),
+				array("operators" => array("="), "associative" => "right", "binary" => true),
+				array("operators" => array("||"), "associative" => "left", "binary" => true),
+				array("operators" => array("&&"), "associative" => "left", "binary" => true),
+				array("operators" => array("==", "!="), "associative" => "left", "binary" => true),
+				array("operators" => array("<", "<=", ">", ">=", "<>"), "associative" => "left", "binary" => true),
+				array("operators" => array("+", "-"), "associative" => "left", "binary" => true),
+				array("operators" => array("*", "/", "%"), "associative" => "left", "binary" => true),
+				array("operators" => array("!"), "associative" => "right", "binary" => false),
+				array("operators" => array("-"), "associative" => "left", "binary" => false),
+			);
 		}
 		
 		public function getAST() {
@@ -168,19 +186,110 @@
 		}
 
 		private function expressionNode() {
+			return $this->expressionOperatorNode(0);
+		}
+		
+		/*
+			$this->operatorTable = array(
+				array("operators" => array(","), "associative" => "left", "binary" => true),
+				array("operators" => array("or"), "associative" => "left", "binary" => true),
+				array("operators" => array("xor"), "associative" => "left", "binary" => true),
+				array("operators" => array("and"), "associative" => "left", "binary" => true),
+				array("operators" => array("="), "associative" => "right", "binary" => true),
+				array("operators" => array("||"), "associative" => "left", "binary" => true),
+				array("operators" => array("&&"), "associative" => "left", "binary" => true),
+				array("operators" => array("==", "!="), "associative" => "left", "binary" => true),
+				array("operators" => array("<", "<=", ">", ">=", "<>"), "associative" => "left", "binary" => true),
+				array("operators" => array("+", "-"), "associative" => "left", "binary" => true),
+				array("operators" => array("*", "/", "%"), "associative" => "left", "binary" => true),
+				array("operators" => array("!"), "associative" => "right", "binary" => false),
+				array("operators" => array("-"), "associative" => "left", "binary" => false),
+			);
+		 */
+		private function expressionOperatorNode($precedence) {
+			if ($precedence < count($this->operatorTable)) {
+				$operator = $this->operatorTable[$precedence];
+				if ($operator["associative"] == "left") {
+					if ($operator["binary"]) {
+						$leftNode = $this->expressionOperatorNode($precedence + 1);
+						while (in_array($this->tokenizer->getNextLexeme(), $operator["operators"])) {
+							$op = $this->tokenizer->advance();
+							$rightNode = $this->expressionOperatorNode($precedence + 1);
+							$leftNode = new TierraTemplateASTNode(TierraTemplateASTNode::OPERATOR_NODE, array("op" => $op, "leftNode" => $leftNode, "rightNode" => $rightNode));
+						}
+						return $leftNode;
+					}
+					else {
+						if (in_array($this->tokenizer->getNextLexeme(), $operator["operators"])) {
+							$op = $this->tokenizer->advance();
+							$leftNode = $this->expressionOperatorNode($precedence + 1);
+							return new TierraTemplateASTNode(TierraTemplateASTNode::OPERATOR_NODE, array("op" => $op, "leftNode" => $leftNode));
+						}
+						return $this->expressionOperatorNode($precedence + 1);
+					}
+				}
+				else {
+					if ($operator["binary"]) {
+						$leftNode = $this->expressionOperatorNode($precedence + 1);
+						if (in_array($this->tokenizer->getNextLexeme(), $operator["operators"])) {
+							$op = $this->tokenizer->advance();
+							$rightNode = $this->expressionOperatorNode($precedence); // <-- same precedence level
+							return new TierraTemplateASTNode(TierraTemplateASTNode::OPERATOR_NODE, array("op" => $op, "leftNode" => $leftNode, "rightNode" => $rightNode));
+						}
+						return $leftNode;
+					}
+					else {
+						if (in_array($this->tokenizer->getNextLexeme(), $operator["operators"])) {
+							$op = $this->tokenizer->advance();
+							$leftNode = $this->expressionOperatorNode($precedence); // <-- same precedence level
+							return new TierraTemplateASTNode(TierraTemplateASTNode::OPERATOR_NODE, array("op" => $op, "leftNode" => $leftNode));
+						}
+						return $this->expressionOperatorNode($precedence + 1);
+					}
+				}
+			}
+			else
+				return $this->expressionBaseNode();
+		}
+		
+		private function expressionBaseNode() {
 			if ($this->tokenizer->matchIf(TierraTemplateTokenizer::LEFT_PAREN_TOKEN)) {
-				$node = $this->expressionNode();
+				$node = $this->expressionOperatorNode(0);
 				$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
 				return $node;
 			}
-			else {
+			else if ($identifier = $this->tokenizer->matchIf(TierraTemplateTokenizer::IDENTIFIER_TOKEN)) {
+				$node = new TierraTemplateASTNode(TierraTemplateASTNode::IDENTIFIER_NODE);
+				$node->identifier = $identifier;
+					
+				if ($this->tokenizer->matchIf(TierraTemplateTokenizer::LEFT_BRACKET_TOKEN)) {
+					if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_BRACKET_TOKEN))
+						$node->index = $this->indexNode();
+					$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_BRACKET_TOKEN);
+				}
 				
+				if ($this->tokenizer->nextIs(TierraTemplateTokenizer::COLON_TOKEN)) {
+					$node->filters = array();
+					while ($this->tokenizer->matchIf(TierraTemplateTokenizer::COLON_TOKEN))
+						$node->filters[] = $this->filterNode();
+				}
+				
+				return $node;
 			}
-			
-			return false;
+			else
+				return $this->valueNode();
 		}
 		
-		
+		private function indexNode() {
+			$node = new TierraTemplateASTNode(TierraTemplateASTNode::INDEX_NODE);
+			$node->start = $this->expressionOperatorNode(9); // <- +/- operator and lower
+			if ($this->tokenizer->nextIs(TierraTemplateTokenizer::COLON_TOKEN)) {
+				$node->end = $this->expressionOperatorNode(9); // <- +/- operator and lower
+				if ($this->tokenizer->nextIs(TierraTemplateTokenizer::COLON_TOKEN))
+					$node->step = $this->expressionOperatorNode(9); // <- +/- operator and lower
+			}
+			return $node;
+		}
 	}
 	
 	class TierraTemplateParserException extends Exception {

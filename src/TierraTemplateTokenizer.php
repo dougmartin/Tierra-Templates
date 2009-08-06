@@ -66,6 +66,10 @@
 			return $this->nextToken;
 		}
 		
+		public function getNextLexeme() {
+			return $this->nextToken;
+		}		
+		
 		public function getStreamIndex() {
 			return $this->streamIndex;
 		}
