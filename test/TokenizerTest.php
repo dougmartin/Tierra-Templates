@@ -245,6 +245,12 @@ HTML;
 			$src = "[@ {$commands} @]";
 			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with double quoted string and identifier is HTML + BLOCK_START + STRING + TEXT + BLOCK_END + EOF");
 			self::checkLexemes($src, array("", "[@", "command1", "command2", "@]", ""), "Block with double quoted string and identifier lexeme check");
-		}			
+		}		
+
+		public function testBlockWithSimpleConditional() {
+			$src = "[@ include foo if true @]";	
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Block with simple conditional");
+			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "true", "@]", ""), "Block with simple conditional lexeme check");
+		}
 		
 	}

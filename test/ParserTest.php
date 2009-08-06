@@ -12,7 +12,7 @@
 		protected function tearDown() {
 		}
 		
-		public function checkSyntax($src, $message) {
+		public function checkSyntax($src, $message, $dump=false) {
 			try {
 				$isValid = true;
 				$parser = new TierraTemplateParser($src);
@@ -20,6 +20,13 @@
 			} 
 			catch (TierraTemplateParserException $e) {
 				$isValid = false;
+			}
+			if ($dump) {
+				echo "\n{$message}\n";
+				echo "src:\n";
+				var_dump($src);
+				echo "ast:\n";
+				var_dump($parser->getAST());
 			}
 			$this->assertTrue($isValid, $message);
 		}
@@ -216,5 +223,40 @@
 			$src = " [@ extends test @] foo [@ extends foo @] ";
 			self::checkSyntax($src, "Duplicate extends blocks with html is valid syntax");
 		}
+		
+		public function testBlockWithSimpleConditional() {
+			$src = "[@ include foo if true @]";	
+			self::checkSyntax($src, "Block with simple conditional");
+		}
+
+		public function testBlockWithOneConditionalOperator() {
+			$src = "[@ include foo if x < 3 @]";	
+			self::checkSyntax($src, "Block with one conditional operator");
+		}
+
+		public function testBlockWithTwoConditionalOperators() {
+			$src = "[@ include foo if x < 2 * 3 @]";	
+			self::checkSyntax($src, "Block with two conditional operators");
+		}
+
+		public function testBlockWithAssignment() {
+			$src = "[@ include foo if x = 3 < 2 * 3 @]";	
+			self::checkSyntax($src, "Block with assignment");
+		}
+
+		public function testBlockWithAssignmentInParens() {
+			$src = "[@ include foo if (x = 3 < 2) * 3 @]";	
+			self::checkSyntax($src, "Block with assignment in parens");
+		}
+
+		public function testBlockWithSimpleNotConditional() {
+			$src = "[@ include foo if !x @]";	
+			self::checkSyntax($src, "Block with simple not conditional");
+		}
+		
+		public function testBlockWithSimpleNotConditionalPlusOperator() {
+			$src = "[@ include foo if !x != 3 @]";	
+			self::checkSyntax($src, "Block with simple not conditional plus operator");
+		}		
 		
 	}
