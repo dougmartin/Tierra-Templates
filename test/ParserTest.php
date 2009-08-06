@@ -302,6 +302,12 @@
 		public function testBlockWithDecorators() {
 			$src = "[@ include foo do gzip(), memcache({for: '2 days', port: 12000, password: 'test'}) @]";	
 			self::checkSyntax($src, "Block with decorators");
-		}		
+		}	
+
+		public function testBlockWithNamespacedFunction() {
+			$src = "[@ include foo if x\\x(2,-2) @]";	
+			self::checkSyntax($src, "Block with namespaced function");
+		}	
+		
 		
 	}

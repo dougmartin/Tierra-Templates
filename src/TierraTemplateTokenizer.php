@@ -54,7 +54,8 @@
 		const PLUS_TOKEN = "+";
 		const MINUS_TOKEN = "-";
 		const DIVIDE_TOKEN = "/";
-		const MODULUS_TOKEN = "%"; 		
+		const MODULUS_TOKEN = "%";
+		const DOT_TOKEN = "."; 		
 		
 		const HTML_MODE = "HTML_MODE";
 		const COMMENT_MODE = "COMMENT_MODE";
@@ -125,6 +126,7 @@
 				self::MINUS_TOKEN,
 				self::DIVIDE_TOKEN,
 				self::MODULUS_TOKEN, 		
+				self::DOT_TOKEN
 			);
 				
 			$this->outputTemplateSingleTokens = array(
@@ -140,8 +142,8 @@
 				self::XOR_TOKEN => '/(' . self::XOR_TOKEN . ')/',
 				self::OR_TOKEN => '/(' . self::OR_TOKEN . ')/',
 				self::AND_TOKEN => '/(' . self::AND_TOKEN . ')/',			
-				self::FUNCTION_CALL_TOKEN => '/([A-Za-z_\/]([A-Za-z_\:\/]*)?)\(/',
-				self::IDENTIFIER_TOKEN => '/([$A-Za-z_]([.A-Za-z_0-9]*)?)/',
+				self::FUNCTION_CALL_TOKEN => '/([A-Za-z_]([A-Za-z_\\\\]*)?)\(/',
+				self::IDENTIFIER_TOKEN => '/([$A-Za-z_]([A-Za-z_0-9]*)?)/',
 				self::FLOAT_TOKEN => '/((\d+\.\d+))/',
 				self::INTEGER_TOKEN => '/(\d+)/',
 			);

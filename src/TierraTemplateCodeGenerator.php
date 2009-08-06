@@ -8,6 +8,7 @@
 		private static $blockStack = array();
 		private static $isChildTemplate = false;
 		private static $decorators = array();
+		private static $returnIdentifierName = false;
 		
 		public static function addDecorator($name, $method) {
 			self::$decorators[$name] = $method;
@@ -188,7 +189,8 @@
 					if (function_exists($node->method))
 						$code[] = "call_user_func_array('{$node->method}', {$params})";
 					else
-						$code[] = "\$this->runtime->call('{$node->method}', {$params})";
+						// addslashes() to escape the possible namespace slashes in the method
+						$code[] = "\$this->runtime->call('" . addslashes($node->method) . "', {$params})";
 					break;		
 
 				case TierraTemplateASTNode::LITERAL_NODE:
@@ -199,33 +201,45 @@
 					break;
 					
 				case TierraTemplateASTNode::IDENTIFIER_NODE:
-					if (in_array(strtolower($node->identifier), array("true", "false"))) {
+					if (self::$returnIdentifierName)
+						$code[] = "'{$node->identifier}'";
+					else if (in_array(strtolower($node->identifier), array("true", "false")))
 						$code[] = $node->identifier;
-					}
-					else if (strpos($node->identifier, ".") !== false) {
-						$parts = explode(".", $node->identifier);
-						$var = array_shift($parts);
-						$attr = array_shift($parts);
-						array_unshift($parts, "\$this->runtime->attr(\$this->runtime->identifier('{$var}'), '{$attr}')");
-						while (count($parts) > 1) {
-							$var = array_shift($parts);
-							$attr = array_shift($parts);
-							array_unshift($parts, "\$this->runtime->attr({$var}, '{$attr}')");
-						}
-						$code[] = array_pop($parts);
-					}
-					else {
+					else
 						$code[] = "\$this->runtime->identifier('" . str_replace("\$", "\\\$", $node->identifier) . "')";
-					}					
 					break;
 					
 				case TierraTemplateASTNode::OPERATOR_NODE:
 					switch ($node->op) {
 						case TierraTemplateTokenizer::COMMA_TOKEN:
+							$code[] = self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode);
 							break;
 							
 						case TierraTemplateTokenizer::EQUAL_TOKEN:
 							$code[] = "\$this->runtime->assign(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
+							break;
+							
+						case TierraTemplateTokenizer::LEFT_BRACKET_TOKEN:
+						case TierraTemplateTokenizer::DOT_TOKEN:
+							$savedValue = self::$returnIdentifierName;
+							self::$returnIdentifierName = true;
+							$code[] = "\$this->runtime->attr(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
+							self::$returnIdentifierName = $savedValue;
+							break;
+							
+						case TierraTemplateTokenizer::COLON_TOKEN:
+							if (($node->rightNode->type == TierraTemplateASTNode::OPERATOR_NODE) && ($node->rightNode->op == ",")) {
+								$code[] = "\$this->runtime->limit(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode->leftNode) . ", " . self::emitExpression($node->rightNode->rightNode) . ")";
+							}
+							else {
+								if ($node->rightNode->type == TierraTemplateASTNode::FUNCTION_CALL_NODE) {
+									// reverse the order of the function calls and pass the value of the expression as the first parameter
+									array_unshift($node->rightNode->params, $node->leftNode);
+									$code[] = self::emitExpression($node->rightNode);
+								}
+								else
+									$code[] = "\$this->runtime->limit(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
+							}
 							break;
 							
 						default:
