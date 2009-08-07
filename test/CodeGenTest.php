@@ -29,7 +29,7 @@
 				echo "testSrc:\n";
 				var_dump($testSrc);
 			}
-			$this->assertEquals($emittedSrc, $testSrc, $message);
+			$this->assertEquals($testSrc, $emittedSrc, $message);
 		}
 		
 		public function testEmpty() {
@@ -198,15 +198,29 @@ HTML;
 
 		public function testPageBlockWithGzipDecorator() {
 			$src = "[@ page do gzip() @] foo";	
-			self::checkEmit($src, "<?php ob_start('ob_gzhandler'); ?> foo", "Block with gzip decorator");
+			self::checkEmit($src, "<?php ob_start('ob_gzhandler'); ?> foo", "Page block with gzip decorator");
 		}
-
+		
+		public function testNormalBlockWithGzipDecorator() {
+			$src = "[@ start do gzip() @] foo [@ end @]";	
+			self::checkEmit($src, " foo ", "Normal block with gzip decorator");
+		}
+		
 		public function testPageBlockWithGzipAndNoCacheDecorator() {
-			$code = "<?php header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); ob_start('ob_gzhandler'); ?> foo";
+			$code = "<?php ob_start('ob_gzhandler'); header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); ?> foo";
 			$src = "[@ page do gzip(), nocache() @] foo";	
 			self::checkEmit($src, $code, "Block with gzip and nocache decorators");
-		}			
+		}
+
+		public function testBlockWithWrapperDecorator() {
+			$src = "[@ start do testWrapper('1') @] foo [@ end @]";
+			self::checkEmit($src, "<?php if (1) { ?> foo <?php } /* end if (1) */", "Block with test wrapper decorators");
+		}
 			
-				
+		public function testBlockWithDoubleWrapperDecorator() {
+			$src = "[@ start do testWrapper('1'), testWrapper('2') @] foo [@ end @]";
+			self::checkEmit($src, "<?php if (1) { if (2) { ?> foo <?php } /* end if (2) */ } /* end if (1) */", "Block with two test wrapper decorators");
+		}
+		
 	}
 	

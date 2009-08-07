@@ -11,9 +11,10 @@
 		private static $returnIdentifierNameStack = array();
 		
 		private static $decorators = array(
-										"nocache" => array("self", "noCacheDecorator"),
-										"gzip" => array("self", "gzipDecorator"),
-										);
+			"nocache" => array("self", "noCacheDecorator"),
+			"gzip" => array("self", "gzipDecorator"),
+			"testwrapper" => array("self", "testWrapperDecorator")
+		);
 		
 		public static function addDecorator($name, $method) {
 			self::$decorators[$name] = strtolower($method);
@@ -31,6 +32,13 @@
 			return false;
 		}
 		
+		public static function testWrapperDecorator($generatorParams, $condition) {
+			if ($generatorParams["isStart"])
+				return "if ({$condition}) {";
+			else
+				return "} /* end if ({$condition}) */";
+		}
+		
 		public static function emit($ast) {
 			
 			self::$isChildTemplate = isset($ast->parentTemplateName);
@@ -39,8 +47,10 @@
 			$chunks = array();
 
 			// call the decorators in reverse order at the start of the root page
-			foreach (self::getDecoratorCode($ast, true, true) as $decoratorCode)
-				$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $decoratorCode);
+			foreach (self::getDecoratorCode($ast, true, true) as $decoratorCode) {
+				if (strlen($decoratorCode) > 0)
+					$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $decoratorCode);
+			}
 			
 			// get the html and code chunks
 			foreach ($ast->getNodes() as $node) {
@@ -52,11 +62,15 @@
 						break;
 						
 					case TierraTemplateASTNode::BLOCK_NODE:
-						$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, self::emitBlock($node));
+						$code = self::emitBlock($node);
+						if (strlen($code) > 0)
+							$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $code);
 						break;
 						
 					case TierraTemplateASTNode::GENERATOR_NODE:
-						$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, self::emitGenerator($node));
+						$code = self::emitGenerator($node);
+						if (strlen($code) > 0)
+							$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $code);
 						break;
 				}
 			}
@@ -66,8 +80,10 @@
 				$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, "\$this->includeTemplate('{$ast->parentTemplateName}');");
 			}
 			else {
-				foreach (self::getDecoratorCode($ast, true, false) as $decoratorCode)
-					$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $decoratorCode);
+				foreach (self::getDecoratorCode($ast, true, false) as $decoratorCode) {
+					if (strlen($decoratorCode) > 0)
+						$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $decoratorCode);
+				}
 			}
 			
 			// merge the like chunks together and add the php start/end tags
@@ -90,8 +106,10 @@
 			$code = array();
 			
 			// call the decorators in reverse order at the start of the block
-			foreach (self::getDecoratorCode($code, false, true) as $decoratorCode)
-				$code[] = $decoratorCode;
+			foreach (self::getDecoratorCode($node, false, true) as $decoratorCode) {
+				if (strlen($decoratorCode) > 0)
+					$code[] = $decoratorCode;
+			}
 			
 			// emit the opening common code by command
 			switch ($node->command) {
@@ -167,8 +185,10 @@
 				}
 				
 				// add code generator decorator calls after the block is closed
-				foreach (self::getDecoratorCode($openingBlock, false, false) as $decoratorCode)
-					$code[] = $decoratorCode;
+				foreach (self::getDecoratorCode($openingBlock, false, false) as $decoratorCode) {
+					if (strlen($decoratorCode) > 0)
+						$code[] = $decoratorCode;
+				}
 			}
 			
 			return implode(" ", $code);
@@ -177,16 +197,17 @@
 		public static function getDecoratorCode($block, $isPage, $isStart) {
 			$code = array();
 			if (isset($block->decorators)) {
-				foreach ($isStart ? array_reverse($block->decorators) : $block->decorators as $decorator) {
+				foreach ($isStart ? $block->decorators : array_reverse($block->decorators) as $decorator) {
 					if (isset(self::$decorators[strtolower($decorator->method)])) {
 						$params = array_slice($decorator->evaledParams, 0); 
 						array_unshift($params, array("isStart" => $isStart, "isPage" => $isPage)); 
 						$decoratorCode = call_user_func_array(self::$decorators[strtolower($decorator->method)], $params);
-						if ($decoratorCode)
+						if (strlen($decoratorCode) > 0)
 							$code[] = $decoratorCode;
 					}
 				}
 			}
+			
 			return $code;
 		}
 		
