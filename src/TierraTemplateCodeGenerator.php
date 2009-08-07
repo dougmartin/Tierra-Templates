@@ -7,23 +7,27 @@
 		
 		private static $blockStack = array();
 		private static $isChildTemplate = false;
-		private static $decorators = array("nocache" => array("self", "noCacheDecorator"));
 		private static $returnIdentifierName = false;
 		private static $returnIdentifierNameStack = array();
 		
+		private static $decorators = array(
+										"nocache" => array("self", "noCacheDecorator"),
+										"gzip" => array("self", "gzipDecorator"),
+										);
+		
 		public static function addDecorator($name, $method) {
-			self::$decorators[$name] = $method;
+			self::$decorators[$name] = strtolower($method);
 		}
 		
 		public static function noCacheDecorator($generatorParams) {
-			if ($generatorParams["isStart"] && $generatorParams["isPage"]) {
-				return <<<CODE
-header("Expires: Sun, 03 Oct 1971 00:00:00 GMT");
-header("Cache-Control: no-store, no-cache, must-revalidate");
-header("Cache-Control: post-check=0, pre-check=0", false);
-header("Pragma: no-cache");
-CODE;
-			}
+			if ($generatorParams["isStart"] && $generatorParams["isPage"])
+				return "header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache');";
+			return false;
+		}
+		
+		public static function gzipDecorator($generatorParams) {
+			if (($generatorParams["isPage"]) && ($generatorParams["isStart"]))
+				return "ob_start('ob_gzhandler');";
 			return false;
 		}
 		
@@ -174,10 +178,10 @@ CODE;
 			$code = array();
 			if (isset($block->decorators)) {
 				foreach ($isStart ? array_reverse($block->decorators) : $block->decorators as $decorator) {
-					if (isset(self::$decorators[$decorator->method])) {
+					if (isset(self::$decorators[strtolower($decorator->method)])) {
 						$params = array_slice($decorator->evaledParams, 0); 
 						array_unshift($params, array("isStart" => $isStart, "isPage" => $isPage)); 
-						$decoratorCode = call_user_func_array(self::$decorators[$decorator->method], $params);
+						$decoratorCode = call_user_func_array(self::$decorators[strtolower($decorator->method)], $params);
 						if ($decoratorCode)
 							$code[] = $decoratorCode;
 					}

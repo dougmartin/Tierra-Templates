@@ -185,12 +185,7 @@ HTML;
 		}
 		
 		public function testPageBlockWithDecorator() {
-			$code = <<<CODE
-<?php header("Expires: Sun, 03 Oct 1971 00:00:00 GMT");
-header("Cache-Control: no-store, no-cache, must-revalidate");
-header("Cache-Control: post-check=0, pre-check=0", false);
-header("Pragma: no-cache"); ?> foo
-CODE;
+			$code = "<?php header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); ?> foo";
 			$src = "[@ page do nocache({foo: 1}, 2, 3) @] foo";	
 			self::checkEmit($src, $code, "Block with decorator");
 		}			
@@ -198,8 +193,20 @@ CODE;
 		public function testPageBlockWithBadDecorator() {
 			$this->setExpectedException('TierraTemplateException');
 			$src = "[@ page do nocache(bar()) @] foo";	
-			self::checkEmit($src, "", "Block with decorator");
+			self::checkEmit($src, "", "Block with bad decorator");
+		}
+
+		public function testPageBlockWithGzipDecorator() {
+			$src = "[@ page do gzip() @] foo";	
+			self::checkEmit($src, "<?php ob_start('ob_gzhandler'); ?> foo", "Block with gzip decorator");
+		}
+
+		public function testPageBlockWithGzipAndNoCacheDecorator() {
+			$code = "<?php header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); ob_start('ob_gzhandler'); ?> foo";
+			$src = "[@ page do gzip(), nocache() @] foo";	
+			self::checkEmit($src, $code, "Block with gzip and nocache decorators");
 		}			
+			
 				
 	}
 	
