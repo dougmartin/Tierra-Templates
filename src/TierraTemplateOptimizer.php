@@ -22,34 +22,44 @@
 			$isParentTemplate = !isset($ast->parentTemplateName);
 			$blockStack = array();
 			foreach ($ast->getNodes() as $node) {
-				if ($node->type != TierraTemplateASTNode::COMMENT_NODE) {
-					if ($isParentTemplate) {
-						if ($node->type == TierraTemplateASTNode::HTML_NODE) {
-							if ($node->html != "") {
-								if (($lastNode !== false) && ($lastNode->type == TierraTemplateASTNode::HTML_NODE)) {
-									$lastNode->html .= $node->html;
-								}
-								else {
-									// create new html nodes so that when we append we leave the old node the same
-									$lastNode = new TierraTemplateASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $node->html));
-									$mergedNodes[] = $lastNode;
-								}
+				
+				// remove comments
+				if ($node->type == TierraTemplateASTNode::COMMENT_NODE)
+					continue;
+					
+				if ($isParentTemplate) {
+					if ($node->type == TierraTemplateASTNode::HTML_NODE) {
+						
+						// strip empty html
+						if ($node->html != "") {
+							
+							// merge adjacent html
+							if (($lastNode !== false) && ($lastNode->type == TierraTemplateASTNode::HTML_NODE)) {
+								$lastNode->html .= $node->html;
 							}
-						}
-						else {
-							$mergedNodes[] = $node;
-							$lastNode = $node;
+							else {
+								// create new html nodes so that when we append we leave the old node the same
+								$lastNode = new TierraTemplateASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => $node->html));
+								$mergedNodes[] = $lastNode;
+							}
 						}
 					}
 					else {
-						if (($node->type != TierraTemplateASTNode::HTML_NODE) || (count($blockStack) > 0))
-							$mergedNodes[] = $node;
-						if ($node->type == TierraTemplateASTNode::BLOCK_NODE) {
-							if (in_array($node->command, array("start", "prepend", "append", "replace")))
-								$blockStack[] = $node;
-							else if ($node->command == "end")
-								array_pop($blockStack);
-						}
+						$mergedNodes[] = $node;
+						$lastNode = $node;
+					}
+				}
+				else {
+					// strip html that is not in blocks in child templates
+					if (($node->type != TierraTemplateASTNode::HTML_NODE) || (count($blockStack) > 0))
+						$mergedNodes[] = $node;
+						
+					// track if we are in a block
+					if ($node->type == TierraTemplateASTNode::BLOCK_NODE) {
+						if (in_array($node->command, array("start", "prepend", "append", "replace")))
+							$blockStack[] = $node;
+						else if ($node->command == "end")
+							array_pop($blockStack);
 					}
 				}
 			}

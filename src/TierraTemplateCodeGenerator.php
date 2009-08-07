@@ -17,7 +17,7 @@
 		);
 		
 		public static function addDecorator($name, $method) {
-			self::$decorators[$name] = strtolower($method);
+			self::$decorators[strtolower($name)] = $method;
 		}
 		
 		public static function noCacheDecorator($generatorParams) {
@@ -301,9 +301,8 @@
 		
 		public function emitArray($a) {
 			$code = array();
-			$numElements = count($a);
-			for ($i=0; $i<$numElements; $i++)
-				$code[] = self::emitExpression($a[$i]);
+			foreach ($a as $item)
+				$code[] = self::emitExpression($item);
 			return "array(" . implode(", ", $code) . ")";
 		}
 		

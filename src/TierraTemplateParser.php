@@ -17,6 +17,7 @@
 			$this->ast = new TierraTemplateAST();
 			$this->blockStack = array();
 			
+			// all operators in ascending order of precedence
 			$this->operatorTable = array(
 				array("operators" => array("or"), "associative" => "left", "binary" => true),
 				array("operators" => array("xor"), "associative" => "left", "binary" => true),
@@ -148,14 +149,13 @@
 					
 			// get the conditionals
 			if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN)) {
-				if (($node->command != "extends") && ($node->command != "end")) {
-					$this->tokenizer->match(TierraTemplateTokenizer::IF_TOKEN);
-					$node->conditional = $this->expressionNode();
-					if ($node->conditional === false) 
-						$this->tokenizer->matchError("Block conditional is empty");
-				}
-				else
+				if (($node->command == "extends") || ($node->command == "end"))
 					$this->tokenizer->matchError(ucfirst($node->command) . " blocks cannot have conditionals");
+					
+				$this->tokenizer->match(TierraTemplateTokenizer::IF_TOKEN);
+				$node->conditional = $this->expressionNode();
+				if ($node->conditional === false) 
+					$this->tokenizer->matchError("Block conditional is empty");
 			}
 
 			// get the decorators
@@ -245,15 +245,15 @@
 		}
 		
 		private function jsonAttributeNode() {
-			if (($name = $this->tokenizer->matchIf(TierraTemplateTokenizer::IDENTIFIER_TOKEN)) || ($name = $this->tokenizer->matchIf(TierraTemplateTokenizer::STRING_TOKEN))) {
-				$this->tokenizer->match(TierraTemplateTokenizer::COLON_TOKEN);
-				$node = new TierraTemplateASTNode(TierraTemplateASTNode::JSON_ATTRIBUTE_NODE);
-				$node->name = $name;
-				$node->value = $this->valueNode();
-				return $node;
-			}
-			else
+			$nextToken = $this->tokenizer->getNextToken();
+			if (($nextToken != TierraTemplateTokenizer::IDENTIFIER_TOKEN) && ($nextToken != TierraTemplateTokenizer::STRING_TOKEN))
 				$this->tokenizer->matchError("Json attribute names must be an identifier or string");
+				
+			$node = new TierraTemplateASTNode(TierraTemplateASTNode::JSON_ATTRIBUTE_NODE);
+			$node->name = $this->tokenizer->advance();
+			$this->tokenizer->match(TierraTemplateTokenizer::COLON_TOKEN);
+			$node->value = $this->valueNode();
+			return $node;
 		}
 	
 		private function valueNode() {
