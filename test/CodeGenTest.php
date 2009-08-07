@@ -194,6 +194,12 @@ CODE;
 			$src = "[@ page do nocache({foo: 1}, 2, 3) @] foo";	
 			self::checkEmit($src, $code, "Block with decorator");
 		}			
-		
+
+		public function testPageBlockWithBadDecorator() {
+			$this->setExpectedException('TierraTemplateException');
+			$src = "[@ page do nocache(bar()) @] foo";	
+			self::checkEmit($src, "", "Block with decorator");
+		}			
+				
 	}
 	

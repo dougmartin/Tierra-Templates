@@ -164,7 +164,10 @@
 				$node->decorators = array();
 				while (!$this->tokenizer->nextIs(TierraTemplateTokenizer::BLOCK_END_TOKEN)) {
 					$decorator = $this->functionCallNode();
-					$decorator->evaledParams = @eval("return " . TierraTemplateCodeGenerator::emitArray($decorator->params) . ";"); 
+					$paramsCode = TierraTemplateCodeGenerator::emitArray($decorator->params);
+					if (strpos($paramsCode, "$"))
+						throw new TierraTemplateException("Block decorator parameters are not valid. They cannot contain variable references or function invocations as they are called at compile time.");
+					$decorator->evaledParams = eval("return {$paramsCode};");
 					$node->decorators[] = $decorator;
 					$this->tokenizer->matchIf(TierraTemplateTokenizer::COMMA_TOKEN);
 				}
