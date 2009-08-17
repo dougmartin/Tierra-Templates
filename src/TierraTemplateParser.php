@@ -313,12 +313,16 @@
 			return $node;
 		}
 		
-		private function functionCallNode() {
+		private function functionCallNode($noParams=false) {
 			
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::FUNCTION_CALL_NODE);
 			$node->method = $this->tokenizer->match(TierraTemplateTokenizer::FUNCTION_CALL_TOKEN);
 			$node->params = array();
 			
+			// filters can optionally have no parameters when chained.  They look like identifiers to the tokenizer.
+			if ($noParams)
+				return node;
+				
 			$this->tokenizer->match(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
 			if (!$this->tokenizer->nextIs((TierraTemplateTokenizer::RIGHT_PAREN_TOKEN)))
 				$node->params[] = $this->expressionNode();
@@ -330,6 +334,9 @@
 		private function filterNode() {
 			switch ($this->tokenizer->getNextToken()) {
 				case TierraTemplateTokenizer::IDENTIFIER_TOKEN:
+					$node = $this->functionCallNode($noParams=true);
+					break;
+					
 				case TierraTemplateTokenizer::FUNCTION_CALL_TOKEN:
 					$node = $this->functionCallNode();
 					break;
