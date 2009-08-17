@@ -20,20 +20,20 @@
 			self::$decorators[strtolower($name)] = $method;
 		}
 		
-		public static function noCacheDecorator($generatorParams) {
-			if ($generatorParams["isStart"] && $generatorParams["isPage"])
+		public static function noCacheDecorator($context) {
+			if ($context["isStart"] && $context["isPage"])
 				return "header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache');";
 			return false;
 		}
 		
-		public static function gzipDecorator($generatorParams) {
-			if (($generatorParams["isPage"]) && ($generatorParams["isStart"]))
+		public static function gzipDecorator($context) {
+			if (($context["isPage"]) && ($context["isStart"]))
 				return "ob_start('ob_gzhandler');";
 			return false;
 		}
 		
-		public static function testWrapperDecorator($generatorParams, $condition) {
-			if ($generatorParams["isStart"])
+		public static function testWrapperDecorator($context, $condition) {
+			if ($context["isStart"])
 				return "if ({$condition}) {";
 			else
 				return "} /* end if ({$condition}) */";
@@ -200,7 +200,8 @@
 				foreach ($isStart ? $block->decorators : array_reverse($block->decorators) as $decorator) {
 					if (isset(self::$decorators[strtolower($decorator->method)])) {
 						$params = array_slice($decorator->evaledParams, 0); 
-						array_unshift($params, array("isStart" => $isStart, "isPage" => $isPage)); 
+						$context = array("isStart" => $isStart, "isPage" => $isPage);
+						array_unshift($params, $context); 
 						$decoratorCode = call_user_func_array(self::$decorators[strtolower($decorator->method)], $params);
 						if (strlen($decoratorCode) > 0)
 							$code[] = $decoratorCode;
