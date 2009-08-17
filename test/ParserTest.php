@@ -173,12 +173,12 @@
 				
 		public function testUnnamedBlockOnlyForException() {
 			$this->setExpectedException('TierraTemplateTokenizerException');
-			foreach (array("extends", "include", "prepend", "append", "replace") as $command)
+			foreach (array("extends", "include", "prepend", "append", "set") as $command)
 				self::checkBlockCommand($command, "Unnamed {$command} block");
 		}
 				
 		public function testNamedBlockOnly() {
-			foreach (array("start", "prepend", "append", "replace") as $command) {
+			foreach (array("start", "prepend", "append", "set") as $command) {
 				$src = "[@ start foo @] bar [@ end foo @]";
 				self::checkSyntax($src, "Unnamed blocks is valid syntax");
 				$ast = TestHelpers::MakeAST(array(
@@ -192,7 +192,7 @@
 		}		
 				
 		public function testNamedStringBlockOnly() {
-			foreach (array("start", "prepend", "append", "replace") as $command) {
+			foreach (array("start", "prepend", "append", "set") as $command) {
 				$src = "[@ start 'foo' @] bar [@ end 'foo' @]";
 				self::checkSyntax($src, "Unnamed blocks is valid syntax");
 				$ast = TestHelpers::MakeAST(array(

@@ -135,6 +135,7 @@
 				case "start":
 				case "prepend":
 				case "append":
+				case "set":
 					if (isset($node->conditional))
 						$code[] = "if (" . self::emitExpression($node->conditional) . ") {";
 					self::$blockStack[] = $node;
@@ -156,6 +157,7 @@
 					
 				case "prepend":
 				case "append":
+				case "set":
 					$code[] = "ob_start();";
 					break;
 			}
@@ -180,6 +182,7 @@
 						
 					case "prepend":
 					case "append":
+					case "set":
 						$code[] = "\$this->request->{$openingBlock->command}Block('{$node->blockName}', ob_get_contents()); ob_end_clean();";
 						break;
 				}

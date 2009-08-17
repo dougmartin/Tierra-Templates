@@ -92,7 +92,7 @@
 											$this->tokenizer->matchError("End block does not match opening block name", $steamIndex);
 									}
 								}
-								else if (in_array($node->command, array("start", "prepend", "append", "replace"))) {
+								else if (in_array($node->command, array("start", "prepend", "append", "set"))) {
 									$this->blockStack[] = $node;
 								}
 								
