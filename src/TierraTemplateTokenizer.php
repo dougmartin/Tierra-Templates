@@ -364,14 +364,14 @@
 						
 						if (!$this->eof) {
 							if ($nextChar == '#') {
-								array_push($this->modeStack, self::COMMENT_MODE);
+								$this->modeStack[] = self::COMMENT_MODE;
 								$this->commentOpener = $curChar;
 								$this->commentCloser = $curChar == "[" ? "]" : "}";
 							}
 							else if ($curChar == '[')
-								array_push($this->modeStack, self::BLOCK_MODE);
+								$this->modeStack[] = self::BLOCK_MODE;
 							else if ($curChar == '{')
-								array_push($this->modeStack, self::GENERATOR_MODE);
+								$this->modeStack[] = self::GENERATOR_MODE;
 						}						
 						break;
 						
