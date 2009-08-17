@@ -2,17 +2,17 @@
 
 	class TierraTemplateTokenizer {
 		
-		const UNKNOWN_TOKEN = "UNKNOWN_TOKEN";
-		const EOF_TOKEN = "EOF_TOKEN";
-		const HTML_TOKEN = "HTML_TOKEN";
-		const COMMENT_TOKEN = "COMMENT_TOKEN";
-		const COMMENT_START_TOKEN = "COMMENT_START_TOKEN";
-		const COMMENT_END_TOKEN = "COMMENT_END_TOKEN";
-		const STRING_TOKEN = "STRING_TOKEN";
-		const FUNCTION_CALL_TOKEN = "FUNCTION_CALL_TOKEN";
-		const IDENTIFIER_TOKEN = "IDENTIFIER_TOKEN";
-		const FLOAT_TOKEN = "FLOAT_TOKEN";
-		const INTEGER_TOKEN = "INTEGER_TOKEN";
+		const UNKNOWN_TOKEN = "unknown";
+		const EOF_TOKEN = "end of file";
+		const HTML_TOKEN = "html";
+		const COMMENT_TOKEN = "comment";
+		const COMMENT_START_TOKEN = "comment start";
+		const COMMENT_END_TOKEN = "comment end";
+		const STRING_TOKEN = "string";
+		const FUNCTION_CALL_TOKEN = "function call";
+		const IDENTIFIER_TOKEN = "identifier";
+		const FLOAT_TOKEN = "float";
+		const INTEGER_TOKEN = "integer";
 		
 		const IF_TOKEN = "if";
 		const DO_TOKEN = "do";
@@ -71,7 +71,6 @@
 		private $streamLength;
 		private $streamIndex;
 		private $startStreamIndex;
-		private $mode;
 		private $eof;
 		private $commentOpener;
 		private $commentCloser;
@@ -80,7 +79,9 @@
 		private $singleTokens;
 		private $doubleTokens;
 		private $outputTemplateSingleTokens;
-		private $tokenPatterns;		
+		private $tokenPatterns;
+
+		private $modeStack;
 				
 		public function __construct($src) {
 			$this->src = $src;
@@ -154,7 +155,7 @@
 			$this->nextToken = self::UNKNOWN_TOKEN;
 			
 			$this->eof = false;
-			$this->mode = self::HTML_MODE;
+			$this->modeStack = array(self::HTML_MODE);
 			
 			$this->startSelectionIndices = array();
 			
@@ -345,7 +346,8 @@
 				$this->nextToken = self::UNKNOWN_TOKEN;
 				$startIndex = $this->streamIndex;
 
-				switch ($this->mode) {
+				// the top of the modeStack contains the current mode
+				switch ($this->modeStack[count($this->modeStack) - 1]) {
 					case self::HTML_MODE:
 						$this->startSelection();
 						
@@ -362,14 +364,14 @@
 						
 						if (!$this->eof) {
 							if ($nextChar == '#') {
-								$this->mode = self::COMMENT_MODE;
+								array_push($this->modeStack, self::COMMENT_MODE);
 								$this->commentOpener = $curChar;
 								$this->commentCloser = $curChar == "[" ? "]" : "}";
 							}
 							else if ($curChar == '[')
-								$this->mode = self::BLOCK_MODE;
+								array_push($this->modeStack, self::BLOCK_MODE);
 							else if ($curChar == '{')
-								$this->mode = self::GENERATOR_MODE;
+								array_push($this->modeStack, self::GENERATOR_MODE);
 						}						
 						break;
 						
@@ -389,7 +391,7 @@
 							$this->nextLexeme = $this->endSelection();
 							$this->nextToken = self::COMMENT_END_TOKEN;
 							
-							$this->mode = self::HTML_MODE;
+							array_pop($this->modeStack);
 						}
 						else {
 							while (!$this->eof && !((($curChar == '@') || ($curChar == '#')) && ($nextChar == $this->commentCloser))) {
@@ -405,13 +407,13 @@
 					case self::BLOCK_MODE:
 						$this->advanceToken();
 						if ($this->nextToken == self::BLOCK_END_TOKEN)
-							$this->mode = self::HTML_MODE;
+							array_pop($this->modeStack);
 						break;
 						
 					case self::GENERATOR_MODE:
 						$this->advanceToken();
 						if ($this->nextToken == self::GENERATOR_END_TOKEN)
-							$this->mode = self::HTML_MODE;						
+							array_pop($this->modeStack);
 						break;
 				}
 			}
