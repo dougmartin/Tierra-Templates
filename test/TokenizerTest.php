@@ -36,10 +36,12 @@
 			return $tokenizer;
 		}
 		
-		public function checkLexemes($src, $lexemes, $testMessage) {
+		public function checkLexemes($src, $lexemes, $testMessage, $dump=false) {
 			$tokenizer = new TierraTemplateTokenizer($src);
 			foreach ($lexemes as $lexeme) {
 				$actualLexeme = $tokenizer->advance();
+				if ($dump)
+					echo "expected: '{$lexeme}', found '{$actualLexeme}'\n";
 				$this->assertEquals($lexeme, $actualLexeme, $testMessage . " / Expected '{$lexeme}' found '{$actualLexeme}'");
 			} 
 			$this->assertTrue(true, $testMessage);
@@ -268,6 +270,31 @@ HTML;
 			$src = "[@ include foo if foo() @]";	
 			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::FUNCTION_CALL_TOKEN, TierraTemplateTokenizer::LEFT_PAREN_TOKEN, TierraTemplateTokenizer::RIGHT_PAREN_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Function call no params");
 			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "foo", "(", ")", "@]", ""), "Function call no params lexeme check");
-		}				
+		}
+
+		public function testBlockWithOutputTemplateWithBraces() {
+			$src = "[@ include foo if `foo{bar}` @]";	
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::BACKTICK_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::LEFT_BRACE_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::RIGHT_BRACE_TOKEN, TierraTemplateTokenizer::BACKTICK_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Output block");
+			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "`", "foo", "{", "bar", "}", "`", "@]", ""), "Output template lexeme check");
+		}
+		
+		public function testBlockWithOutputTemplateWithStartGenerators() {
+			$src = "[@ include foo if `foo{@ bar @}` @]";	
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::BACKTICK_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::GENERATOR_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::GENERATOR_END_TOKEN, TierraTemplateTokenizer::BACKTICK_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Output block");
+			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "`", "foo", "{@", "bar", "@}", "`", "@]", ""), "Output template lexeme check");
+		}
+		
+		public function testBlockWithStrictOutputTemplateWithBraces() {
+			$src = "[@ include foo if ~foo{bar}~ @]";	
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::TILDE_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::TILDE_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Strict output block");
+			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "~", "foo{bar}", "~", "@]", ""), "Strict output block lexeme check");
+		}
+					
+		public function testBlockWithStrictOutputTemplateWithStartGenerators() {
+			$src = "[@ include foo if ~foo{@ bar @}~ @]";	
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::TILDE_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::GENERATOR_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::GENERATOR_END_TOKEN, TierraTemplateTokenizer::TILDE_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Output block");
+			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "~", "foo", "{@", "bar", "@}", "~", "@]", ""), "Output template lexeme check");
+		}
+		
 		
 	}

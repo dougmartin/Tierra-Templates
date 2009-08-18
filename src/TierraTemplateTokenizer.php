@@ -63,7 +63,7 @@
 		const BLOCK_MODE = "BLOCK_MODE";
 		const GENERATOR_MODE = "GENERATOR_MODE";
 		const OUTPUT_TEMPLATE_MODE = "OUTPUT_TEMPLATE_MODE";
-		const STRICK_OUTPUT_TEMPLATE_MODE = "STRICK_OUTPUT_TEMPLATE_MODE";
+		const STRICT_OUTPUT_TEMPLATE_MODE = "STRICT_OUTPUT_TEMPLATE_MODE";
 		
 		private $src;
 		private $lineNumber;
@@ -119,6 +119,7 @@
 				self::LEFT_BRACE_TOKEN, 
 				self::RIGHT_BRACE_TOKEN, 
 				self::BACKTICK_TOKEN,
+				self::TILDE_TOKEN,
 				self::AT_TOKEN,
 				self::LESS_THAN_TOKEN,
 				self::GREATER_THAN_TOKEN,
@@ -457,7 +458,8 @@
 						$curChar = $this->curChar();
 						if ($curChar == self::BACKTICK_TOKEN) {
 							$this->nextToken = self::BACKTICK_TOKEN;
-							$this->nextLexeme = $this->advanceChar();
+							$this->nextLexeme = self::BACKTICK_TOKEN; 
+							$this->advanceChar();
 							$this->popMode();
 						}
 						else if ($curChar == self::LEFT_BRACE_TOKEN) {
@@ -469,7 +471,8 @@
 							}
 							else {
 								$this->nextToken = self::LEFT_BRACE_TOKEN;
-								$this->nextLexeme = $this->advanceChar();
+								$this->nextLexeme = self::LEFT_BRACE_TOKEN; 
+								$this->advanceChar();
 							}
 							
 							$this->pushMode(self::GENERATOR_MODE);
@@ -491,12 +494,13 @@
 						
 						if ($curChar == self::TILDE_TOKEN) {
 							$this->nextToken = self::TILDE_TOKEN;
-							$this->nextLexeme = $this->advanceChar();
+							$this->nextLexeme = self::TILDE_TOKEN; 
+							$this->advanceChar();
 							$this->popMode();
 						}
 						else if ($curChar . $nextChar == self::GENERATOR_START_TOKEN) {
 							$this->nextToken = self::GENERATOR_START_TOKEN;
-							$this->nextLexeme = $curChar . $nextChar;
+							$this->nextLexeme = self::GENERATOR_START_TOKEN;
 							$this->advanceChar(2);
 							
 							$this->pushMode(self::GENERATOR_MODE);
