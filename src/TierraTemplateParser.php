@@ -367,6 +367,29 @@
 		}
 		
 		private function generatorNode() {
+			$node = new TierraTemplateASTNode(TierraTemplateASTNode::GENERATOR_NODE);
+			
+			// generator heads are optional if there is a conditional
+			$node->expression = $this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN) ? false : $this->expressionNode();
+			
+			// grab all the conditionals
+			$node->conditionals = array();
+			if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN)) {
+				while ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN)) {
+					$this->tokenizer->match(TierraTemplateTokenizer::IF_TOKEN);
+					$conditionalNode = new TierraTemplateASTNode(TierraTemplateASTNode::CONDITIONAL_NODE);
+					$conditionalNode->expression = $this->expressionNode();
+					$conditionalNode->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->expressionNode() : false;
+					$conditionalNode->ifFalse = false;
+					$node->conditionals[] = $conditionalNode; 
+				}
+				$conditionalNode->ifFalse = $this->tokenizer->matchIf(TierraTemplateTokenizer::COLON_TOKEN) ? $this->expressionNode() : false;
+			}
+			else {
+				$node->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->expressionNode() : false;
+				$node->ifFalse = $this->tokenizer->matchIf(TierraTemplateTokenizer::COLON_TOKEN) ? $this->expressionNode() : false;
+			}
+			return $node;
 		}
 		
 		private function functionCallNode($noParams=false) {
@@ -380,7 +403,7 @@
 				return node;
 				
 			$this->tokenizer->match(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
-			if (!$this->tokenizer->nextIs((TierraTemplateTokenizer::RIGHT_PAREN_TOKEN)))
+			if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN))
 				$node->params[] = $this->expressionNode();
 			$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
 

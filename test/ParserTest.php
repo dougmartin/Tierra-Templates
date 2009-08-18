@@ -311,10 +311,9 @@
 		
 		public function testBlockWithOutputTemplateWithEmptyBraces() {
 			$src = "[@ include foo if `foo{}bar` @]";	
-			self::checkSyntax($src, "Block with output template with empty braces", true);
+			self::checkSyntax($src, "Block with output template with empty braces");
 		}
 		
-		/*
 		public function testBlockWithOutputTemplateWithBraces() {
 			$src = "[@ include foo if `foo{bar}` @]";	
 			self::checkSyntax($src, "Block with output template with braces");
@@ -334,6 +333,10 @@
 			$src = "[@ include foo if ~foo{@ bar @}~ @]";	
 			self::checkSyntax($src, "Block with strict output template with start generators");
 		}
-		*/		
+		
+		public function testBlockWithGeneratorHead() {
+			$src = "[@ include foo if `foo {bar ? baz}` @]";	
+			self::checkSyntax($src, "Block with generator head", true);
+		}
 		
 	}
