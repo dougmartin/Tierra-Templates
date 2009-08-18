@@ -35,6 +35,7 @@
 		const LEFT_BRACE_TOKEN = "{";
 		const RIGHT_BRACE_TOKEN = "}";
 		const BACKTICK_TOKEN = "`";
+		const TILDE_TOKEN = "~";
 		const HASH_TOKEN = "#";
 		const AT_TOKEN = "@";
 		const XOR_TOKEN = "xor";
@@ -60,8 +61,9 @@
 		const HTML_MODE = "HTML_MODE";
 		const COMMENT_MODE = "COMMENT_MODE";
 		const BLOCK_MODE = "BLOCK_MODE";
-		const BLOCK_CONDITIONAL_MODE = "BLOCK_CONDITIONAL_MODE";
 		const GENERATOR_MODE = "GENERATOR_MODE";
+		const OUTPUT_TEMPLATE_MODE = "OUTPUT_TEMPLATE_MODE";
+		const STRICK_OUTPUT_TEMPLATE_MODE = "STRICK_OUTPUT_TEMPLATE_MODE";
 		
 		private $src;
 		private $lineNumber;
@@ -129,12 +131,7 @@
 				self::MODULUS_TOKEN, 		
 				self::DOT_TOKEN
 			);
-				
-			$this->outputTemplateSingleTokens = array(
-				self::LEFT_BRACE_TOKEN, 
-				self::RIGHT_BRACE_TOKEN, 
-				self::BACKTICK_TOKEN,
-			);
+
 			
 			// order of patterns matter - we want to match the largest lexemes first
 			$this->tokenPatterns = array(
@@ -330,6 +327,22 @@
 			}
 		}
 		
+		public function pushMode($mode) {
+			$this->modeStack[] = $mode;
+		}
+		
+		public function popMode() {
+			array_pop($this->modeStack);
+		}
+		
+		public function getMode() {
+			return $this->modeStack[count($this->modeStack) - 1];
+		}
+		
+		public function getPreviousMode() {
+			return count($this->modeStack) > 1 ? $this->modeStack[count($this->modeStack) - 2] : false;
+		}
+		
 		public function advance() {
 			// save where we started for match context errors
 			$this->startStreamIndex = $this->streamIndex;
@@ -346,8 +359,8 @@
 				$this->nextToken = self::UNKNOWN_TOKEN;
 				$startIndex = $this->streamIndex;
 
-				// the top of the modeStack contains the current mode
-				switch ($this->modeStack[count($this->modeStack) - 1]) {
+				$mode = $this->getMode();
+				switch ($mode) {
 					case self::HTML_MODE:
 						$this->startSelection();
 						
@@ -364,14 +377,14 @@
 						
 						if (!$this->eof) {
 							if ($nextChar == '#') {
-								$this->modeStack[] = self::COMMENT_MODE;
+								$this->pushMode(self::COMMENT_MODE);
 								$this->commentOpener = $curChar;
 								$this->commentCloser = $curChar == "[" ? "]" : "}";
 							}
 							else if ($curChar == '[')
-								$this->modeStack[] = self::BLOCK_MODE;
+								$this->pushMode(self::BLOCK_MODE);
 							else if ($curChar == '{')
-								$this->modeStack[] = self::GENERATOR_MODE;
+								$this->pushMode(self::GENERATOR_MODE);
 						}						
 						break;
 						
@@ -391,7 +404,7 @@
 							$this->nextLexeme = $this->endSelection();
 							$this->nextToken = self::COMMENT_END_TOKEN;
 							
-							array_pop($this->modeStack);
+							$this->popMode();
 						}
 						else {
 							while (!$this->eof && !((($curChar == '@') || ($curChar == '#')) && ($nextChar == $this->commentCloser))) {
@@ -404,16 +417,99 @@
 						}
 						break;
 						
+					// these two modes are combined to share the common code for switching to the output template modes
 					case self::BLOCK_MODE:
-						$this->advanceToken();
-						if ($this->nextToken == self::BLOCK_END_TOKEN)
-							array_pop($this->modeStack);
-						break;
-						
 					case self::GENERATOR_MODE:
 						$this->advanceToken();
-						if ($this->nextToken == self::GENERATOR_END_TOKEN)
-							array_pop($this->modeStack);
+						
+						switch ($this->nextToken) {
+							case self::BLOCK_END_TOKEN:
+								if ($mode == self::BLOCK_MODE)
+									$this->popMode();
+								break;
+								
+							case self::GENERATOR_END_TOKEN:
+								if ($mode == self::GENERATOR_MODE)
+									$this->popMode();
+								break;
+								
+							// normal output templates can use {...} or {@...@} to delimit generators
+							// strict output templates can only use {@...@}
+							case self::RIGHT_BRACE_TOKEN:
+								if (($mode == self::GENERATOR_MODE) && ($this->getPreviousMode() == self::OUTPUT_TEMPLATE_MODE))
+									$this->popMode();
+								break;
+								
+							case self::BACKTICK_TOKEN:
+								$this->pushMode(self::OUTPUT_TEMPLATE_MODE);
+								break;
+							
+							case self::TILDE_TOKEN:
+								$this->pushMode(self::STRICT_OUTPUT_TEMPLATE_MODE);
+								break;
+						}
+						break;
+
+					// the difference in the two modes is the delimiters `...` for normal and ~...~ for strict
+					// and the generator delimiters {...} and {@...@} for normal but just {@...@} for strict
+					// strict is used when including javascript with braces in a output template so you don't have to escape all the {} characters
+					case self::OUTPUT_TEMPLATE_MODE:
+						$curChar = $this->curChar();
+						if ($curChar == self::BACKTICK_TOKEN) {
+							$this->nextToken = self::BACKTICK_TOKEN;
+							$this->nextLexeme = $this->advanceChar();
+							$this->popMode();
+						}
+						else if ($curChar == self::LEFT_BRACE_TOKEN) {
+							$nextChar = $this->nextChar();
+							if ($curChar . $nextChar == self::GENERATOR_START_TOKEN) {
+								$this->nextToken = self::GENERATOR_START_TOKEN;
+								$this->nextLexeme = $curChar . $nextChar;
+								$this->advanceChar(2);
+							}
+							else {
+								$this->nextToken = self::LEFT_BRACE_TOKEN;
+								$this->nextLexeme = $this->advanceChar();
+							}
+							
+							$this->pushMode(self::GENERATOR_MODE);
+						}
+						else {
+							$this->startSelection();
+							$curChar = $this->curChar();
+							while (!$this->eof && ($curChar != self::BACKTICK_TOKEN) && ($curChar != self::LEFT_BRACE_TOKEN)) {
+								$curChar = $this->advanceChar();
+							}
+							$this->nextLexeme = $this->endSelection();
+							$this->nextToken = self::STRING_TOKEN;							
+						}
+						break;
+						
+					case self::STRICT_OUTPUT_TEMPLATE_MODE:
+						$curChar = $this->curChar();
+						$nextChar = $this->nextChar();
+						
+						if ($curChar == self::TILDE_TOKEN) {
+							$this->nextToken = self::TILDE_TOKEN;
+							$this->nextLexeme = $this->advanceChar();
+							$this->popMode();
+						}
+						else if ($curChar . $nextChar == self::GENERATOR_START_TOKEN) {
+							$this->nextToken = self::GENERATOR_START_TOKEN;
+							$this->nextLexeme = $curChar . $nextChar;
+							$this->advanceChar(2);
+							
+							$this->pushMode(self::GENERATOR_MODE);
+						}
+						else {
+							$this->startSelection();
+							while (!$this->eof && ($curChar != self::TILDE_TOKEN) && ($curChar . $nextChar != self::GENERATOR_START_TOKEN)) {
+								$curChar = $this->advanceChar();
+								$nextChar = $this->nextChar();
+							}
+							$this->nextLexeme = $this->endSelection();
+							$this->nextToken = self::STRING_TOKEN;							
+						}
 						break;
 				}
 			}
