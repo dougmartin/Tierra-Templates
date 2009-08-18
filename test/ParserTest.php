@@ -309,5 +309,31 @@
 			self::checkSyntax($src, "Block with namespaced function");
 		}	
 		
+		public function testBlockWithOutputTemplateWithEmptyBraces() {
+			$src = "[@ include foo if `foo{}bar` @]";	
+			self::checkSyntax($src, "Block with output template with empty braces", true);
+		}
+		
+		/*
+		public function testBlockWithOutputTemplateWithBraces() {
+			$src = "[@ include foo if `foo{bar}` @]";	
+			self::checkSyntax($src, "Block with output template with braces");
+		}
+		
+		public function testBlockWithOutputTemplateWithStartGenerators() {
+			$src = "[@ include foo if `foo{@ bar @}` @]";	
+			self::checkSyntax($src, "Block with output template with start generators");
+		}
+		
+		public function testBlockWithStrictOutputTemplateWithBraces() {
+			$src = "[@ include foo if ~foo{bar}~ @]";	
+			self::checkSyntax($src, "Block with strict output template with braces");
+		}
+					
+		public function testBlockWithStrictOutputTemplateWithStartGenerators() {
+			$src = "[@ include foo if ~foo{@ bar @}~ @]";	
+			self::checkSyntax($src, "Block with strict output template with start generators");
+		}
+		*/		
 		
 	}

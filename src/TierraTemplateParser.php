@@ -289,6 +289,59 @@
 					$node->attributes = $namedAttributes;
 					break;
 					
+				case TierraTemplateTokenizer::BACKTICK_TOKEN:
+					$node = new TierraTemplateASTNode(TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE);
+					$node->outputItems = array();
+					
+					$this->tokenizer->match(TierraTemplateTokenizer::BACKTICK_TOKEN);
+					while (true) {
+						if ($this->tokenizer->getNextToken() == TierraTemplateTokenizer::BACKTICK_TOKEN) {
+							break;
+						}
+						else if ($this->tokenizer->matchIf(TierraTemplateTokenizer::LEFT_BRACE_TOKEN)) {
+							if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_BRACE_TOKEN))
+								$node->outputItems[] = $this->generatorNode();
+							$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_BRACE_TOKEN);
+						}
+						else if ($this->tokenizer->matchIf(TierraTemplateTokenizer::GENERATOR_START_TOKEN)) {
+							if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::GENERATOR_END_TOKEN))
+								$node->outputItems[] = $this->generatorNode();
+							$this->tokenizer->match(TierraTemplateTokenizer::GENERATOR_END_TOKEN);
+						}
+						else {
+							$item = new TierraTemplateASTNode(TierraTemplateASTNode::LITERAL_NODE);
+							$item->tokenType = TierraTemplateTokenizer::STRING_TOKEN;
+							$item->value = $this->tokenizer->match(TierraTemplateTokenizer::STRING_TOKEN);
+							$node->outputItems[] = $item;
+						}
+					}
+					$this->tokenizer->match(TierraTemplateTokenizer::BACKTICK_TOKEN);
+					break;
+							
+				case TierraTemplateTokenizer::TILDE_TOKEN:
+					$node = new TierraTemplateASTNode(TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE);
+					$node->outputItems = array();
+					
+					$this->tokenizer->match(TierraTemplateTokenizer::TILDE_TOKEN);
+					while (true) {
+						if ($this->tokenizer->getNextToken() == TierraTemplateTokenizer::TILDE_TOKEN) {
+							break;
+						}
+						else if ($this->tokenizer->matchIf(TierraTemplateTokenizer::GENERATOR_START_TOKEN)) {
+							if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::GENERATOR_END_TOKEN))
+								$node->outputItems[] = $this->generatorNode();
+							$this->tokenizer->match(TierraTemplateTokenizer::GENERATOR_END_TOKEN);
+						}
+						else {
+							$item = new TierraTemplateASTNode(TierraTemplateASTNode::LITERAL_NODE);
+							$item->tokenType = TierraTemplateTokenizer::STRING_TOKEN;
+							$item->value = $this->tokenizer->match(TierraTemplateTokenizer::STRING_TOKEN);
+							$node->outputItems[] = $item;
+						}
+					}
+					$this->tokenizer->match(TierraTemplateTokenizer::TILDE_TOKEN);
+					break;
+					
 				case TierraTemplateTokenizer::IDENTIFIER_TOKEN:
 					$node = $this->identifierNode();
 					break;
@@ -311,6 +364,9 @@
 			}
 			
 			return $node;
+		}
+		
+		private function generatorNode() {
 		}
 		
 		private function functionCallNode($noParams=false) {
