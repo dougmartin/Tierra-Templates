@@ -15,6 +15,7 @@
 		const INTEGER_TOKEN = "integer";
 		
 		const IF_TOKEN = "if";
+		const ELSE_TOKEN = "else";
 		const DO_TOKEN = "do";
 		
 		const BLOCK_START_TOKEN = "[@";
@@ -137,6 +138,7 @@
 			// order of patterns matter - we want to match the largest lexemes first
 			$this->tokenPatterns = array(
 				self::IF_TOKEN => '/(' . self::IF_TOKEN . ')/',
+				self::ELSE_TOKEN => '/(' . self::ELSE_TOKEN . ')/',
 				self::DO_TOKEN => '/(' . self::DO_TOKEN . ')/',
 				self::XOR_TOKEN => '/(' . self::XOR_TOKEN . ')/',
 				self::OR_TOKEN => '/(' . self::OR_TOKEN . ')/',

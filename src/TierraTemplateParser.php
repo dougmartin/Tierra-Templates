@@ -372,23 +372,41 @@
 			// generator heads are optional if there is a conditional
 			$node->expression = $this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN) ? false : $this->expressionNode();
 			
-			// grab all the conditionals
+			$node->ifTrue = false;
+			$node->ifFalse = false;
 			$node->conditionals = array();
+			
+			// grab all the conditionals
 			if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN)) {
 				while ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN)) {
 					$this->tokenizer->match(TierraTemplateTokenizer::IF_TOKEN);
 					$conditionalNode = new TierraTemplateASTNode(TierraTemplateASTNode::CONDITIONAL_NODE);
 					$conditionalNode->expression = $this->expressionNode();
-					$conditionalNode->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->expressionNode() : false;
+					$conditionalNode->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->conditionalGeneratorNode() : false;
 					$conditionalNode->ifFalse = false;
-					$node->conditionals[] = $conditionalNode; 
+					$node->conditionals[] = $conditionalNode;
+
+					if (($conditionalNode->ifTrue !== false) && $this->tokenizer->matchIf(TierraTemplateTokenizer::ELSE_TOKEN)) {
+						if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN)) {
+							$node->ifFalse = $this->conditionalGeneratorNode();
+							break;
+						}
+					}
 				}
-				$conditionalNode->ifFalse = $this->tokenizer->matchIf(TierraTemplateTokenizer::COLON_TOKEN) ? $this->expressionNode() : false;
 			}
 			else {
-				$node->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->expressionNode() : false;
-				$node->ifFalse = $this->tokenizer->matchIf(TierraTemplateTokenizer::COLON_TOKEN) ? $this->expressionNode() : false;
+				$node->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->conditionalGeneratorNode() : false;
+				$node->ifFalse = ($node->ifTrue !== false) && $this->tokenizer->matchIf(TierraTemplateTokenizer::ELSE_TOKEN) ? $this->conditionalGeneratorNode() : false;
 			}
+			return $node;
+		}
+		
+		private function conditionalGeneratorNode() {
+			$hasParen = $this->tokenizer->nextIs(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
+			$this->tokenizer->matchIf(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
+			$node = $this->generatorNode();
+			if ($hasParen)
+				$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
 			return $node;
 		}
 		

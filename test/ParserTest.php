@@ -336,7 +336,45 @@
 		
 		public function testBlockWithGeneratorHead() {
 			$src = "[@ include foo if `foo {bar ? baz}` @]";	
-			self::checkSyntax($src, "Block with generator head", true);
+			self::checkSyntax($src, "Block with generator head");
 		}
+		
+		public function testBlockWithGeneratorSingleConditional() {
+			$src = "[@ include foo if `foo {bar if bam ? baz}` @]";	
+			self::checkSyntax($src, "Block with generator single conditional");
+		}
+
+		public function testBlockWithGeneratorSingleConditionalExpression() {
+			$src = "[@ include foo if `foo {bar if bam || boom ? baz}` @]";	
+			self::checkSyntax($src, "Block with generator single conditional expression");
+		}		
+
+		public function testBlockWithGeneratorMultipleConditional() {
+			$src = "[@ include foo if `foo {bar if bam ? baz if boom ? floom if whim ? wham else kaboom}` @]";	
+			self::checkSyntax($src, "Block with generator mulitple conditionals");
+		}
+		
+		public function testBlockWithGeneratorSingleConditionalAndFilter() {
+			$src = "[@ include foo if `foo {bar if bam ? baz:boom else foom}` @]";	
+			self::checkSyntax($src, "Block with generator single conditional and filter");
+		}
+
+		public function testBlockWithGeneratorComplexConditionals() {
+			$src = <<<SRC
+[@ include foo if `foo {@ user 
+	if type == 1 ? (foo 
+		if a == 1 ? bar
+		else if b == 3 ? baz
+	)
+	else if type == 2 ? (
+		if c == 4 ? `user.type == 2 && user.c == 4`
+		else if d == 6 ? "user.type == 2 && user.d == 6"
+	)
+	else if type == 3 ? `bam`
+	else `flam`
+@}` @]
+SRC;
+			self::checkSyntax($src, "Block with generator complex conditionals");
+		}		
 		
 	}
