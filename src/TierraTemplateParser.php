@@ -180,7 +180,17 @@
 		}
 		
 		private function expressionNode() {
-			return $this->expressionOperatorNode(0);
+			$expressions[] = $this->expressionOperatorNode(0);
+			while ($this->tokenizer->matchIf(TierraTemplateTokenizer::SEMICOLON_TOKEN))
+				$expressions[] = $this->expressionOperatorNode(0);
+				
+			if (count($expressions) > 1) {
+				$node = new TierraTemplateASTNode(TierraTemplateASTNode::MULTI_EXPRESSION_NODE);
+				$node->expression = $expressions;
+				return $node;
+			}
+			else
+				return $expressions[0];
 		}
 		
 		private function expressionOperatorNode($precedence) {

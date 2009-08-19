@@ -420,7 +420,16 @@ SRC;
 @}
 SRC;
 
-			self::checkSyntax($src, "Generator with script", true);
+			self::checkSyntax($src, "Generator with script");
 		}		
 		
+		public function testGeneratorWithFilter() {
+			$src = "{@ foo:1,2 @}";	
+			self::checkSyntax($src, "Generator with filter", true);
+		}
+		
+		public function testGeneratorWithMultipleStatements() {
+			$src = "{@ foo; bar ? bam @}";	
+			self::checkSyntax($src, "Generator with multiple statements");
+		}		
 	}
