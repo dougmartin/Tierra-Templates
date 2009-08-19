@@ -377,4 +377,20 @@ SRC;
 			self::checkSyntax($src, "Block with generator complex conditionals");
 		}		
 		
+		public function testBareGenerator() {
+			$src = "{@ foo @}";	
+			self::checkSyntax($src, "Bare generator");
+		}
+		
+		public function testGeneratorWithMultipleOutputTemplates() {
+			$src = <<<SRC
+{@ users ?
+	`<p>{name}`
+	logins ? `<ul>` `<li>{date:dateformat("U")}</li>` `</ul>`
+	`</p>`
+@}
+SRC;
+			self::checkSyntax($src, "Generator with multiple output templates", true);
+		}
+		
 	}

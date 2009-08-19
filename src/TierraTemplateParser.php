@@ -104,7 +104,10 @@
 						break;
 						
 					case TierraTemplateTokenizer::GENERATOR_START_TOKEN:
-						// TODO: implement
+						$this->tokenizer->matchIf(TierraTemplateTokenizer::GENERATOR_START_TOKEN);
+						if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::GENERATOR_END_TOKEN))
+							$this->ast->addNode($this->generatorNode());
+						$this->tokenizer->match(TierraTemplateTokenizer::GENERATOR_END_TOKEN);
 						break;
 				}
 			}
@@ -402,11 +405,25 @@
 		}
 		
 		private function conditionalGeneratorNode() {
-			$hasParen = $this->tokenizer->nextIs(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
-			$this->tokenizer->matchIf(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
-			$node = $this->generatorNode();
-			if ($hasParen)
-				$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
+			$node = new TierraTemplateASTNode(TierraTemplateASTNode::CONDITIONAL_GENERATOR_NODE);
+			$node->elements = array();
+			
+			for ($i=0; $i<3; $i++) {
+				$hasParen = $this->tokenizer->nextIs(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
+				$this->tokenizer->matchIf(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
+
+				if ($this->tokenizer->nextIn(array(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN, TierraTemplateTokenizer::ELSE_TOKEN, TierraTemplateTokenizer::RIGHT_BRACE_TOKEN, TierraTemplateTokenizer::GENERATOR_END_TOKEN))) {
+					if ($hasParen)
+						$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
+					break;
+				} 
+				
+				$node->elements[] = $this->generatorNode();
+					
+				if ($hasParen)
+					$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
+			}
+			
 			return $node;
 		}
 		
