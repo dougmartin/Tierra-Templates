@@ -391,7 +391,7 @@
 
 					if (($conditionalNode->ifTrue !== false) && $this->tokenizer->matchIf(TierraTemplateTokenizer::ELSE_TOKEN)) {
 						if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN)) {
-							$node->ifFalse = $this->conditionalGeneratorNode();
+							$node->ifFalse = $this->generatorNode();
 							break;
 						}
 					}
@@ -399,8 +399,13 @@
 			}
 			else {
 				$node->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->conditionalGeneratorNode() : false;
-				$node->ifFalse = ($node->ifTrue !== false) && $this->tokenizer->matchIf(TierraTemplateTokenizer::ELSE_TOKEN) ? $this->conditionalGeneratorNode() : false;
+				$node->ifFalse = ($node->ifTrue !== false) && $this->tokenizer->matchIf(TierraTemplateTokenizer::ELSE_TOKEN) ? $this->generatorNode() : false;
 			}
+			
+			// remove the enclosing generator if there are no conditionals
+			if (($node->ifTrue === false) && ($node->ifFalse === false) && (count($node->conditionals) == 0))
+				return $node->expression;
+			
 			return $node;
 		}
 		
@@ -424,6 +429,14 @@
 					$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
 			}
 			
+			// if () return false
+			if (count($node->elements) == 0)
+				return false;
+				
+			// if just one element return it
+			if (count($node->elements) == 1)
+				return $node->elements[0];
+				
 			return $node;
 		}
 		

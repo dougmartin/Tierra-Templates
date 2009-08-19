@@ -382,6 +382,11 @@ SRC;
 			self::checkSyntax($src, "Bare generator");
 		}
 		
+		public function testGeneratorDoubleParens() {
+			$src = "{@ foo ? (bar ? baz) (bam ? boom else foom) kaboom @}";	
+			self::checkSyntax($src, "Generator with double parens", true);
+		}
+		
 		public function testGeneratorWithMultipleOutputTemplates() {
 			$src = <<<SRC
 {@ users ?
@@ -390,7 +395,7 @@ SRC;
 	`</p>`
 @}
 SRC;
-			self::checkSyntax($src, "Generator with multiple output templates", true);
+			self::checkSyntax($src, "Generator with multiple output templates");
 		}
 		
 	}
