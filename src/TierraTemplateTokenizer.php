@@ -328,6 +328,10 @@
 					
 				}
 			}
+			else {
+				$this->nextLexeme = "";
+				$this->nextToken = self::EOF_TOKEN;				
+			}
 		}
 		
 		public function pushMode($mode) {

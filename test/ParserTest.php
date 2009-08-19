@@ -389,11 +389,11 @@ SRC;
 		
 		public function testGeneratorMultipleParens() {
 			$src = "{@ foo ? ((((bar)))) @}";	
-			self::checkSyntax($src, "Generator with multiple parens", true);
+			self::checkSyntax($src, "Generator with multiple parens");
 		}
 		
 		public function testGeneratorExpressionParens() {
-			$src = "{@ (foo + bar) - baz ? bam @}";	
+			$src = "{@ (foo + bar) - baz > 0 ? bam @}";	
 			self::checkSyntax($src, "Generator with expression parens");
 		}
 		
@@ -407,5 +407,20 @@ SRC;
 SRC;
 			self::checkSyntax($src, "Generator with multiple output templates");
 		}
+		
+		public function testGeneratorWithScript() {
+			$src = <<<SRC
+{@ foo ?
+	~<script>
+		function bar(baz) {
+			return baz > {@ count(bam) @} ? " yes " : " no ";
+		}
+	</script>~
+	`<script>document.write(bar({\$}));</script>`
+@}
+SRC;
+
+			self::checkSyntax($src, "Generator with script", true);
+		}		
 		
 	}
