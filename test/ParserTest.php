@@ -384,7 +384,17 @@ SRC;
 		
 		public function testGeneratorDoubleParens() {
 			$src = "{@ foo ? (bar ? baz) (bam ? boom else foom) kaboom @}";	
-			self::checkSyntax($src, "Generator with double parens", true);
+			self::checkSyntax($src, "Generator with double parens");
+		}
+		
+		public function testGeneratorMultipleParens() {
+			$src = "{@ foo ? ((((bar)))) @}";	
+			self::checkSyntax($src, "Generator with multiple parens", true);
+		}
+		
+		public function testGeneratorExpressionParens() {
+			$src = "{@ (foo + bar) - baz ? bam @}";	
+			self::checkSyntax($src, "Generator with expression parens");
 		}
 		
 		public function testGeneratorWithMultipleOutputTemplates() {

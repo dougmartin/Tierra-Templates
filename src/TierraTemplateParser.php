@@ -370,6 +370,7 @@
 		}
 		
 		private function generatorNode() {
+			
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::GENERATOR_NODE);
 			
 			// generator heads are optional if there is a conditional
