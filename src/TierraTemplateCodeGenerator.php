@@ -9,6 +9,7 @@
 		private static $isChildTemplate = false;
 		private static $returnIdentifierName = false;
 		private static $returnIdentifierNameStack = array();
+		private static $outputTemplateFunctions = array();
 		
 		private static $decorators = array(
 			"nocache" => array("self", "noCacheDecorator"),
@@ -84,6 +85,15 @@
 					if (strlen($decoratorCode) > 0)
 						$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $decoratorCode);
 				}
+			}
+			
+			// and then add any saved output template functions to the start of the code
+			if (count(self::$outputTemplateFunctions) > 0) {
+				$code = array();
+				foreach (self::$outputTemplateFunctions as $otfName => $otfCode) {
+					$code[] = "if (!function_exists('{$otfName}')) { function {$otfName}() { ob_start(); {$otfCode} \$_otfOutput = ob_get_contents(); ob_end_clean(); return \$_otfOutput;} };";
+				}
+				array_unshift($chunks, new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, implode("; ", $code)));
 			}
 			
 			// merge the like chunks together and add the php start/end tags
@@ -297,28 +307,7 @@
 					break;		
 
 				case TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE:
-					$numItems = count($node->outputItems);
-					if ($numItems > 0) {
-						$output = array();
-						foreach ($node->outputItems as $item) {
-							if ($item->type == TierraTemplateASTNode::GENERATOR_NODE) {
-								if ($item->ifTrue || $item->ifFalse) {
-									// emit the output so far and then emit the generator
-									if (count($output) > 0) {
-										$code[] = "echo " . implode(" . ", $output) . ";";
-										$output = array();
-									}
-									$code[] = self::emitGenerator($item);
-								}
-								else
-									$output[] = self::emitGenerator($item, true);
-							}
-							else
-								$output[] = self::emitExpression($item);
-						}
-						if (count($output) > 0)
-							$code[] = "echo " . implode(" . ", $output) . ";";
-					}
+					$code[] = self::emitOutputTemplate($node, false);
 					break;					
 					
 				default:
@@ -355,7 +344,10 @@
 				$expression = $node->expression;
 			
 			if (($node->ifTrue === false) && ($node->ifFalse === false)) {
-				$code[] = ($expression->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE) || $noEcho ? self::emitExpression($expression) : "echo " . self::emitExpression($expression) . ";";
+				if ($expression->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE)
+					$code[] =  self::emitOutputTemplate($expression, true);
+				else
+					$code[] =  $noEcho ? self::emitExpression($expression) : "echo " . self::emitExpression($expression) . ";";
 			}
 			else {
 				$code[] = "if (\$this->runtime->startGenerator(" .  self::emitExpression($expression) .  ")) {";
@@ -378,17 +370,64 @@
 			
 			$preElement = ($numElements > 1 ? $node->elements[0] : false);
 			if ($preElement)
-				$code[] = self::emitGenerator($preElement);
+				$code[] = self::emitGeneratorOrOutputTemplate($preElement);
 				
 			$loopElement = ($numElements > 1 ? $node->elements[1] : ($numElements > 0 ? $node->elements[0] : false));
 			if ($loopElement)
-				$code[] = "do { " . self::emitGenerator($loopElement) ." } while (\$this->runtime->loop());";
+				$code[] = "do { " . self::emitGeneratorOrOutputTemplate($loopElement) ." } while (\$this->runtime->loop());";
 			
 			$postElement = ($numElements > 2 ? $node->elements[2] : false);
 			if ($postElement)
-				$code[] = self::emitGenerator($postElement);
+				$code[] = self::emitGeneratorOrOutputTemplate($postElement);
 
 			return implode(" ", $code);
+		}
+		
+		public static function emitGeneratorOrOutputTemplate($node) {
+			return $node->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE ? self::emitOutputTemplate($node, true) : self::emitGenerator($node);
+		}
+		
+		public static function emitOutputTemplate($node, $echoOutput) {
+			$code = array();
+			
+			if (count($node->outputItems) > 0) {
+				$hasGenerator = false;
+				$output = array();
+				foreach ($node->outputItems as $item) {
+					if ($item->type == TierraTemplateASTNode::GENERATOR_NODE) {
+						if ($item->ifTrue || $item->ifFalse) {
+							// emit the output so far and then emit the generator
+							if (count($output) > 0) {
+								$code[] = "echo " . implode(" . ", $output) . ";";
+								$output = array();
+							}
+							$code[] = self::emitGenerator($item);
+							$hasGenerator = true;
+						}
+						else
+							$output[] = self::emitGenerator($item, true);
+					}
+					else
+						$output[] = self::emitExpression($item);
+				}
+				if (count($output) > 0)
+					$code[] = $echoOutput || $hasGenerator ? ("echo " . implode(" . ", $output) . ";") : implode(" . ", $output);
+					
+				// we wrap the output template in a function if we are not echoing the output and the template has at least one generator so we can return its value
+				if (!$echoOutput && $hasGenerator) {
+					$functionName = self::saveOutputTemplate(implode(" ", $code));
+					$code = array("{$functionName}()");
+				}
+					
+			}			
+			return implode(" ", $code);
+		}
+		
+		public static function saveOutputTemplate($code) {
+			$hash = "otf_" . sha1($code);
+			if (!isset(self::$outputTemplateFunctions[$hash]))
+				self::$outputTemplateFunctions[$hash] = $code;
+			return $hash;			
 		}
 		
 		public static function setReturnIdentifierName($value) {

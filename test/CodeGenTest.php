@@ -258,12 +258,10 @@ HTML;
 			self::checkEmit($src, "<?php if (\$this->runtime->startGenerator(\$this->runtime->identifier('foo'))) { echo 'bar'; do { echo 'baz'; } while (\$this->runtime->loop()); } \$this->runtime->endGenerator();", "Generator with one output template");
 		}
 		
-		/*
 		public function testGeneratorWithTemplateAssignment() {
 			$src = "{@ foo = `bar {baz ? bam} boom` @}";
-			self::checkEmit($src, "", "Generator with template assignment");
+			self::checkEmit($src, "<?php if (!function_exists('otf_8844721509b878c04eda4bc54d9ab46f44f4323b')) { function otf_8844721509b878c04eda4bc54d9ab46f44f4323b() { ob_start(); echo 'bar '; if (\$this->runtime->startGenerator(\$this->runtime->identifier('baz'))) { do { echo \$this->runtime->identifier('bam'); } while (\$this->runtime->loop()); } \$this->runtime->endGenerator(); echo ' boom'; \$_otfOutput = ob_get_contents(); ob_end_clean(); return \$_otfOutput;} }; echo \$this->runtime->assign('foo', otf_8844721509b878c04eda4bc54d9ab46f44f4323b());", "Generator with template assignment");
 		}
-		*/
-		
+
 	}
 	
