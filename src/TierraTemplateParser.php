@@ -186,7 +186,7 @@
 				
 			if (count($expressions) > 1) {
 				$node = new TierraTemplateASTNode(TierraTemplateASTNode::MULTI_EXPRESSION_NODE);
-				$node->expression = $expressions;
+				$node->expressions = $expressions;
 				return $node;
 			}
 			else
@@ -413,10 +413,6 @@
 				$node->ifFalse = ($node->ifTrue !== false) && $this->tokenizer->matchIf(TierraTemplateTokenizer::ELSE_TOKEN) ? $this->generatorNode() : false;
 			}
 			
-			// remove the enclosing generator if there are no conditionals
-			if (($node->ifTrue === false) && ($node->ifFalse === false) && (count($node->conditionals) == 0))
-				return $node->expression;
-			
 			return $node;
 		}
 		
@@ -443,10 +439,6 @@
 			// if () return false
 			if (count($node->elements) == 0)
 				return false;
-				
-			// if just one element return it
-			if (count($node->elements) == 1)
-				return $node->elements[0];
 				
 			return $node;
 		}

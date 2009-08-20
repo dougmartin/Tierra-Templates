@@ -425,7 +425,7 @@ SRC;
 		
 		public function testGeneratorWithFilter() {
 			$src = "{@ foo:1,2 @}";	
-			self::checkSyntax($src, "Generator with filter", true);
+			self::checkSyntax($src, "Generator with filter");
 		}
 		
 		public function testGeneratorWithMultipleStatements() {

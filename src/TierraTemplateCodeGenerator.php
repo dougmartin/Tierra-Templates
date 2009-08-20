@@ -294,6 +294,31 @@
 					
 				case TierraTemplateASTNode::JSON_ATTRIBUTE_NODE:
 					$code[] = $node->name . ": " . self::emitExpression($node->value);
+					break;		
+
+				case TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE:
+					$numItems = count($node->outputItems);
+					if ($numItems > 0) {
+						$output = array();
+						foreach ($node->outputItems as $item) {
+							if ($item->type == TierraTemplateASTNode::GENERATOR_NODE) {
+								if ($item->ifTrue || $item->ifFalse) {
+									// emit the output so far and then emit the generator
+									if (count($output) > 0) {
+										$code[] = "echo " . implode(" . ", $output) . ";";
+										$output = array();
+									}
+									$code[] = self::emitGenerator($item);
+								}
+								else
+									$output[] = self::emitGenerator($item, true);
+							}
+							else
+								$output[] = self::emitExpression($item);
+						}
+						if (count($output) > 0)
+							$code[] = "echo " . implode(" . ", $output) . ";";
+					}
 					break;					
 					
 				default:
@@ -316,11 +341,54 @@
 				$code[] = "\"{$name}\" => " . self::emitExpression($value);
 			return "array(" . implode(", ", $code) . ")";
 		}		
-				
-		public static function emitGenerator($node) {
-			// TODO: implement
+
+		// noEcho is used when emit generators from without an output template
+		public static function emitGenerator($node, $noEcho=false) {
+			$code = array();
+			
+			if ($node->expression->type == TierraTemplateASTNode::MULTI_EXPRESSION_NODE) {
+				$expression = array_pop($node->expression->expressions);
+				foreach ($node->expression->expressions as $preExpression)
+					$code[] = self::emitExpression($preExpression) . ";";
+			}
+			else
+				$expression = $node->expression;
+			
+			if (($node->ifTrue === false) && ($node->ifFalse === false)) {
+				$code[] = ($expression->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE) || $noEcho ? self::emitExpression($expression) : "echo " . self::emitExpression($expression) . ";";
+			}
+			else {
+				$code[] = "if (\$this->runtime->startGenerator(" .  self::emitExpression($expression) .  ")) {";
+				if ($node->ifTrue !== false)
+					$code[] = self::emitGeneratorOutput($node->ifTrue);
+				$code[] = "}";
+				if ($node->ifFalse !== false)
+					$code[] = "else {" . self::emitGeneratorOutput($node->ifFalse) . "}";
+				$code[] = "\$this->runtime->endGenerator();";
+			}
+			
 			// TODO: add code generator decorator calls
-			return "";
+			
+			return implode(" ", $code);
+		}
+		
+		public static function emitGeneratorOutput($node) {
+			$code = array();
+			$numElements = count($node->elements);
+			
+			$preElement = ($numElements > 1 ? $node->elements[0] : false);
+			if ($preElement)
+				$code[] = self::emitGenerator($preElement);
+				
+			$loopElement = ($numElements > 1 ? $node->elements[1] : ($numElements > 0 ? $node->elements[0] : false));
+			if ($loopElement)
+				$code[] = "do { " . self::emitGenerator($loopElement) ." } while (\$this->runtime->loop());";
+			
+			$postElement = ($numElements > 2 ? $node->elements[2] : false);
+			if ($postElement)
+				$code[] = self::emitGenerator($postElement);
+
+			return implode(" ", $code);
 		}
 		
 		public static function setReturnIdentifierName($value) {

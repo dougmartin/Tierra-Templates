@@ -2,6 +2,7 @@
 
 	require_once 'PHPUnit/Framework.php';
 	require_once dirname(__FILE__) . "/../src/TierraTemplateCodeGenerator.php";
+	require_once dirname(__FILE__) . "/../src/TierraTemplateOptimizer.php";
 	require_once dirname(__FILE__) . "/TestHelpers.php";
 	 
 	class CodeGenTest extends PHPUnit_Framework_TestCase {
@@ -221,6 +222,48 @@ HTML;
 			$src = "[@ start do testWrapper('1'), testWrapper('2') @] foo [@ end @]";
 			self::checkEmit($src, "<?php if (1) { if (2) { ?> foo <?php } /* end if (2) */ } /* end if (1) */", "Block with two test wrapper decorators");
 		}
+		
+		public function testSimpleGenerator() {
+			$src = "{@ foo @}";
+			self::checkEmit($src, "<?php echo \$this->runtime->identifier('foo');", "Simple generator");
+		}
+
+		public function testMultiExpressionGenerator() {
+			$src = "{@ foo; bar @}";
+			self::checkEmit($src, "<?php \$this->runtime->identifier('foo'); echo \$this->runtime->identifier('bar');", "Simple generator with multiple expressions");
+		}
+		
+		public function testSimpleGeneratorWithOutput() {
+			$src = "{@ foo ? bar @}";
+			self::checkEmit($src, "<?php if (\$this->runtime->startGenerator(\$this->runtime->identifier('foo'))) { do { echo \$this->runtime->identifier('bar'); } while (\$this->runtime->loop()); } \$this->runtime->endGenerator();", "Simple generator with output");
+		}
+		
+		public function testGeneratorWithOneOutputTemplate() {
+			$src = "{@ foo ? `bar` @}";
+			self::checkEmit($src, "<?php if (\$this->runtime->startGenerator(\$this->runtime->identifier('foo'))) { do { echo 'bar'; } while (\$this->runtime->loop()); } \$this->runtime->endGenerator();", "Generator with one output template");
+		}
+		
+		public function testGeneratorWithOneOutputTemplateWithSimpleGenerator() {
+			$src = "{@ foo ? `bar {baz} boom` @}";
+			self::checkEmit($src, "<?php if (\$this->runtime->startGenerator(\$this->runtime->identifier('foo'))) { do { echo 'bar ' . \$this->runtime->identifier('baz') . ' boom'; } while (\$this->runtime->loop()); } \$this->runtime->endGenerator();", "Generator with one output template with simple generator");
+		}			
+
+		public function testGeneratorWithOneOutputTemplateWithGenerator() {
+			$src = "{@ foo ? `bar {baz ? bam} boom` @}";
+			self::checkEmit($src, "<?php if (\$this->runtime->startGenerator(\$this->runtime->identifier('foo'))) { do { echo 'bar '; if (\$this->runtime->startGenerator(\$this->runtime->identifier('baz'))) { do { echo \$this->runtime->identifier('bam'); } while (\$this->runtime->loop()); } \$this->runtime->endGenerator(); echo ' boom'; } while (\$this->runtime->loop()); } \$this->runtime->endGenerator();", "Generator with one output template with generator");
+		}		
+		
+		public function testGeneratorWithTwoOutputTemplates() {
+			$src = "{@ foo ? `bar` `baz` @}";
+			self::checkEmit($src, "<?php if (\$this->runtime->startGenerator(\$this->runtime->identifier('foo'))) { echo 'bar'; do { echo 'baz'; } while (\$this->runtime->loop()); } \$this->runtime->endGenerator();", "Generator with one output template");
+		}
+		
+		/*
+		public function testGeneratorWithTemplateAssignment() {
+			$src = "{@ foo = `bar {baz ? bam} boom` @}";
+			self::checkEmit($src, "", "Generator with template assignment");
+		}
+		*/
 		
 	}
 	
