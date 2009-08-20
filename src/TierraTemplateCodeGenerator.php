@@ -160,7 +160,7 @@
 				case "else":
 				case "start":
 					if ($node->blockName !== false) {
-						$code[] = "if (!\$this->request->echoBlock('{$node->blockName}')) {";
+						$code[] = "if (!\$this->__request->echoBlock('{$node->blockName}')) {";
 						
 						// buffer all blocks in child templates
 						if (self::$isChildTemplate)
@@ -184,10 +184,10 @@
 						if ($node->blockName !== false) {
 							// saved the buffered blocks in child templates
 							if (self::$isChildTemplate) {
-								$code[] = "\$this->request->setBlock('{$node->blockName}', ob_get_contents()); ob_end_clean();";
+								$code[] = "\$this->__request->setBlock('{$node->blockName}', ob_get_contents()); ob_end_clean();";
 								// output blocks within blocks so it is buffered in the outer block
 								if (count(self::$blockStack) > 0)
-									$code[] = "\$this->request->echoBlock('{$node->blockName}');";
+									$code[] = "\$this->__request->echoBlock('{$node->blockName}');";
 							}
 							$code[] = "}";
 						}
@@ -196,7 +196,7 @@
 					case "prepend":
 					case "append":
 					case "set":
-						$code[] = "\$this->request->{$openingBlock->command}Block('{$node->blockName}', ob_get_contents()); ob_end_clean();";
+						$code[] = "\$this->__request->{$openingBlock->command}Block('{$node->blockName}', ob_get_contents()); ob_end_clean();";
 						break;
 				}
 				
@@ -254,7 +254,7 @@
 					else if (in_array(strtolower($node->identifier), array("true", "false")))
 						$code[] = $node->identifier;
 					else
-						$code[] = "\$this->__runtime->identifier('" . str_replace("\$", "\\\$", $node->identifier) . "')";
+						$code[] = "\$this->__runtime->identifier('{$node->identifier}')";
 					break;
 					
 				case TierraTemplateASTNode::OPERATOR_NODE:
@@ -299,6 +299,10 @@
 								$code[] = $node->op . self::emitExpression($node->rightNode);
 							break;
 					}
+					break;
+					
+				case TierraTemplateASTNode::ARRAY_NODE:
+					$code[] = "array(" . ($node->elements ? self::emitExpression($node->elements) : "" ) . ")";
 					break;
 					
 				case TierraTemplateASTNode::JSON_NODE:

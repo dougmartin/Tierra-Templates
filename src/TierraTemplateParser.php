@@ -273,13 +273,10 @@
 			switch ($this->tokenizer->getNextToken()) {
 				case TierraTemplateTokenizer::LEFT_BRACKET_TOKEN:
 					$node = new TierraTemplateASTNode(TierraTemplateASTNode::ARRAY_NODE);
-					$node->statements = array();
+					$node->elements = false;
 					$this->tokenizer->match(TierraTemplateTokenizer::LEFT_BRACKET_TOKEN);
-					if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_BRACKET_TOKEN)) {
-						$node->statements[] = $this->statementNode();
-						while ($this->tokenizer->matchIf(TierraTemplateTokenizer::COMMA_TOKEN))
-							$node->statements[] = $this->statementNode();
-					}
+					if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_BRACKET_TOKEN))
+						$node->elements = $this->expressionNode();
 					$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_BRACKET_TOKEN);
 					break;
 					

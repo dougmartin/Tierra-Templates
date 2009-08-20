@@ -98,91 +98,91 @@ HTML;
 		}
 
 		public function testBlockInParent() {
-			self::checkEmit("[@ start foo @] bar [@ end foo @]", "<?php if (!\$this->request->echoBlock('foo')) { ?> bar <?php }", "Block in parent");
+			self::checkEmit("[@ start foo @] bar [@ end foo @]", "<?php if (!\$this->__request->echoBlock('foo')) { ?> bar <?php }", "Block in parent");
 		}
 					
 		public function testBlockInParentWithSpaces() {
-			self::checkEmit(" [@ start foo @] bar [@ end foo @] ", " <?php if (!\$this->request->echoBlock('foo')) { ?> bar <?php } ?> ", "Block in parent with spaces");
+			self::checkEmit(" [@ start foo @] bar [@ end foo @] ", " <?php if (!\$this->__request->echoBlock('foo')) { ?> bar <?php } ?> ", "Block in parent with spaces");
 		}
 					
 		public function testBlocksInBlocksInParent() {
-			self::checkEmit("[@ start foo @] bar [@ start baz @] bam [@ end baz @] [@ end foo @]", "<?php if (!\$this->request->echoBlock('foo')) { ?> bar <?php if (!\$this->request->echoBlock('baz')) { ?> bam <?php } ?> <?php }", "Block in parent");
+			self::checkEmit("[@ start foo @] bar [@ start baz @] bam [@ end baz @] [@ end foo @]", "<?php if (!\$this->__request->echoBlock('foo')) { ?> bar <?php if (!\$this->__request->echoBlock('baz')) { ?> bam <?php } ?> <?php }", "Block in parent");
 		}
 		
 		public function testBlockInChild() {
-			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ end foo @]", "<?php if (!\$this->request->echoBlock('foo')) { ob_start(); ?> bar <?php \$this->request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Block in child");
+			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ end foo @]", "<?php if (!\$this->__request->echoBlock('foo')) { ob_start(); ?> bar <?php \$this->__request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Block in child");
 		}			
 
 		public function testBlocksInBlocksInChild() {
-			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ start baz @] bam [@ end baz @] [@ end foo @]", "<?php if (!\$this->request->echoBlock('foo')) { ob_start(); ?> bar <?php if (!\$this->request->echoBlock('baz')) { ob_start(); ?> bam <?php \$this->request->setBlock('baz', ob_get_contents()); ob_end_clean(); \$this->request->echoBlock('baz'); } ?> <?php \$this->request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Blocks in block in child");
+			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ start baz @] bam [@ end baz @] [@ end foo @]", "<?php if (!\$this->__request->echoBlock('foo')) { ob_start(); ?> bar <?php if (!\$this->__request->echoBlock('baz')) { ob_start(); ?> bam <?php \$this->__request->setBlock('baz', ob_get_contents()); ob_end_clean(); \$this->__request->echoBlock('baz'); } ?> <?php \$this->__request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Blocks in block in child");
 		}
 		
 		public function testAppendInParent() {
-			self::checkEmit("[@ append foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->request->appendBlock('foo', ob_get_contents()); ob_end_clean();", "Append in parent");
+			self::checkEmit("[@ append foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->appendBlock('foo', ob_get_contents()); ob_end_clean();", "Append in parent");
 		}
 				
 		public function testAppendInChild() {
-			self::checkEmit("[@ extends bam @] [@ append foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->request->appendBlock('foo', ob_get_contents()); ob_end_clean(); \$this->includeTemplate('bam');", "Append in child");
+			self::checkEmit("[@ extends bam @] [@ append foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->appendBlock('foo', ob_get_contents()); ob_end_clean(); \$this->includeTemplate('bam');", "Append in child");
 		}
 
 		public function testPrependInParent() {
-			self::checkEmit("[@ prepend foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->request->prependBlock('foo', ob_get_contents()); ob_end_clean();", "Append in parent");
+			self::checkEmit("[@ prepend foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->prependBlock('foo', ob_get_contents()); ob_end_clean();", "Append in parent");
 		}
 				
 		public function testPrependInChild() {
-			self::checkEmit("[@ extends bam @] [@ prepend foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->request->prependBlock('foo', ob_get_contents()); ob_end_clean(); \$this->includeTemplate('bam');", "Append in child");
+			self::checkEmit("[@ extends bam @] [@ prepend foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->prependBlock('foo', ob_get_contents()); ob_end_clean(); \$this->includeTemplate('bam');", "Append in child");
 		}
 
 		public function testBlockWithFunctionCallNoParams() {
-			self::checkEmit("[@ include foo if foo() @]", "<?php if (\$this->runtime->call('foo', array())) { \$this->includeTemplate('foo'); }", "Block with function call and no params");
+			self::checkEmit("[@ include foo if foo() @]", "<?php if (\$this->__runtime->call('foo', array())) { \$this->includeTemplate('foo'); }", "Block with function call and no params");
 		}
 			
 		public function testBlockWithFunctionCallOneParam() {
-			self::checkEmit("[@ include foo if foo(2) @]", "<?php if (\$this->runtime->call('foo', array(2))) { \$this->includeTemplate('foo'); }", "Block with function call with one param");
+			self::checkEmit("[@ include foo if foo(2) @]", "<?php if (\$this->__runtime->call('foo', array(2))) { \$this->includeTemplate('foo'); }", "Block with function call with one param");
 		}
 
 		public function testBlockWithFunctionCallVarParam() {
-			self::checkEmit("[@ include foo if foo(bar) @]", "<?php if (\$this->runtime->call('foo', array(\$this->runtime->identifier('bar')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var param");
+			self::checkEmit("[@ include foo if foo(bar) @]", "<?php if (\$this->__runtime->call('foo', array(\$this->__runtime->identifier('bar')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var param");
 		}
 
 		public function testBlockWithFunctionCallVarWithDotParam() {
-			self::checkEmit("[@ include foo if foo(bar.bam) @]", "<?php if (\$this->runtime->call('foo', array(\$this->runtime->attr('bar', 'bam')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var with dot param");
+			self::checkEmit("[@ include foo if foo(bar.bam) @]", "<?php if (\$this->__runtime->call('foo', array(\$this->__runtime->attr('bar', 'bam')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var with dot param");
 		}		
 		
 		public function testBlockWithOperator() {
-			self::checkEmit("[@ include foo if x < 3 @]", "<?php if (\$this->runtime->identifier('x') < 3) { \$this->includeTemplate('foo'); }", "Block with operator");
+			self::checkEmit("[@ include foo if x < 3 @]", "<?php if (\$this->__runtime->identifier('x') < 3) { \$this->includeTemplate('foo'); }", "Block with operator");
 		}
 
 		public function testBlockWithAssign() {
-			self::checkEmit("[@ include foo if x = 1 < 3 @]", "<?php if (\$this->runtime->assign('x', 1 < 3)) { \$this->includeTemplate('foo'); }", "Block with assignment");
+			self::checkEmit("[@ include foo if x = 1 < 3 @]", "<?php if (\$this->__runtime->assign('x', 1 < 3)) { \$this->includeTemplate('foo'); }", "Block with assignment");
 		}
 
 		public function testBlockWithIndex() {
-			self::checkEmit("[@ include foo if x[1] @]", "<?php if (\$this->runtime->attr('x', 1)) { \$this->includeTemplate('foo'); }", "Block with index");
+			self::checkEmit("[@ include foo if x[1] @]", "<?php if (\$this->__runtime->attr('x', 1)) { \$this->includeTemplate('foo'); }", "Block with index");
 		}			
 		
 		public function testBlockWithArrayIndexAndSingleLimit() {
-			self::checkEmit("[@ include foo if x[3]:1 @]", "<?php if (\$this->runtime->limit(\$this->runtime->attr('x', 3), 1)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
+			self::checkEmit("[@ include foo if x[3]:1 @]", "<?php if (\$this->__runtime->limit(\$this->__runtime->attr('x', 3), 1)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
 		}
 				
 		public function testBlockWithArrayIndexAndFullLimit() {
-			self::checkEmit("[@ include foo if x[3]:1,-3 @]", "<?php if (\$this->runtime->limit(\$this->runtime->attr('x', 3), 1, -3)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
+			self::checkEmit("[@ include foo if x[3]:1,-3 @]", "<?php if (\$this->__runtime->limit(\$this->__runtime->attr('x', 3), 1, -3)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
 		}
 
 		public function testBlockWithArrayIndexAndFilter() {
-			self::checkEmit("[@ include foo if x[3]:bar() @]", "<?php if (\$this->runtime->call('bar', array(\$this->runtime->attr('x', 3)))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
+			self::checkEmit("[@ include foo if x[3]:bar() @]", "<?php if (\$this->__runtime->call('bar', array(\$this->__runtime->attr('x', 3)))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
 		}
 					
 		public function testBlockWithArrayIndexAndFilters() {
-			self::checkEmit("[@ include foo if x[3]:bar(1,2):boom(3):bam() @]", "<?php if (\$this->runtime->call('bam', array(\$this->runtime->call('boom', array(\$this->runtime->call('bar', array(\$this->runtime->attr('x', 3), 1, 2)), 3))))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
+			self::checkEmit("[@ include foo if x[3]:bar(1,2):boom(3):bam() @]", "<?php if (\$this->__runtime->call('bam', array(\$this->__runtime->call('boom', array(\$this->__runtime->call('bar', array(\$this->__runtime->attr('x', 3), 1, 2)), 3))))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
 		}
 
 		public function testBlockWithBuiltInFilter() {
-			self::checkEmit("[@ include foo if x:substr(2,-2) @]", "<?php if (call_user_func_array('substr', array(\$this->runtime->identifier('x'), 2, -2))) { \$this->includeTemplate('foo'); }", "Block with built in filter");
+			self::checkEmit("[@ include foo if x:substr(2,-2) @]", "<?php if (call_user_func_array('substr', array(\$this->__runtime->identifier('x'), 2, -2))) { \$this->includeTemplate('foo'); }", "Block with built in filter");
 		}
 		
 		public function testBlockWithNamespacedFilter() {
-			self::checkEmit("[@ include foo if x:bar\\bam() @]", "<?php if (\$this->runtime->call('bar\\\\bam', array(\$this->runtime->identifier('x')))) { \$this->includeTemplate('foo'); }", "Block with built in filter");
+			self::checkEmit("[@ include foo if x:bar\\bam() @]", "<?php if (\$this->__runtime->call('bar\\\\bam', array(\$this->__runtime->identifier('x')))) { \$this->includeTemplate('foo'); }", "Block with built in filter");
 		}
 		
 		public function testPageBlockWithDecorator() {
@@ -225,52 +225,52 @@ HTML;
 		
 		public function testSimpleGenerator() {
 			$src = "{@ foo @}";
-			self::checkEmit($src, "<?php echo \$this->runtime->identifier('foo');", "Simple generator");
+			self::checkEmit($src, "<?php echo \$this->__runtime->identifier('foo');", "Simple generator");
 		}
 
 		public function testMultiExpressionGenerator() {
 			$src = "{@ foo; bar @}";
-			self::checkEmit($src, "<?php \$this->runtime->identifier('foo'); echo \$this->runtime->identifier('bar');", "Simple generator with multiple expressions");
+			self::checkEmit($src, "<?php \$this->__runtime->identifier('foo'); echo \$this->__runtime->identifier('bar');", "Simple generator with multiple expressions");
 		}
 		
 		public function testSimpleGeneratorWithOutput() {
 			$src = "{@ foo ? bar @}";
-			self::checkEmit($src, "<?php if (\$this->runtime->startGenerator(\$this->runtime->identifier('foo'))) { do { echo \$this->runtime->identifier('bar'); } while (\$this->runtime->loop()); } \$this->runtime->endGenerator();", "Simple generator with output");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo \$this->__runtime->identifier('bar'); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Simple generator with output");
 		}
 		
 		public function testGeneratorWithOneOutputTemplate() {
 			$src = "{@ foo ? `bar` @}";
-			self::checkEmit($src, "<?php if (\$this->runtime->startGenerator(\$this->runtime->identifier('foo'))) { do { echo 'bar'; } while (\$this->runtime->loop()); } \$this->runtime->endGenerator();", "Generator with one output template");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template");
 		}
 		
 		public function testGeneratorWithOneOutputTemplateWithSimpleGenerator() {
 			$src = "{@ foo ? `bar {baz} boom` @}";
-			self::checkEmit($src, "<?php if (\$this->runtime->startGenerator(\$this->runtime->identifier('foo'))) { do { echo 'bar ' . \$this->runtime->identifier('baz') . ' boom'; } while (\$this->runtime->loop()); } \$this->runtime->endGenerator();", "Generator with one output template with simple generator");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar ' . \$this->__runtime->identifier('baz') . ' boom'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template with simple generator");
 		}			
 
 		public function testGeneratorWithOneOutputTemplateWithGenerator() {
 			$src = "{@ foo ? `bar {baz ? bam} boom` @}";
-			self::checkEmit($src, "<?php if (\$this->runtime->startGenerator(\$this->runtime->identifier('foo'))) { do { echo 'bar '; if (\$this->runtime->startGenerator(\$this->runtime->identifier('baz'))) { do { echo \$this->runtime->identifier('bam'); } while (\$this->runtime->loop()); } \$this->runtime->endGenerator(); echo ' boom'; } while (\$this->runtime->loop()); } \$this->runtime->endGenerator();", "Generator with one output template with generator");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar '; if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('baz'))) { do { echo \$this->__runtime->identifier('bam'); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator(); echo ' boom'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template with generator");
 		}		
 		
 		public function testGeneratorWithTwoOutputTemplates() {
 			$src = "{@ foo ? `bar` `baz` @}";
-			self::checkEmit($src, "<?php if (\$this->runtime->startGenerator(\$this->runtime->identifier('foo'))) { echo 'bar'; do { echo 'baz'; } while (\$this->runtime->loop()); } \$this->runtime->endGenerator();", "Generator with one output template");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { echo 'bar'; do { echo 'baz'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template");
 		}
 		
 		public function testGeneratorWithTemplateAssignment() {
 			$src = "{@ foo = `bar {baz ? bam} boom` @}";
-			self::checkEmit($src, "<?php if (!function_exists('otf_8844721509b878c04eda4bc54d9ab46f44f4323b')) { function otf_8844721509b878c04eda4bc54d9ab46f44f4323b() { ob_start(); echo 'bar '; if (\$this->runtime->startGenerator(\$this->runtime->identifier('baz'))) { do { echo \$this->runtime->identifier('bam'); } while (\$this->runtime->loop()); } \$this->runtime->endGenerator(); echo ' boom'; \$_otfOutput = ob_get_contents(); ob_end_clean(); return \$_otfOutput;} }; echo \$this->runtime->assign('foo', otf_8844721509b878c04eda4bc54d9ab46f44f4323b());", "Generator with template assignment");
+			self::checkEmit($src, "<?php if (!function_exists('otf_25babf696a1f4e5644f774f8145ebb54f75d5671')) { function otf_25babf696a1f4e5644f774f8145ebb54f75d5671() { ob_start(); echo 'bar '; if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('baz'))) { do { echo \$this->__runtime->identifier('bam'); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator(); echo ' boom'; \$_otfOutput = ob_get_contents(); ob_end_clean(); return \$_otfOutput;} }; echo \$this->__runtime->assign('foo', otf_25babf696a1f4e5644f774f8145ebb54f75d5671());", "Generator with template assignment");
 		}
 		
 		public function testGeneratorWithNoOutput() {
 			$src = "{@ foo ? @}";
-			self::checkEmit($src, "<?php \$this->runtime->identifier('foo')", "Generator with no output");
+			self::checkEmit($src, "<?php \$this->__runtime->identifier('foo')", "Generator with no output");
 		}
 
 		public function testGeneratorWithNoOutputAndAssignment() {
 			$src = "{@ foo = 1 ? @}";
-			self::checkEmit($src, "<?php \$this->runtime->assign('foo', 1)", "Generator with no output and assignment");
+			self::checkEmit($src, "<?php \$this->__runtime->assign('foo', 1)", "Generator with no output and assignment");
 		}
 
 	}

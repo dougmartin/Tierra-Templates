@@ -14,13 +14,22 @@
 		private $__runtime;
 		private $__request;
 		
-		public function __construct($templateFile, $baseTemplateDir, $options=array(), $request=false) {
+		public function __construct($options=array()) {
 			
 			$this->__options = $options;
-			$this->__templateFile = $templateFile;
-			$this->__baseTemplateDir = self::AddTrailingDirectorySeparator($baseTemplateDir);
-			$this->__request = $request !== false ? $request : new TierraTemplateRequest();
+			
+			$templateFile = $this->getOption("templateFile");
+			if ($templateFile === false)
+				throw new TierraTemplateException("Missing templateFile option");
+			$baseTemplateDir = self::AddTrailingDirectorySeparator($this->getOption("baseTemplateDir"));
+			if ($baseTemplateDir === false)
+				throw new TierraTemplateException("Missing baseTemplateDir option");
+			
+			$this->__request = isset($options["request"]) !== false ? $options["request"] : new TierraTemplateRequest();
 			$this->__runtime = new TierraTemplateRuntime($this->__request);
+			$this->__templateFile = $templateFile;
+			$this->__baseTemplateDir = $baseTemplateDir;
+			$this->__cachedTemplatePath = false;
 			
 			$rawTemplatePath = $baseTemplateDir . $templateFile;
 			$rawTemplateInfo = @stat($rawTemplatePath);
@@ -39,17 +48,27 @@
 			}
 		}
 		
-		public static function Load($templateFile, $baseTemplateDir, $options=array(), $request=false) {
-			return new TierraTemplate($templateFile, $baseTemplateDir, $options, $request);
+		public static function LoadTemplate($options) {
+			return new TierraTemplate($options);
 		}
 		
-		public static function Run($templateFile, $baseTemplateDir, $options=array(), $request=false) {
-			$template = self::Load($templateFile, $baseTemplateDir, $options, $request);
+		public static function RenderTemplate($options) {
+			$template = self::Load($options);
 			$template->render();
 		}
 		
-		public static function RunDynamic($templateContents, $options=array(), $request=false) {
-			
+		public static function RenderDynamicTemplate($templateContents, $options=array()) {
+			list($options["templateFile"], $options["baseTemplateDir"]) = self::SaveDynamicTemplate($templateContents, $options);
+			self::RenderTemplate($options);
+		}
+		
+		public static function GetDynamicTemplateOutput($templateContents, $options=array()) {
+			list($options["templateFile"], $options["baseTemplateDir"]) = self::SaveDynamicTemplate($templateContents, $options);
+			$template = self::LoadTemplate($options);
+			return $template->render(true, true);
+		}
+		
+		public static function SaveDynamicTemplate($templateContents, $options) {
 			$cacheRoot = self::GetCacheRoot($options);
 			
 			$templateFile = self::AddTrailingDirectorySeparator(self::StaticGetOption($options, "dynamicTemplateDir", "_dtt")) . "dtt_" . sha1($templateContents) . ".html";
@@ -64,9 +83,9 @@
 				}
 				else
 					throw new TierraTemplateException("Cannot create dynamic template: {$templatePath}");			
-			} 
+			}
 			
-			self::Run($templateFile, $cacheRoot, $options, $request);
+			return array($templateFile, $cacheRoot);
 		}
 		
 		public static function StaticGetOption($options, $name, $default=false) {
@@ -127,15 +146,19 @@
 			return self::StaticGetOption($this->__options, $name, $default);
 		}
 		
-		public function render($bufferOutput=true) {
-			$bufferOutput = false;
-			if ($bufferOutput)
-				ob_start();
-			require_once $this->__cachedTemplatePath;
-			if ($bufferOutput) {
-				$output = ob_get_contents();
-				ob_end_clean();
-				echo $output;
+		public function render($bufferOutput=true, $returnOutput=false) {
+			if ($this->__cachedTemplatePath) {
+				if ($bufferOutput || $returnOutput)
+					ob_start();
+				require_once $this->__cachedTemplatePath;
+				if ($bufferOutput || $returnOutput) {
+					$output = ob_get_contents();
+					ob_end_clean();
+					if (!$returnOutput)
+						echo $output;
+				}
+				if ($returnOutput)
+					return $output;
 			}
 		}
 		
@@ -151,8 +174,11 @@
 			$info = pathinfo($templateFile);
 			if (!isset($info["extension"]) && $this->getOption("autoAddHtmlExtension", true))
 				$templateFile .= ".html";
+				
+			$options = array_slice($this->__options, 0);
+			$options["templateFile"] = $templateFile;
 			
-			$includedTemplate = Template::Load($templateFile, $this->__baseTemplateDir, $this->__options, $this->__request);
+			$includedTemplate = Template::Load($options);
 			$includedTemplate->render(false);
 		}			
 	}
