@@ -1,5 +1,5 @@
 <?php
-	require_once dirname(__FILE__) . "/../src/TierraTemplateStackFrame.php";
+	require_once dirname(__FILE__) . "/TierraTemplateStackFrame.php";
 	
 	class TierraTemplateRuntime {
 	

@@ -238,7 +238,7 @@
 						$code[] = "call_user_func_array('{$node->method}', {$params})";
 					else
 						// addslashes() to escape the possible namespace slashes in the method
-						$code[] = "\$this->runtime->call('" . addslashes($node->method) . "', {$params})";
+						$code[] = "\$this->__runtime->call('" . addslashes($node->method) . "', {$params})";
 					break;		
 
 				case TierraTemplateASTNode::LITERAL_NODE:
@@ -254,7 +254,7 @@
 					else if (in_array(strtolower($node->identifier), array("true", "false")))
 						$code[] = $node->identifier;
 					else
-						$code[] = "\$this->runtime->identifier('" . str_replace("\$", "\\\$", $node->identifier) . "')";
+						$code[] = "\$this->__runtime->identifier('" . str_replace("\$", "\\\$", $node->identifier) . "')";
 					break;
 					
 				case TierraTemplateASTNode::OPERATOR_NODE:
@@ -267,19 +267,19 @@
 							self::setReturnIdentifierName(true);
 							$var = self::emitExpression($node->leftNode);
 							self::resetReturnIdentifierName();
-							$code[] = "\$this->runtime->assign({$var}, " . self::emitExpression($node->rightNode) . ")";
+							$code[] = "\$this->__runtime->assign({$var}, " . self::emitExpression($node->rightNode) . ")";
 							break;
 							
 						case TierraTemplateTokenizer::LEFT_BRACKET_TOKEN:
 						case TierraTemplateTokenizer::DOT_TOKEN:
 							self::setReturnIdentifierName(true);
-							$code[] = "\$this->runtime->attr(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
+							$code[] = "\$this->__runtime->attr(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
 							self::resetReturnIdentifierName();
 							break;
 							
 						case TierraTemplateTokenizer::COLON_TOKEN:
 							if (($node->rightNode->type == TierraTemplateASTNode::OPERATOR_NODE) && ($node->rightNode->op == ",")) {
-								$code[] = "\$this->runtime->limit(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode->leftNode) . ", " . self::emitExpression($node->rightNode->rightNode) . ")";
+								$code[] = "\$this->__runtime->limit(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode->leftNode) . ", " . self::emitExpression($node->rightNode->rightNode) . ")";
 							}
 							else {
 								if ($node->rightNode->type == TierraTemplateASTNode::FUNCTION_CALL_NODE) {
@@ -288,7 +288,7 @@
 									$code[] = self::emitExpression($node->rightNode);
 								}
 								else
-									$code[] = "\$this->runtime->limit(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
+									$code[] = "\$this->__runtime->limit(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
 							}
 							break;
 							
@@ -358,13 +358,13 @@
 				$code[] = self::emitExpression($expression);
 			}
 			else {
-				$code[] = "if (\$this->runtime->startGenerator(" .  self::emitExpression($expression) .  ")) {";
+				$code[] = "if (\$this->__runtime->startGenerator(" .  self::emitExpression($expression) .  ")) {";
 				if ($node->ifTrue !== false)
 					$code[] = self::emitGeneratorOutput($node->ifTrue);
 				$code[] = "}";
 				if ($node->ifFalse !== false)
-					$code[] = "else {" . self::emitGeneratorOutput($node->ifFalse) . "}";
-				$code[] = "\$this->runtime->endGenerator();";
+					$code[] = "else { " . self::emitGenerator($node->ifFalse) . " }";
+				$code[] = "\$this->__runtime->endGenerator();";
 			}
 			
 			// TODO: add code generator decorator calls
@@ -382,7 +382,7 @@
 				
 			$loopElement = ($numElements > 1 ? $node->elements[1] : ($numElements > 0 ? $node->elements[0] : false));
 			if ($loopElement)
-				$code[] = "do { " . self::emitGeneratorOrOutputTemplate($loopElement) ." } while (\$this->runtime->loop());";
+				$code[] = "do { " . self::emitGeneratorOrOutputTemplate($loopElement) ." } while (\$this->__runtime->loop());";
 			
 			$postElement = ($numElements > 2 ? $node->elements[2] : false);
 			if ($postElement)
