@@ -24,24 +24,15 @@
 		}
 		
 		public function identifier($name) {
-			$value = false;
 			if (is_array($this->loopValue) && isset($this->loopValue[$name]))
-				$value = $this->loopValue[$name];
-			else if (is_object($this->loopValue)) {
-				if (   isset($this->loopValue->$name)
-					|| (   method_exists($this->loopValue, "izset")
-						&& $this->loopValue->izset($name)))
-					$value = $this->loopValue->$name;
-			}
-			return $value;
+				return $this->loopValue[$name];
+			if (is_object($this->loopValue) && isset($this->loopValue->$name))
+				return $this->loopValue->$name;
+			return false;
 		}
 		
 		public function hasIdentifier($name) {
-			return     (is_array($this->loopValue) && isset($this->loopValue[$name])) 
-					|| (   is_object($this->loopValue) 
-						&& (   isset($this->loopValue->$name)
-							|| (   method_exists($this->loopValue, "izset")
-								&& $this->loopValue->izset($name))));
+			return (is_array($this->loopValue) && isset($this->loopValue[$name])) || (is_object($this->loopValue) && isset($this->loopValue->$name));
 		}
 		
 		public function loop() {
@@ -52,21 +43,11 @@
 			return $continue;
 		}
 		
-		public function setLoopMod($mod) {
-			$this->loopMod = $mod;
+		public function currentValue() {
+			return $this->loopValue;
 		}
 		
-		public function inLoopStep($start, $end, $mod=false) {
-			$mod = ($mod === false ? $this->loopMod : $mod);
-			$index = ($this->loopIndex % $mod);
-			return (($index >= $start) && ($index <= $end));
-		}
-		
-		public function currentValue($index) {
-			return $this->loopValue[$index];
-		}
-		
-		public function dollarValue($index) {
+		public function specialValue($index) {
 			switch ($index) {
 				case "":
 					$value = $this->loopValue;

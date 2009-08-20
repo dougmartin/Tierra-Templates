@@ -22,9 +22,9 @@
 		
 		public function identifier($name) {
 		
-			// see if this is a placeholder identifier
+			// see if this is a special value
 			if ($name[0] == "$")
-				return ($this->context ? $this->context->dollarValue(substr($name,1)) : false);
+				return ($this->context ? $this->context->specialValue(substr($name,1)) : false);
 				
 			// walk down the stack looking for the identifier
 			for ($i=count($this->stack)-1; $i>=0; $i--) {
@@ -44,7 +44,7 @@
 			else if (is_string($expression))
 				$result = strlen($expression) > 0;
 			else if (is_int($expression))
-				$result = true;
+				$result != 0;
 			else 
 				$result = $expression;
 				
@@ -85,10 +85,6 @@
 		public function inLoopStep($start, $end, $mod) {
 			return $this->context->inLoopStep($start, $end, $mod);
 		}
-		
-		public function output() {
-			$params = func_get_args();
-			echo @implode("", $params);
-		}
+
 		
 	}
