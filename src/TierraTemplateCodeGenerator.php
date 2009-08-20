@@ -44,6 +44,9 @@
 			
 			self::$isChildTemplate = isset($ast->parentTemplateName);
 			self::$blockStack = array();
+			self::$returnIdentifierName = false;
+			self::$returnIdentifierNameStack = array();
+			self::$outputTemplateFunctions = array();
 			
 			$chunks = array();
 
@@ -343,11 +346,16 @@
 			else
 				$expression = $node->expression;
 			
+			// if this generator has no output then output the head
 			if (($node->ifTrue === false) && ($node->ifFalse === false)) {
 				if ($expression->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE)
 					$code[] =  self::emitOutputTemplate($expression, true);
 				else
 					$code[] =  $noEcho ? self::emitExpression($expression) : "echo " . self::emitExpression($expression) . ";";
+			}
+			// if the generator explicitly has no output by using a trailing ? then just emit the expression
+			else if ($node->ifTrue && (count($node->ifTrue->elements) == 0) && (!$node->ifFalse || (count($node->ifFalse->elements) == 0))) {
+				$code[] = self::emitExpression($expression);
 			}
 			else {
 				$code[] = "if (\$this->runtime->startGenerator(" .  self::emitExpression($expression) .  ")) {";

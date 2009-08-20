@@ -436,10 +436,6 @@
 					$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
 			}
 			
-			// if () return false
-			if (count($node->elements) == 0)
-				return false;
-				
 			return $node;
 		}
 		
