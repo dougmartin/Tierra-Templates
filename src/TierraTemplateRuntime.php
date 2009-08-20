@@ -1,13 +1,15 @@
 <?php
+	require_once dirname(__FILE__) . "/../src/TierraTemplateStackFrame.php";
+	
 	class TierraTemplateRuntime {
 	
-		private $stack;
-		private $context;
+		private $stackFrame;
+		private $currentFrame;
 		private $request;
 		
 		public function __construct($request) {
-			$this->stack = array();
-			$this->context = null;
+			$this->stackFrame = array();
+			$this->currentFrame = false;
 			$this->request = $request;
 		}
 		
@@ -23,14 +25,14 @@
 		public function identifier($name) {
 		
 			// see if this is a special value
-			if ($name[0] == "$")
-				return ($this->context ? $this->context->specialValue(substr($name,1)) : false);
+			if (($name[0] == "$") || ($name[0] == "%")) 
+				return ($this->currentFrame ? $this->currentFrame->specialValue(substr($name,1)) : false);
 				
 			// walk down the stack looking for the identifier
-			for ($i=count($this->stack)-1; $i>=0; $i--) {
-				$frame = $this->stack[$i];
-				if ($frame->hasIdentifier($name))
-					return $frame->identifier($name);
+			for ($i=count($this->stackFrame)-1; $i>=0; $i--) {
+				$currentFrame = $this->stackFrame[$i];
+				if ($currentFrame->hasIdentifier($name))
+					return $currentFrame->identifier($name);
 			}
 	
 			// finally look in the request
@@ -44,19 +46,19 @@
 			else if (is_string($expression))
 				$result = strlen($expression) > 0;
 			else if (is_int($expression))
-				$result != 0;
+				$result = $expression != 0;
 			else 
 				$result = $expression;
 				
-			$this->context = new TemplateStackFrame($expression);
-			$this->stack[] = $this->context;
+			$this->currentFrame = new TierraTemplateStackFrame($expression);
+			$this->stackFrame[] = $this->currentFrame;
 			
 			return $result;
 		}
 		
 		public function endGenerator() {
-			array_pop($this->stack);
-			$this->context = count($this->stack) > 0 ? $this->stack[count($this->stack) - 1] : false;
+			array_pop($this->stackFrame);
+			$this->currentFrame = count($this->stackFrame) > 0 ? $this->stackFrame[count($this->stackFrame) - 1] : false;
 		}
 		
 		public function call($functionName, $params=array()) {
@@ -75,16 +77,7 @@
 		}
 		
 		public function loop() {
-			return $this->context->loop();
+			return $this->currentFrame->loop();
 		}
-		
-		public function setLoopMod($mod) {
-			$this->context->setLoopMod($mod);
-		}
-		
-		public function inLoopStep($start, $end, $mod) {
-			return $this->context->inLoopStep($start, $end, $mod);
-		}
-
 		
 	}
