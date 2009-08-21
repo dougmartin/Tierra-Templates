@@ -9,7 +9,8 @@
 		showError(!isset($options[$option]), "Missing '{$option}' in config.php");
 
 	// get the relative url from this script
-	$uri = substr(urldecode($_SERVER["REQUEST_URI"]), strlen(dirname($_SERVER["SCRIPT_NAME"])));
+	$scriptDir = dirname($_SERVER["SCRIPT_NAME"]);
+	$uri = substr(urldecode($_SERVER["REQUEST_URI"]), strlen($scriptDir) > 1 ? strlen($scriptDir) : 0);
 	
 	// render the page
 	showError(!@include_once $options["srcDir"] . "/TierraTemplateRunner.php", "Unable to find TierraTemplateRunner.php in {$options["srcDir"]}");
