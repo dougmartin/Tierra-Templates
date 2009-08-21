@@ -264,6 +264,15 @@
 			return $this->curChar();
 		}
 		
+		// skips over the slash if present and adds the character to the buffer
+		public function skipSlash($curChar, &$chars) {
+			if ($curChar == "\\") {
+				$chars[] = $this->advanceChar();
+				$curChar = $this->advanceChar();
+			}
+			return $curChar;
+		} 
+		
 		public function startSelection() {
 			$this->startSelectionIndices[] = $this->streamIndex;
 		}
@@ -292,13 +301,14 @@
 				if (($curChar == '"') || ($curChar == "'")) {
 					$quoteDelimiter = $curChar;
 					$curChar = $this->advanceChar();
-					$this->startSelection();
+					$chars = array();
 					while (!$this->eof && ($curChar != $quoteDelimiter)) {
 						if ($curChar == "\\")
-							$this->advanceChar();
+							$curChar = $this->advanceChar();
+						$chars[] = $curChar;
 						$curChar = $this->advanceChar();
 					}
-					$this->nextLexeme = $this->endSelection();
+					$this->nextLexeme = implode("", $chars);
 					$this->nextToken = self::STRING_TOKEN;
 					
 					// get past the closing quote
@@ -373,22 +383,13 @@
 				switch ($mode) {
 					case self::HTML_MODE:
 						$chars = array();
-						
-						$curChar = $this->curChar();
-						if ($curChar == "\\") {
-							$chars[] = $this->advanceChar();
-							$curChar = $this->advanceChar();
-						}
+						$curChar = $this->skipSlash($this->curChar(), $chars);
 												
 						// get everything up to the next comment, block or generator start 
 						$nextChar = $this->nextChar();
 						while (!$this->eof && !((($curChar == '[') || ($curChar == '{')) && (($nextChar == '#') || ($nextChar == '@')))) {
 							$chars[] = $curChar;
-							$curChar = $this->advanceChar();
-							if ($curChar == "\\") {
-								$chars[] = $this->advanceChar();
-								$curChar = $this->advanceChar();
-							}
+							$curChar = $this->skipSlash($this->advanceChar(), $chars);
 							$nextChar = $this->nextChar();
 						}
 						
@@ -476,11 +477,7 @@
 					case self::OUTPUT_TEMPLATE_MODE:
 						$chars = array();
 						
-						$curChar = $this->curChar();
-						if ($curChar == "\\") {
-							$chars[] = $this->advanceChar();
-							$curChar = $this->advanceChar();
-						}
+						$curChar = $this->skipSlash($this->curChar(), $chars);
 						
 						if ($curChar == self::BACKTICK_TOKEN) {
 							$this->nextToken = self::BACKTICK_TOKEN;
@@ -506,11 +503,7 @@
 						else {
 							while (!$this->eof && ($curChar != self::BACKTICK_TOKEN) && ($curChar != self::LEFT_BRACE_TOKEN)) {
 								$chars[] = $curChar;
-								$curChar = $this->advanceChar();
-								if ($curChar == "\\") {
-									$chars[] = $this->advanceChar();
-									$curChar = $this->advanceChar();
-								}								
+								$curChar = $this->skipSlash($this->advanceChar(), $chars);
 							}
 							$this->nextLexeme = implode("", $chars);
 							$this->nextToken = self::STRING_TOKEN;							
@@ -518,13 +511,9 @@
 						break;
 						
 					case self::STRICT_OUTPUT_TEMPLATE_MODE:
-						$chars = array();
 						
-						$curChar = $this->curChar();
-						if ($curChar == "\\") {
-							$chars[] = $this->advanceChar();
-							$curChar = $this->advanceChar();
-						}
+						$chars = array();
+						$curChar = $this->skipSlash($this->curChar(), $chars);
 						$nextChar = $this->nextChar();
 						
 						if ($curChar == self::TILDE_TOKEN) {
@@ -543,11 +532,7 @@
 						else {
 							while (!$this->eof && ($curChar != self::TILDE_TOKEN) && ($curChar . $nextChar != self::GENERATOR_START_TOKEN)) {
 								$chars[] = $curChar;
-								$curChar = $this->advanceChar();
-								if ($curChar == "\\") {
-									$chars[] = $this->advanceChar();
-									$curChar = $this->advanceChar();
-								}
+								$curChar = $this->skipSlash($this->advanceChar(), $chars);
 								$nextChar = $this->nextChar();
 							}
 							$this->nextLexeme = implode("", $chars);
