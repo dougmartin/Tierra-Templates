@@ -375,6 +375,7 @@
 					$node->value = $this->tokenizer->advance();
 					break;
 					
+				case TierraTemplateTokenizer::EXTERNAL_FUNCTION_CALL_TOKEN:
 				case TierraTemplateTokenizer::FUNCTION_CALL_TOKEN:
 					$node = $this->functionCallNode();
 					break;
@@ -450,7 +451,8 @@
 		private function functionCallNode($noParams=false) {
 			
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::FUNCTION_CALL_NODE);
-			$node->method = $this->tokenizer->match(TierraTemplateTokenizer::FUNCTION_CALL_TOKEN);
+			$node->isExternal = $this->tokenizer->nextIs(TierraTemplateTokenizer::EXTERNAL_FUNCTION_CALL_TOKEN);
+			$node->method = $this->tokenizer->matches(array(TierraTemplateTokenizer::FUNCTION_CALL_TOKEN, TierraTemplateTokenizer::EXTERNAL_FUNCTION_CALL_TOKEN));
 			$node->params = array();
 			
 			// filters can optionally have no parameters when chained.  They look like identifiers to the tokenizer.

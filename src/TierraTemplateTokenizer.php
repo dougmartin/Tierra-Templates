@@ -10,6 +10,7 @@
 		const COMMENT_END_TOKEN = "comment end";
 		const STRING_TOKEN = "string";
 		const FUNCTION_CALL_TOKEN = "function call";
+		const EXTERNAL_FUNCTION_CALL_TOKEN = "external function call";
 		const IDENTIFIER_TOKEN = "identifier";
 		const FLOAT_TOKEN = "float";
 		const INTEGER_TOKEN = "integer";
@@ -143,7 +144,8 @@
 				self::XOR_TOKEN => '/(' . self::XOR_TOKEN . ')/',
 				self::OR_TOKEN => '/(' . self::OR_TOKEN . ')/',
 				self::AND_TOKEN => '/(' . self::AND_TOKEN . ')/',			
-				self::FUNCTION_CALL_TOKEN => '/([A-Za-z_]([A-Za-z_\\\\]*)?)\(/',
+				self::FUNCTION_CALL_TOKEN => '/([A-Za-z_]([A-Za-z_]*)?)\(/',
+				self::EXTERNAL_FUNCTION_CALL_TOKEN => '/([A-Za-z_]([A-Za-z_\\\\]*(::)*[A-Za-z_\\\\]*)?)\(/',
 				self::IDENTIFIER_TOKEN => '/([$A-Za-z_]([A-Za-z_0-9]*)?)/',
 				self::FLOAT_TOKEN => '/((\d+\.\d+))/',
 				self::INTEGER_TOKEN => '/(\d+)/',
@@ -475,8 +477,8 @@
 					// and the generator delimiters {...} and {@...@} for normal but just {@...@} for strict
 					// strict is used when including javascript with braces in a output template so you don't have to escape all the {} characters
 					case self::OUTPUT_TEMPLATE_MODE:
-						$chars = array();
 						
+						$chars = array();
 						$curChar = $this->skipSlash($this->curChar(), $chars);
 						
 						if ($curChar == self::BACKTICK_TOKEN) {
