@@ -201,12 +201,23 @@
 						$leftNode = $this->expressionOperatorNode($precedence + 1);
 						while (in_array($this->tokenizer->getNextLexeme(), $operator["operators"])) {
 							$op = $this->tokenizer->advance();
+							
+							// for array references consume the brackets
 							if ($op == TierraTemplateTokenizer::LEFT_BRACKET_TOKEN) {
 								$rightNode = $this->expressionNode();
 								$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_BRACKET_TOKEN);
 							}
 							else
 								$rightNode = $this->expressionOperatorNode($precedence + 1);
+								
+							// for filters convert chained identifiers to functions
+							if (($op == TierraTemplateTokenizer::COLON_TOKEN) && ($rightNode->type == TierraTemplateASTNode::IDENTIFIER_NODE)) {
+								$node = new TierraTemplateASTNode(TierraTemplateASTNode::FUNCTION_CALL_NODE);
+								$node->method = $rightNode->identifier;
+								$node->params = array();
+								$rightNode = $node;
+							}
+							
 							$leftNode = new TierraTemplateASTNode(TierraTemplateASTNode::OPERATOR_NODE, array("op" => $op, "leftNode" => $leftNode, "rightNode" => $rightNode, "binary" => true));
 						}
 						return $leftNode;

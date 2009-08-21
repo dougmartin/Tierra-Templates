@@ -243,8 +243,11 @@
 			throw new TierraTemplateTokenizerException($message);
 		}
 		
-		public function curChar() {
-			return $this->streamIndex < $this->streamLength ? $this->stream[$this->streamIndex] : "";
+		public function curChar($skipSlash=false) {
+			$char = $this->streamIndex < $this->streamLength ? $this->stream[$this->streamIndex] : "";
+			if ($skipSlash && ($char == "\\"))
+				return $this->advanceChar(2);
+			return $char;
 		} 
 		
 		public function nextChar() {
@@ -281,7 +284,8 @@
 		}
 		
 		public function advanceToken() {
-			$curChar = $this->skipWhitespace();
+			$this->skipWhitespace();
+			$curChar = $this->curChar(true);
 			
 			if (!$this->eof) {
 				$nextChar = $this->nextChar();
@@ -372,10 +376,11 @@
 						$this->startSelection();
 						
 						// get everything up to the next comment, block or generator start 
-						$curChar = $this->curChar();
+						$curChar = $this->curChar(true);
 						$nextChar = $this->nextChar();
 						while (!$this->eof && !((($curChar == '[') || ($curChar == '{')) && (($nextChar == '#') || ($nextChar == '@')))) {
-							$curChar = $this->advanceChar();
+							$this->advanceChar();
+							$curChar = $this->curChar(true);
 							$nextChar = $this->nextChar();
 						}
 						
@@ -461,7 +466,9 @@
 					// and the generator delimiters {...} and {@...@} for normal but just {@...@} for strict
 					// strict is used when including javascript with braces in a output template so you don't have to escape all the {} characters
 					case self::OUTPUT_TEMPLATE_MODE:
-						$curChar = $this->curChar();
+						$this->startSelection();
+						
+						$curChar = $this->curChar(true);
 						if ($curChar == self::BACKTICK_TOKEN) {
 							$this->nextToken = self::BACKTICK_TOKEN;
 							$this->nextLexeme = self::BACKTICK_TOKEN; 
@@ -484,10 +491,10 @@
 							$this->pushMode(self::GENERATOR_MODE);
 						}
 						else {
-							$this->startSelection();
 							$curChar = $this->curChar();
 							while (!$this->eof && ($curChar != self::BACKTICK_TOKEN) && ($curChar != self::LEFT_BRACE_TOKEN)) {
-								$curChar = $this->advanceChar();
+								$this->advanceChar();
+								$curChar = $this->curChar(true);
 							}
 							$this->nextLexeme = $this->endSelection();
 							$this->nextToken = self::STRING_TOKEN;							
@@ -495,7 +502,9 @@
 						break;
 						
 					case self::STRICT_OUTPUT_TEMPLATE_MODE:
-						$curChar = $this->curChar();
+						$this->startSelection();
+						
+						$curChar = $this->curChar(true);
 						$nextChar = $this->nextChar();
 						
 						if ($curChar == self::TILDE_TOKEN) {
@@ -512,9 +521,9 @@
 							$this->pushMode(self::GENERATOR_MODE);
 						}
 						else {
-							$this->startSelection();
 							while (!$this->eof && ($curChar != self::TILDE_TOKEN) && ($curChar . $nextChar != self::GENERATOR_START_TOKEN)) {
-								$curChar = $this->advanceChar();
+								$this->advanceChar();
+								$curChar = $this->curChar(true);
 								$nextChar = $this->nextChar();
 							}
 							$this->nextLexeme = $this->endSelection();

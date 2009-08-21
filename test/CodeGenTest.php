@@ -118,7 +118,7 @@ HTML;
 		}
 		
 		public function testAppendInParent() {
-			self::checkEmit("[@ append foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->appendBlock('foo', ob_get_contents()); ob_end_clean();", "Append in parent");
+			self::checkEmit("[@ append foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->appendBlock('foo', ob_get_contents()); ob_end_clean(); \$this->__request->echoBlock('foo');", "Append in parent");
 		}
 				
 		public function testAppendInChild() {
@@ -126,7 +126,7 @@ HTML;
 		}
 
 		public function testPrependInParent() {
-			self::checkEmit("[@ prepend foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->prependBlock('foo', ob_get_contents()); ob_end_clean();", "Append in parent");
+			self::checkEmit("[@ prepend foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->prependBlock('foo', ob_get_contents()); ob_end_clean(); \$this->__request->echoBlock('foo');", "Append in parent");
 		}
 				
 		public function testPrependInChild() {
@@ -265,12 +265,12 @@ HTML;
 		
 		public function testGeneratorWithNoOutput() {
 			$src = "{@ foo ? @}";
-			self::checkEmit($src, "<?php \$this->__runtime->identifier('foo')", "Generator with no output");
+			self::checkEmit($src, "<?php \$this->__runtime->identifier('foo');", "Generator with no output");
 		}
 
 		public function testGeneratorWithNoOutputAndAssignment() {
 			$src = "{@ foo = 1 ? @}";
-			self::checkEmit($src, "<?php \$this->__runtime->assign('foo', 1)", "Generator with no output and assignment");
+			self::checkEmit($src, "<?php \$this->__runtime->assign('foo', 1);", "Generator with no output and assignment");
 		}
 		
 		public function testMultipleConditionals() {
@@ -282,6 +282,25 @@ HTML;
 			$src = "{@ if foo ? bar @}";
 			self::checkEmit($src, "<?php \$this->__runtime->startGenerator(true); if (\$this->__runtime->identifier('foo')) { do { echo \$this->__runtime->identifier('bar'); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with empty head");
 		}
-
+		
+		public function testEscapedGenerator() {
+			$src = "\\{@ if foo ? bar @}";
+			self::checkEmit($src, "\\{@ if foo ? bar @}", "Escaped generator");
+		}
+		
+		public function testEscapedBlock() {
+			$src = "\\[@ start foo @]\\[@ end foo @]";
+			self::checkEmit($src, "\\[@ start foo @]\\[@ end foo @]", "Escaped block");
+		}		
+		
+		public function testOutputTemplateWithEscapedGenerator() {
+			$src = "{@ `\\{foo}\\{@ bar @}` @}";
+			self::checkEmit($src, "<?php echo '\\{foo}\{@ bar @}';", "Escaped output template");
+		}		
+		
+		public function testStrictOutputTemplateWithEscapedGenerator() {
+			$src = "{@ ~\\{@ bar @}~ @}";
+			self::checkEmit($src, "<?php echo '\\{@ bar @}';", "Escaped output template");
+		}		
 	}
 	
