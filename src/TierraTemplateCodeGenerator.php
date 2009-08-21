@@ -94,7 +94,8 @@
 			if (count(self::$outputTemplateFunctions) > 0) {
 				$code = array();
 				foreach (self::$outputTemplateFunctions as $otfName => $otfCode) {
-					$code[] = "if (!function_exists('{$otfName}')) { function {$otfName}() { ob_start(); {$otfCode} \$_otfOutput = ob_get_contents(); ob_end_clean(); return \$_otfOutput;} };";
+					$otfCode = str_replace('$this->', '$__template->', $otfCode);
+					$code[] = "if (!function_exists('{$otfName}')) { function {$otfName}(\$__template) { ob_start(); {$otfCode} \$__output = ob_get_contents(); ob_end_clean(); return \$__output;} };";
 				}
 				array_unshift($chunks, new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, implode("; ", $code)));
 			}
@@ -428,7 +429,7 @@
 				// we wrap the output template in a function if we are not echoing the output and the template has at least one generator so we can return its value
 				if (!$echoOutput && $hasGenerator) {
 					$functionName = self::saveOutputTemplate(implode(" ", $code));
-					$code = array("{$functionName}()");
+					$code = array("{$functionName}(\$this)");
 				}
 					
 			}			

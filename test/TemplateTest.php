@@ -5,7 +5,14 @@
 	 
 	class TemplateTest extends PHPUnit_Framework_TestCase {
 		
+		protected $options;
+		
 		protected function setUp() {
+			$this->options = array(
+				"baseTemplateDir" => "templates",
+				"readFromCache" => true,
+				"cacheDir" => "cache",
+			);
 		}
 		
 		protected function tearDown() {
@@ -50,6 +57,24 @@
 		
 		public function testGeneratorArray() {
 			$this->checkOutput("{@ ['foo', 'bar', 'baz'] ? $ @}", "foobarbaz");
+		}
+		
+		public function testLoadTemplate() {
+			$this->options["templateFile"] = "echofoo.html";
+			$template = TierraTemplate::LoadTemplate($this->options);
+			$this->assertEquals("foo", $template->getOutput());
+		}
+		
+		public function testAssign() {
+			$this->checkOutput("{@ foo = 'bar' @}", "bar");
+		}
+		
+		public function testAssignSimpleOutputTemplate() {
+			$this->checkOutput("{@ foo = `bar` @}", "bar");
+		}
+		
+		public function testAssignComplexOutputTemplate() {
+			$this->checkOutput("{@ foo = `bar {true ? 'baz'} boom` @}", "bar baz boom");
 		}
 		
 	}

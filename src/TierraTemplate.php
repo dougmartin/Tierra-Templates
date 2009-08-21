@@ -7,12 +7,12 @@
 	
 	class TierraTemplate {
 		
-		private $__options;
-		private $__templateFile;
-		private $__baseTemplateDir;
-		private $__cachedTemplatePath;
-		private $__runtime;
-		private $__request;
+		public $__options;
+		public $__templateFile;
+		public $__baseTemplateDir;
+		public $__cachedTemplatePath;
+		public $__runtime;
+		public $__request;
 		
 		public function __construct($options=array()) {
 			
@@ -21,10 +21,11 @@
 			$templateFile = $this->getOption("templateFile");
 			if ($templateFile === false)
 				throw new TierraTemplateException("Missing templateFile option");
-			$baseTemplateDir = self::AddTrailingDirectorySeparator($this->getOption("baseTemplateDir"));
+			$baseTemplateDir = $this->getOption("baseTemplateDir");
 			if ($baseTemplateDir === false)
 				throw new TierraTemplateException("Missing baseTemplateDir option");
-			
+			$baseTemplateDir = self::AddTrailingDirectorySeparator($baseTemplateDir);
+				
 			$this->__request = isset($options["request"]) !== false ? $options["request"] : new TierraTemplateRequest();
 			$this->__runtime = new TierraTemplateRuntime($this->__request);
 			$this->__templateFile = $templateFile;
@@ -33,7 +34,7 @@
 			
 			$rawTemplatePath = $baseTemplateDir . $templateFile;
 			$rawTemplateInfo = @stat($rawTemplatePath);
-			$this->__cachedTemplatePath = self::GetCacheRoot($options) . $templateFile . ".php";
+			$this->__cachedTemplatePath = self::GetCacheDir($options) . $templateFile . ".php";
 			$cachedTemplateInfo = @stat($this->__cachedTemplatePath);
 			
 			$useCachedTemplate = $this->getOption("readFromCache", true) && ($cachedTemplateInfo !== false) && ($cachedTemplateInfo['mtime'] > $rawTemplateInfo['mtime']);
@@ -65,14 +66,14 @@
 		public static function GetDynamicTemplateOutput($templateContents, $options=array()) {
 			list($options["templateFile"], $options["baseTemplateDir"]) = self::SaveDynamicTemplate($templateContents, $options);
 			$template = self::LoadTemplate($options);
-			return $template->render(true, true);
+			return $template->getOutput();
 		}
 		
 		public static function SaveDynamicTemplate($templateContents, $options) {
-			$cacheRoot = self::GetCacheRoot($options);
+			$cacheDir = self::GetCacheDir($options);
 			
 			$templateFile = self::AddTrailingDirectorySeparator(self::StaticGetOption($options, "dynamicTemplateDir", "_dtt")) . "dtt_" . sha1($templateContents) . ".html";
-			$templatePath = $cacheRoot . $templateFile;
+			$templatePath = $cacheDir . $templateFile;
 			@mkdir(dirname($templatePath), self::StaticGetOption($options, "cacheDirPerms", 0777), true);
 			if (!file_exists($templatePath)) {
 				$handle = @fopen($templatePath, "w");
@@ -85,7 +86,7 @@
 					throw new TierraTemplateException("Cannot create dynamic template: {$templatePath}");			
 			}
 			
-			return array($templateFile, $cacheRoot);
+			return array($templateFile, $cacheDir);
 		}
 		
 		public static function StaticGetOption($options, $name, $default=false) {
@@ -98,16 +99,14 @@
 			return $path;
 		}
 		
-		public static function GetCacheRoot($options) {
-			$cacheRoot = self::AddTrailingDirectorySeparator(self::StaticGetOption($options, "cacheRoot", function_exists("sys_get_temp_dir") ? sys_get_temp_dir() : DIRECTORY_SEPARATOR . "tmp" . DIRECTORY_SEPARATOR));
-			// TODO: remove after debugging
-			$cacheRoot = "/Users/Doug/Desktop/Temp/";
-			if (!is_dir($cacheRoot)) {
-				@mkdir(dirname($cacheRoot), self::StaticGetOption($options, "cacheDirPerms", 0777), true);
-				if (!is_dir($cacheRoot))
-					throw new TierraTemplateException("Cache directory cannot be created: {$cacheRoot}");
+		public static function GetCacheDir($options) {
+			$cacheDir = self::AddTrailingDirectorySeparator(self::StaticGetOption($options, "cacheDir", function_exists("sys_get_temp_dir") ? sys_get_temp_dir() : DIRECTORY_SEPARATOR . "tmp" . DIRECTORY_SEPARATOR));
+			if (!is_dir($cacheDir)) {
+				@mkdir(dirname($cacheDir), self::StaticGetOption($options, "cacheDirPerms", 0777), true);
+				if (!is_dir($cacheDir))
+					throw new TierraTemplateException("Cache directory cannot be created: {$cacheDir}");
 			}
-			return $cacheRoot;
+			return $cacheDir;
 		}
 		
 		public static function ParseAndCache($options, $templateContents, $cachedTemplatePath) {
@@ -146,21 +145,28 @@
 			return self::StaticGetOption($this->__options, $name, $default);
 		}
 		
-		public function render($bufferOutput=true, $returnOutput=false) {
+		public function render($bufferOutput=true) {
 			if ($this->__cachedTemplatePath) {
-				if ($bufferOutput || $returnOutput)
+				if ($bufferOutput)
 					ob_start();
-				require_once $this->__cachedTemplatePath;
-				if ($bufferOutput || $returnOutput) {
+				include $this->__cachedTemplatePath;
+				if ($bufferOutput) {
 					$output = ob_get_contents();
 					ob_end_clean();
-					if (!$returnOutput)
-						echo $output;
+					echo $output;
 				}
-				if ($returnOutput)
-					return $output;
 			}
 		}
+		
+		public function getOutput() {
+			if ($this->__cachedTemplatePath) {
+				ob_start();
+				include $this->__cachedTemplatePath;
+				$output = ob_get_contents();
+				ob_end_clean();
+				return $output;
+			}
+		}		
 		
 		public function includeTemplate($templateFile) {
 			if (($templateFile === false) || ($templateFile == ""))

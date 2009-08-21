@@ -260,7 +260,7 @@ HTML;
 		
 		public function testGeneratorWithTemplateAssignment() {
 			$src = "{@ foo = `bar {baz ? bam} boom` @}";
-			self::checkEmit($src, "<?php if (!function_exists('otf_25babf696a1f4e5644f774f8145ebb54f75d5671')) { function otf_25babf696a1f4e5644f774f8145ebb54f75d5671() { ob_start(); echo 'bar '; if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('baz'))) { do { echo \$this->__runtime->identifier('bam'); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator(); echo ' boom'; \$_otfOutput = ob_get_contents(); ob_end_clean(); return \$_otfOutput;} }; echo \$this->__runtime->assign('foo', otf_25babf696a1f4e5644f774f8145ebb54f75d5671());", "Generator with template assignment");
+			self::checkEmit($src, "<?php if (!function_exists('otf_25babf696a1f4e5644f774f8145ebb54f75d5671')) { function otf_25babf696a1f4e5644f774f8145ebb54f75d5671(\$__template) { ob_start(); echo 'bar '; if (\$__template->__runtime->startGenerator(\$__template->__runtime->identifier('baz'))) { do { echo \$__template->__runtime->identifier('bam'); } while (\$__template->__runtime->loop()); } \$__template->__runtime->endGenerator(); echo ' boom'; \$__output = ob_get_contents(); ob_end_clean(); return \$__output;} }; echo \$this->__runtime->assign('foo', otf_25babf696a1f4e5644f774f8145ebb54f75d5671(\$this));", "Generator with template assignment");
 		}
 		
 		public function testGeneratorWithNoOutput() {
