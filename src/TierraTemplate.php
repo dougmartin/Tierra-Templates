@@ -16,6 +16,9 @@
 		
 		public function __construct($options=array()) {
 			
+			// add the request object if not present to the options so it can be shared with parent templates
+			if (!isset($options["request"]))
+				$options["request"] = new TierraTemplateRequest();
 			$this->__options = $options;
 			
 			$templateFile = $this->getOption("templateFile");
@@ -26,7 +29,7 @@
 				throw new TierraTemplateException("Missing baseTemplateDir option");
 			$baseTemplateDir = self::AddTrailingDirectorySeparator($baseTemplateDir);
 				
-			$this->__request = isset($options["request"]) !== false ? $options["request"] : new TierraTemplateRequest();
+			$this->__request = $this->getOption("request");
 			$this->__runtime = new TierraTemplateRuntime($this->__request);
 			$this->__templateFile = $templateFile;
 			$this->__baseTemplateDir = $baseTemplateDir;
@@ -54,7 +57,7 @@
 		}
 		
 		public static function RenderTemplate($options) {
-			$template = self::Load($options);
+			$template = self::LoadTemplate($options);
 			$template->render();
 		}
 		
@@ -102,7 +105,7 @@
 		public static function GetCacheDir($options) {
 			$cacheDir = self::AddTrailingDirectorySeparator(self::StaticGetOption($options, "cacheDir", function_exists("sys_get_temp_dir") ? sys_get_temp_dir() : DIRECTORY_SEPARATOR . "tmp" . DIRECTORY_SEPARATOR));
 			if (!is_dir($cacheDir)) {
-				@mkdir(dirname($cacheDir), self::StaticGetOption($options, "cacheDirPerms", 0777), true);
+				@mkdir($cacheDir, self::StaticGetOption($options, "cacheDirPerms", 0777), true);
 				if (!is_dir($cacheDir))
 					throw new TierraTemplateException("Cache directory cannot be created: {$cacheDir}");
 			}
@@ -181,10 +184,9 @@
 			if (!isset($info["extension"]) && $this->getOption("autoAddHtmlExtension", true))
 				$templateFile .= ".html";
 				
-			$options = array_slice($this->__options, 0);
-			$options["templateFile"] = $templateFile;
+			$this->__options["templateFile"] = $templateFile;
 			
-			$includedTemplate = Template::Load($options);
+			$includedTemplate = self::LoadTemplate($this->__options);
 			$includedTemplate->render(false);
 		}			
 	}

@@ -31,6 +31,23 @@
 			$this->assertEquals($expectedOutput, $output);
 		}
 		
+		public function checkTemplateOutput($templateFile, $expectedOutput, $dump=false) {
+			$this->options["templateFile"] = $templateFile;
+			$template = TierraTemplate::LoadTemplate($this->options);
+			$output = $template->getOutput();
+			if ($dump) {
+				echo "templateFile:\n";
+				var_dump($templateFile);
+				echo "expectedOutput:\n";
+				var_dump($expectedOutput);
+				echo "output:\n";
+				var_dump($output);
+				echo "blocks:\n";
+				$template->__request->dumpBlocks();
+			}
+			$this->assertEquals($expectedOutput, $output);
+		}
+		
 		public function testEmpty() {
 			$this->checkOutput("", "");
 		}
@@ -60,9 +77,7 @@
 		}
 		
 		public function testLoadTemplate() {
-			$this->options["templateFile"] = "echofoo.html";
-			$template = TierraTemplate::LoadTemplate($this->options);
-			$this->assertEquals("foo", $template->getOutput());
+			$this->checkTemplateOutput("echofoo.html", "foo");
 		}
 		
 		public function testAssign() {
@@ -83,7 +98,12 @@
 		
 		public function testEmptyHeadGenerator() {
 			$this->checkOutput("{@ if 1 > 2 ? 'bar' else 'baz' @}", "baz");
-		}		
+		}
+
+		public function testLoadChildTemplate() {
+			$this->checkTemplateOutput("child.html", "grandparent parent child");
+		}
+				
 		
 	}
 	

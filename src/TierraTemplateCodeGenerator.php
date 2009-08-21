@@ -362,7 +362,7 @@
 			}
 			// if the generator explicitly has no output by using a trailing ? then just emit the expression
 			else if ($node->ifTrue && (count($node->ifTrue->elements) == 0) && (!$node->ifFalse || (count($node->ifFalse->elements) == 0)) && (count($node->conditionals) == 0)) {
-				$code[] = ($expression ? self::emitExpression($expression) : "true");
+				$code[] = ($expression ? self::emitExpression($expression) : "true") . ";";
 			}
 			else if (count($node->conditionals) > 0) {
 				$code[] = "\$this->__runtime->startGenerator(" .  ($expression ? self::emitExpression($expression) : "true") .  ");";

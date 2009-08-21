@@ -4,10 +4,12 @@
 		
 		private $__vars;
 		private $__settings;
+		private $__blocks;
 		
 		public function __construct($settings=array()) {
 			$this->__vars = array();
 			$this->__settings = $settings;
+			$this->__blocks = array();
 			
 			$this->addSetting("server", $_SERVER);
 			$this->addSetting("get", $_GET);
@@ -86,4 +88,47 @@
 			// return a copy of the settings
 			return array_slice($this->__settings, 0);
 		}		
+		
+		function haveBlock($blockName) {
+			return isset($this->__blocks[$blockName]);
+		}
+		
+		function setBlock($blockName, $blockContents) {
+			$this->__blocks[$blockName] = $blockContents;
+		}
+		
+		function appendBlock($blockName, $blockContents) {
+			if ($this->haveBlock($blockName))
+				$this->__blocks[$blockName] .= $blockContents;
+			else
+				$this->__blocks[$blockName] = $blockContents;
+		}
+		
+		function prependBlock($blockName, $blockContents) {
+			if ($this->haveBlock($blockName))
+				$this->__blocks[$blockName] = $blockContents . $this->__blocks[$blockName];
+			else
+				$this->__blocks[$blockName] = $blockContents;
+		}
+		
+		function echoBlock($blockName) {
+			$haveBlock = $this->haveBlock($blockName);
+			echo $haveBlock ? $this->__blocks[$blockName] : "";
+			return $haveBlock;
+		}
+		
+		function redirect($url) {
+			header("Location: {$url}");
+		}
+		
+		function reload() {
+			header("Location: {$this->server["REQUEST_URI"]}");
+		}
+		
+		function moved($url) {
+			header("HTTP/1.1 301 Moved Permanently");
+			header("Location: {$url}");
+			header("Connection: close");
+		}
+		
 	}
