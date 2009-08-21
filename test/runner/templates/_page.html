@@ -1,10 +1,44 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<head>
-	<title>Runner Test {@ pageTitle ? `- {$}` @}</title>
-</head>
-<body>
-	[@ start content @]
-	[@ end content @]
-</body>
+	<head> 
+		<title>Runner Test {@ pageTitle ? `- {$}` @}</title>
+		
+		[# 
+			This is an example of using a block in the head of a generator and using the strict output templates so that we can use {} within the script tag for javascript
+			If the pageScript block (or var) exists a script tab containing the script will be output.
+		#] 
+		{@ pageScript ? ~
+			<script>
+				// child template scripts will we inserted here
+				{@ pageScript @}
+	
+				// add your own global script's here ...
+				function bar() {
+					document.write("Bar!");
+				}
+		
+			</script>
+		~ @}
+		
+		[#
+			This is an example of a prepend block.  We use prepend here so that child templates can also add to the block.
+			If we used a start block the content would be ignored if there was a child template that prepended to the pageStyle block.
+			Top level blocks are always outputed.
+		#]
+		<style>
+			[@ prepend pageStyle @]
+			
+			body, div, span, th, td, p, ul, li, h1, h2, h3, h4, h5, h6, a {
+				font-family: arial, verdana, sans-serif;
+				font-size: 14px;
+				color: #000;
+			}
+			
+			[@ end pageStyle @]
+		</style>
+	</head>
+	<body>
+		[@ start content @]
+		[@ end content @]
+	</body>
 </html>

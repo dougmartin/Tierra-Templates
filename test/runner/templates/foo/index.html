@@ -1,0 +1,21 @@
+[@ extends "/_page.html" @]
+
+{@ pageTitle = "Foo!" ? @}
+
+[@ append pageScript @]
+
+	function foo(text) {
+		document.write(text);
+	}
+
+[@ end pageScript @]
+
+[@ start content @]
+
+	<script>foo("Foo!");</script>
+	
+	<p>
+		<script>bar();</script>
+	</p>
+
+[@ end content @]

@@ -34,8 +34,12 @@
 					return $currentFrame->identifier($name);
 			}
 	
-			// finally look in the request
-			return $this->request->getVar($name, false);
+			// look in the request
+			if ($this->request->haveVar($name))
+				return $this->request->getVar($name);
+				
+			// finally look in the blocks
+			return $this->request->getBlock($name, false);
 		}
 
 		public function startGenerator($expression) {

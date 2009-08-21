@@ -2,8 +2,18 @@
 
 {@ pageTitle = "Homepage" ? @}
 
+[@ append pageStyle @]
+
+	ul {
+	}
+
+[@ end pageStyle @]
+
 [@ start content @]
 
-	Welcome to the Test Runner
+	<h2>Welcome to the Test Runner</h2>
+	
+	{@ [{uri: "foo", text: "Foo"}, {uri: "bar", text: "Bar (404)"}] ? "<p>Test Links</p><ul>" `<li><a href="{uri}">{text}</a></li>` "</ul>" @}
 	
 [@ end content @]
+

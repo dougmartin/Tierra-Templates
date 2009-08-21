@@ -10,17 +10,21 @@
 				self::showError("The 'baseTemplateDir' option is missing, cannot continue.");
 			
 			// find the template
-			if ($uri == "/")
-				$uri = "/index.html";
 			$templatePath = realpath($options["baseTemplateDir"] . $uri);
-			if ($templatePath === false) {
-				$templatePath = realpath($options["baseTemplateDir"] . $uri . ".html");
-				if ($templatePath === false) {
-					$templatePath = realpath($options["baseTemplateDir"] . $uri . "/index.html");
-					if ($templatePath) 
-						$uri .= "/index.html";
+			if ($templatePath && is_dir($templatePath)) {
+				if (substr($uri, -1) == "/") {
+					$templatePath = realpath($options["baseTemplateDir"] . $uri . "index.html");
+					if ($templatePath)
+						$uri .= "index.html";	
 				}
-				else
+				else {
+					header("Location: {$uri}/");
+					exit;
+				}
+			}
+			else if (!$templatePath) {
+				$templatePath = realpath($options["baseTemplateDir"] . $uri . ".html");
+				if ($templatePath)
 					$uri .= ".html";	
 			}
 			

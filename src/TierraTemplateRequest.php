@@ -45,6 +45,10 @@
 			return isset($this->__vars[$name]) ? $this->__vars[$name] : $default;	
 		}
 		
+		public function haveVar($name) {
+			return isset($this->__vars[$name]);	
+		}
+		
 		public function setVars($map) {
 			foreach ($map as $name => $value)
 				$this->setVar($name, $value);
@@ -92,6 +96,10 @@
 		function haveBlock($blockName) {
 			return isset($this->__blocks[$blockName]);
 		}
+		
+		public function getBlock($blockName, $default=false) {
+			return isset($this->__blocks[$blockName]) ? $this->__blocks[$blockName] : $default;	
+		}		
 		
 		function setBlock($blockName, $blockContents) {
 			$this->__blocks[$blockName] = $blockContents;
