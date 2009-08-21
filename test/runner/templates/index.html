@@ -17,7 +17,7 @@
 	
 	<p>The "Test Links" list was generated with the following:</p>
 	<pre>
-{@ ~\{@ [{uri: "foo", text: "Foo"}, {uri: "bar", text: "Bar (404)"}] ? "<p>Test Links</p><ul>" `<li><a href="{uri}">{text}</a></li>` "</ul>" @}~:htmlspecialchars  @}
+{@ '{@ [{uri: "foo", text: "Foo"}, {uri: "bar", text: "Bar (404)"}] ? "<p>Test Links</p><ul>" `<li><a href="{uri}">{text}</a></li>` "</ul>" @}':htmlspecialchars  @}
 	</pre>
 	
 [@ end content @]

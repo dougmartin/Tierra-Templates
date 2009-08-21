@@ -284,8 +284,7 @@
 		}
 		
 		public function advanceToken() {
-			$this->skipWhitespace();
-			$curChar = $this->curChar(true);
+			$curChar = $this->skipWhitespace();
 			
 			if (!$this->eof) {
 				$nextChar = $this->nextChar();
@@ -373,18 +372,27 @@
 				$mode = $this->getMode();
 				switch ($mode) {
 					case self::HTML_MODE:
-						$this->startSelection();
+						$chars = array();
 						
+						$curChar = $this->curChar();
+						if ($curChar == "\\") {
+							$chars[] = $this->advanceChar();
+							$curChar = $this->advanceChar();
+						}
+												
 						// get everything up to the next comment, block or generator start 
-						$curChar = $this->curChar(true);
 						$nextChar = $this->nextChar();
 						while (!$this->eof && !((($curChar == '[') || ($curChar == '{')) && (($nextChar == '#') || ($nextChar == '@')))) {
-							$this->advanceChar();
-							$curChar = $this->curChar(true);
+							$chars[] = $curChar;
+							$curChar = $this->advanceChar();
+							if ($curChar == "\\") {
+								$chars[] = $this->advanceChar();
+								$curChar = $this->advanceChar();
+							}
 							$nextChar = $this->nextChar();
 						}
 						
-						$this->nextLexeme = $this->endSelection();
+						$this->nextLexeme = implode("", $chars);
 						$this->nextToken = self::HTML_TOKEN;
 						
 						if (!$this->eof) {
@@ -466,9 +474,14 @@
 					// and the generator delimiters {...} and {@...@} for normal but just {@...@} for strict
 					// strict is used when including javascript with braces in a output template so you don't have to escape all the {} characters
 					case self::OUTPUT_TEMPLATE_MODE:
-						$this->startSelection();
+						$chars = array();
 						
-						$curChar = $this->curChar(true);
+						$curChar = $this->curChar();
+						if ($curChar == "\\") {
+							$chars[] = $this->advanceChar();
+							$curChar = $this->advanceChar();
+						}
+						
 						if ($curChar == self::BACKTICK_TOKEN) {
 							$this->nextToken = self::BACKTICK_TOKEN;
 							$this->nextLexeme = self::BACKTICK_TOKEN; 
@@ -491,20 +504,27 @@
 							$this->pushMode(self::GENERATOR_MODE);
 						}
 						else {
-							$curChar = $this->curChar();
 							while (!$this->eof && ($curChar != self::BACKTICK_TOKEN) && ($curChar != self::LEFT_BRACE_TOKEN)) {
-								$this->advanceChar();
-								$curChar = $this->curChar(true);
+								$chars[] = $curChar;
+								$curChar = $this->advanceChar();
+								if ($curChar == "\\") {
+									$chars[] = $this->advanceChar();
+									$curChar = $this->advanceChar();
+								}								
 							}
-							$this->nextLexeme = $this->endSelection();
+							$this->nextLexeme = implode("", $chars);
 							$this->nextToken = self::STRING_TOKEN;							
 						}
 						break;
 						
 					case self::STRICT_OUTPUT_TEMPLATE_MODE:
-						$this->startSelection();
+						$chars = array();
 						
-						$curChar = $this->curChar(true);
+						$curChar = $this->curChar();
+						if ($curChar == "\\") {
+							$chars[] = $this->advanceChar();
+							$curChar = $this->advanceChar();
+						}
 						$nextChar = $this->nextChar();
 						
 						if ($curChar == self::TILDE_TOKEN) {
@@ -522,11 +542,15 @@
 						}
 						else {
 							while (!$this->eof && ($curChar != self::TILDE_TOKEN) && ($curChar . $nextChar != self::GENERATOR_START_TOKEN)) {
-								$this->advanceChar();
-								$curChar = $this->curChar(true);
+								$chars[] = $curChar;
+								$curChar = $this->advanceChar();
+								if ($curChar == "\\") {
+									$chars[] = $this->advanceChar();
+									$curChar = $this->advanceChar();
+								}
 								$nextChar = $this->nextChar();
 							}
-							$this->nextLexeme = $this->endSelection();
+							$this->nextLexeme = implode("", $chars);
 							$this->nextToken = self::STRING_TOKEN;							
 						}
 						break;

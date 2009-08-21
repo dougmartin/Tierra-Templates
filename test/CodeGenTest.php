@@ -285,22 +285,22 @@ HTML;
 		
 		public function testEscapedGenerator() {
 			$src = "\\{@ if foo ? bar @}";
-			self::checkEmit($src, "\\{@ if foo ? bar @}", "Escaped generator");
+			self::checkEmit($src, "{@ if foo ? bar @}", "Escaped generator");
 		}
 		
 		public function testEscapedBlock() {
 			$src = "\\[@ start foo @]\\[@ end foo @]";
-			self::checkEmit($src, "\\[@ start foo @]\\[@ end foo @]", "Escaped block");
+			self::checkEmit($src, "[@ start foo @][@ end foo @]", "Escaped block");
 		}		
 		
 		public function testOutputTemplateWithEscapedGenerator() {
 			$src = "{@ `\\{foo}\\{@ bar @}` @}";
-			self::checkEmit($src, "<?php echo '\\{foo}\{@ bar @}';", "Escaped output template");
+			self::checkEmit($src, "<?php echo '{foo}{@ bar @}';", "Escaped output template");
 		}		
 		
 		public function testStrictOutputTemplateWithEscapedGenerator() {
 			$src = "{@ ~\\{@ bar @}~ @}";
-			self::checkEmit($src, "<?php echo '\\{@ bar @}';", "Escaped output template");
+			self::checkEmit($src, "<?php echo '{@ bar @}';", "Escaped output template");
 		}		
 	}
 	
