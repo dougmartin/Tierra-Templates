@@ -81,5 +81,9 @@
 			$this->checkOutput("{@ bam = 2; 'foo' if 1 > 3 ? 'baz' else if bam == 2 ? `boom` else $ @}", "boom");
 		}
 		
+		public function testEmptyHeadGenerator() {
+			$this->checkOutput("{@ if 1 > 2 ? 'bar' else 'baz' @}", "baz");
+		}		
+		
 	}
 	

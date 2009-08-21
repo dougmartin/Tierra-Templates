@@ -277,6 +277,11 @@ HTML;
 			$src = "{@ foo if bar == 1 ? baz else if bam == 2 ? boom else foom @}";
 			self::checkEmit($src, "<?php \$this->__runtime->startGenerator(\$this->__runtime->identifier('foo')); if (\$this->__runtime->identifier('bar') == 1) { do { echo \$this->__runtime->identifier('baz'); } while (\$this->__runtime->loop()); } else if (\$this->__runtime->identifier('bam') == 2) { do { echo \$this->__runtime->identifier('boom'); } while (\$this->__runtime->loop()); } else { echo \$this->__runtime->identifier('foom'); } \$this->__runtime->endGenerator();", "Generator with multiple conditionals");
 		}
+		
+		public function testEmptyHeadGenerator() {
+			$src = "{@ if foo ? bar @}";
+			self::checkEmit($src, "<?php \$this->__runtime->startGenerator(true); if (\$this->__runtime->identifier('foo')) { do { echo \$this->__runtime->identifier('bar'); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with empty head");
+		}
 
 	}
 	

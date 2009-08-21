@@ -342,28 +342,30 @@
 		// noEcho is used when emit generators from without an output template
 		public static function emitGenerator($node, $noEcho=false) {
 			$code = array();
-			
-			if ($node->expression->type == TierraTemplateASTNode::MULTI_EXPRESSION_NODE) {
+
+			// the expression can be empty, eg {@ if foo ? bar @}
+			$expression = $node->expression;
+			if ($node->expression && ($node->expression->type == TierraTemplateASTNode::MULTI_EXPRESSION_NODE)) {
 				$expression = array_pop($node->expression->expressions);
 				foreach ($node->expression->expressions as $preExpression)
 					$code[] = self::emitExpression($preExpression) . ";";
 			}
-			else
-				$expression = $node->expression;
 			
 			// if this generator has no output then output the head
 			if (($node->ifTrue === false) && ($node->ifFalse === false) && (count($node->conditionals) == 0)) {
-				if ($expression->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE)
+				if (!$expression)
+					$code[] =  $noEcho ? "true" : "echo true;";
+				else if ($expression->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE)
 					$code[] =  self::emitOutputTemplate($expression, true);
 				else
 					$code[] =  $noEcho ? self::emitExpression($expression) : "echo " . self::emitExpression($expression) . ";";
 			}
 			// if the generator explicitly has no output by using a trailing ? then just emit the expression
 			else if ($node->ifTrue && (count($node->ifTrue->elements) == 0) && (!$node->ifFalse || (count($node->ifFalse->elements) == 0)) && (count($node->conditionals) == 0)) {
-				$code[] = self::emitExpression($expression);
+				$code[] = ($expression ? self::emitExpression($expression) : "true");
 			}
 			else if (count($node->conditionals) > 0) {
-				$code[] = "\$this->__runtime->startGenerator(" .  self::emitExpression($expression) .  ");";
+				$code[] = "\$this->__runtime->startGenerator(" .  ($expression ? self::emitExpression($expression) : "true") .  ");";
 				$ifs = array();
 				foreach ($node->conditionals as $conditional)
 					$ifs[] = "if (" .  self::emitExpression($conditional->expression) .  ") { " . ($conditional->ifTrue !== false ? self::emitGeneratorOutput($conditional->ifTrue) : "") . " }";
@@ -373,7 +375,7 @@
 				$code[] = "\$this->__runtime->endGenerator();";
 			}
 			else {
-				$code[] = "if (\$this->__runtime->startGenerator(" .  self::emitExpression($expression) .  ")) {";
+				$code[] = "if (\$this->__runtime->startGenerator(" .  ($expression ? self::emitExpression($expression) : "true") .  ")) {";
 				if ($node->ifTrue !== false)
 					$code[] = self::emitGeneratorOutput($node->ifTrue);
 				$code[] = "}";
