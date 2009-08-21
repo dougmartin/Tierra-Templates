@@ -77,5 +77,9 @@
 			$this->checkOutput("{@ foo = `bar {true ? 'baz'} boom` @}", "bar baz boom");
 		}
 		
+		public function testMultipleConditionals() {
+			$this->checkOutput("{@ bam = 2; 'foo' if 1 > 2 ? 'baz' else if bam == 2 ? `boom` else $ @}", "boom");
+		}
+		
 	}
 	

@@ -38,8 +38,8 @@
 			// finally look in the request
 			return $this->request->getVar($name, false);
 		}
-		
-		public function startGenerator($expression) {
+
+		public function canGenerate($expression) {
 			$result = false;
 			if (is_array($expression) || is_object($expression))
 				$result = count($expression) > 0;
@@ -49,11 +49,21 @@
 				$result = $expression != 0;
 			else 
 				$result = $expression;
-				
+			return $result;			
+		}
+		
+		public function startGenerator($expression) {
 			$this->currentFrame = new TierraTemplateStackFrame($expression);
 			$this->stackFrame[] = $this->currentFrame;
 			
-			return $result;
+			return $this->canGenerate($expression);
+		}
+		
+		public function startConditionalGenerator($expression, $value) {
+			$this->currentFrame = new TierraTemplateStackFrame($value);
+			$this->stackFrame[] = $this->currentFrame;
+			
+			return $this->canGenerate($expression);
 		}
 		
 		public function endGenerator() {

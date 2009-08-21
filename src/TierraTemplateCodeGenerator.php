@@ -352,15 +352,25 @@
 				$expression = $node->expression;
 			
 			// if this generator has no output then output the head
-			if (($node->ifTrue === false) && ($node->ifFalse === false)) {
+			if (($node->ifTrue === false) && ($node->ifFalse === false) && (count($node->conditionals) == 0)) {
 				if ($expression->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE)
 					$code[] =  self::emitOutputTemplate($expression, true);
 				else
 					$code[] =  $noEcho ? self::emitExpression($expression) : "echo " . self::emitExpression($expression) . ";";
 			}
 			// if the generator explicitly has no output by using a trailing ? then just emit the expression
-			else if ($node->ifTrue && (count($node->ifTrue->elements) == 0) && (!$node->ifFalse || (count($node->ifFalse->elements) == 0))) {
+			else if ($node->ifTrue && (count($node->ifTrue->elements) == 0) && (!$node->ifFalse || (count($node->ifFalse->elements) == 0)) && (count($node->conditionals) == 0)) {
 				$code[] = self::emitExpression($expression);
+			}
+			else if (count($node->conditionals) > 0) {
+				$value = self::emitExpression($expression);
+				$ifs = array();
+				foreach ($node->conditionals as $conditional)
+					$ifs[] = "if (\$this->__runtime->startConditionalGenerator(" .  self::emitExpression($conditional->expression) .  ", {$value})) { " . ($conditional->ifTrue !== false ? self::emitGeneratorOutput($conditional->ifTrue) : "") . " }";
+				if ($node->ifFalse !== false)
+					$ifs[] = "{ " . self::emitGenerator($node->ifFalse) . " }";
+				$code[] = implode(" else ", $ifs);
+				$code[] = "\$this->__runtime->endGenerator();";
 			}
 			else {
 				$code[] = "if (\$this->__runtime->startGenerator(" .  self::emitExpression($expression) .  ")) {";

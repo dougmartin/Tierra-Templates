@@ -272,6 +272,11 @@ HTML;
 			$src = "{@ foo = 1 ? @}";
 			self::checkEmit($src, "<?php \$this->__runtime->assign('foo', 1)", "Generator with no output and assignment");
 		}
+		
+		public function testMultipleConditionals() {
+			$src = "{@ foo if bar == 1 ? baz else if bam == 2 ? boom else foom @}";
+			self::checkEmit($src, "<?php if (\$this->__runtime->startConditionalGenerator(\$this->__runtime->identifier('bar') == 1, \$this->__runtime->identifier('foo'))) { do { echo \$this->__runtime->identifier('baz'); } while (\$this->__runtime->loop()); } else if (\$this->__runtime->startConditionalGenerator(\$this->__runtime->identifier('bam') == 2, \$this->__runtime->identifier('foo'))) { do { echo \$this->__runtime->identifier('boom'); } while (\$this->__runtime->loop()); } else { echo \$this->__runtime->identifier('foom'); } \$this->__runtime->endGenerator();", "Generator with multiple conditionals");
+		}
 
 	}
 	
