@@ -363,10 +363,10 @@
 				$code[] = self::emitExpression($expression);
 			}
 			else if (count($node->conditionals) > 0) {
-				$value = self::emitExpression($expression);
+				$code[] = "\$this->__runtime->startGenerator(" .  self::emitExpression($expression) .  ");";
 				$ifs = array();
 				foreach ($node->conditionals as $conditional)
-					$ifs[] = "if (\$this->__runtime->startConditionalGenerator(" .  self::emitExpression($conditional->expression) .  ", {$value})) { " . ($conditional->ifTrue !== false ? self::emitGeneratorOutput($conditional->ifTrue) : "") . " }";
+					$ifs[] = "if (" .  self::emitExpression($conditional->expression) .  ") { " . ($conditional->ifTrue !== false ? self::emitGeneratorOutput($conditional->ifTrue) : "") . " }";
 				if ($node->ifFalse !== false)
 					$ifs[] = "{ " . self::emitGenerator($node->ifFalse) . " }";
 				$code[] = implode(" else ", $ifs);

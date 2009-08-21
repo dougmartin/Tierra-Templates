@@ -23,9 +23,8 @@
 		}
 		
 		public function identifier($name) {
-		
 			// see if this is a special value
-			if (($name[0] == "$") || ($name[0] == "%")) 
+			if ($name[0] == "$") 
 				return ($this->currentFrame ? $this->currentFrame->specialValue(substr($name,1)) : false);
 				
 			// walk down the stack looking for the identifier
@@ -39,7 +38,10 @@
 			return $this->request->getVar($name, false);
 		}
 
-		public function canGenerate($expression) {
+		public function startGenerator($expression) {
+			$this->currentFrame = new TierraTemplateStackFrame($expression);
+			$this->stackFrame[] = $this->currentFrame;
+			
 			$result = false;
 			if (is_array($expression) || is_object($expression))
 				$result = count($expression) > 0;
@@ -50,20 +52,6 @@
 			else 
 				$result = $expression;
 			return $result;			
-		}
-		
-		public function startGenerator($expression) {
-			$this->currentFrame = new TierraTemplateStackFrame($expression);
-			$this->stackFrame[] = $this->currentFrame;
-			
-			return $this->canGenerate($expression);
-		}
-		
-		public function startConditionalGenerator($expression, $value) {
-			$this->currentFrame = new TierraTemplateStackFrame($value);
-			$this->stackFrame[] = $this->currentFrame;
-			
-			return $this->canGenerate($expression);
 		}
 		
 		public function endGenerator() {
