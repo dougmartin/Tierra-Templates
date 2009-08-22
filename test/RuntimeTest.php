@@ -11,7 +11,7 @@
 		
 		protected function setUp() {
 			$this->request = new TierraTemplateRequest();
-			$this->runtime = new TierraTemplateRuntime($this->request);
+			$this->runtime = new TierraTemplateRuntime($this->request, array());
 		}
 		
 		protected function tearDown() {
@@ -78,40 +78,40 @@
 		
 		public function testSpecialValues() {
 			$this->runtime->startGenerator(array("foo", "bar", "baz"));
-			$this->assertEquals($this->runtime->identifier("\$count"), 3);
-			$this->assertEquals($this->runtime->identifier("\$this is a garbage value"), false);
+			$this->assertEquals($this->runtime->specialIdentifier("count"), 3);
+			$this->assertEquals($this->runtime->specialIdentifier("this is a garbage value"), false);
 			
 			// foo
-			$this->assertEquals($this->runtime->identifier("\$"), "foo");
-			$this->assertEquals($this->runtime->identifier("\$0"), 0);
-			$this->assertEquals($this->runtime->identifier("\$1"), 1);
-			$this->assertEquals($this->runtime->identifier("\$key"), 0);
-			$this->assertTrue($this->runtime->identifier("\$first"));
-			$this->assertFalse($this->runtime->identifier("\$last"));
-			$this->assertTrue($this->runtime->identifier("\$even"));
-			$this->assertFalse($this->runtime->identifier("\$odd"));
+			$this->assertEquals($this->runtime->specialIdentifier(""), "foo");
+			$this->assertEquals($this->runtime->specialIdentifier("0"), 0);
+			$this->assertEquals($this->runtime->specialIdentifier("1"), 1);
+			$this->assertEquals($this->runtime->specialIdentifier("key"), 0);
+			$this->assertTrue($this->runtime->specialIdentifier("first"));
+			$this->assertFalse($this->runtime->specialIdentifier("last"));
+			$this->assertTrue($this->runtime->specialIdentifier("even"));
+			$this->assertFalse($this->runtime->specialIdentifier("odd"));
 			
 			// bar
 			$this->runtime->loop();
-			$this->assertEquals($this->runtime->identifier("\$"), "bar");
-			$this->assertEquals($this->runtime->identifier("\$0"), 1);
-			$this->assertEquals($this->runtime->identifier("\$1"), 2);
-			$this->assertEquals($this->runtime->identifier("\$key"), 1);
-			$this->assertFalse($this->runtime->identifier("\$first"));
-			$this->assertFalse($this->runtime->identifier("\$last"));
-			$this->assertFalse($this->runtime->identifier("\$even"));
-			$this->assertTrue($this->runtime->identifier("\$odd"));
+			$this->assertEquals($this->runtime->specialIdentifier(""), "bar");
+			$this->assertEquals($this->runtime->specialIdentifier("0"), 1);
+			$this->assertEquals($this->runtime->specialIdentifier("1"), 2);
+			$this->assertEquals($this->runtime->specialIdentifier("key"), 1);
+			$this->assertFalse($this->runtime->specialIdentifier("first"));
+			$this->assertFalse($this->runtime->specialIdentifier("last"));
+			$this->assertFalse($this->runtime->specialIdentifier("even"));
+			$this->assertTrue($this->runtime->specialIdentifier("odd"));
 
 			// baz
 			$this->runtime->loop();
-			$this->assertEquals($this->runtime->identifier("\$"), "baz");
-			$this->assertEquals($this->runtime->identifier("\$0"), 2);
-			$this->assertEquals($this->runtime->identifier("\$1"), 3);
-			$this->assertEquals($this->runtime->identifier("\$key"), 2);
-			$this->assertFalse($this->runtime->identifier("\$first"));
-			$this->assertTrue($this->runtime->identifier("\$last"));
-			$this->assertTrue($this->runtime->identifier("\$even"));
-			$this->assertFalse($this->runtime->identifier("\$odd"));			
+			$this->assertEquals($this->runtime->specialIdentifier(""), "baz");
+			$this->assertEquals($this->runtime->specialIdentifier("0"), 2);
+			$this->assertEquals($this->runtime->specialIdentifier("1"), 3);
+			$this->assertEquals($this->runtime->specialIdentifier("key"), 2);
+			$this->assertFalse($this->runtime->specialIdentifier("first"));
+			$this->assertTrue($this->runtime->specialIdentifier("last"));
+			$this->assertTrue($this->runtime->specialIdentifier("even"));
+			$this->assertFalse($this->runtime->specialIdentifier("odd"));			
 		}
 		
 		public function testStartEmptyGenerators() {

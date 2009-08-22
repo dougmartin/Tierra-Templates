@@ -6,11 +6,14 @@
 		private $stackFrame;
 		private $currentFrame;
 		private $request;
+		private $options;
 		
-		public function __construct($request) {
+		public function __construct($request, $options) {
+			$this->request = $request;
+			$this->options = $options;
+			
 			$this->stackFrame = array();
 			$this->currentFrame = false;
-			$this->request = $request;
 		}
 		
 		public function attr($var, $name) {
@@ -23,10 +26,6 @@
 		}
 		
 		public function identifier($name) {
-			// see if this is a special value
-			if ($name[0] == "$") 
-				return ($this->currentFrame ? $this->currentFrame->specialValue(substr($name,1)) : false);
-				
 			// walk down the stack looking for the identifier
 			for ($i=count($this->stackFrame)-1; $i>=0; $i--) {
 				$currentFrame = $this->stackFrame[$i];
@@ -40,6 +39,14 @@
 				
 			// finally look in the blocks
 			return $this->request->getBlock($name, false);
+		}
+		
+		public function specialIdentifier($name) {
+			return ($this->currentFrame ? $this->currentFrame->specialIdentifier($name) : false);
+		}
+		
+		public function externalIdentifier($name) {
+			// TODO:: implement lookup of static vars
 		}
 
 		public function startGenerator($expression) {
@@ -64,9 +71,48 @@
 		}
 		
 		public function call($functionName, $params=array()) {
-			// TODO: convert from CMS
-			array_unshift($params, $functionName);
-			return call_user_func_array(array("CMS", "Call"), $params);
+			if (function_exists($functionName)) {
+				array_unshift($params, $functionName);
+				return call_user_func_array(array("CMS", "Call"), $params);
+			}
+			throw new TierraTemplateException("Function not found: {$functionName}");
+		}
+		
+		public function externalCall($functionName, $class, $virtualDir, $subDir, $debugInfo, $params=array()) {
+			
+			if (!class_exists($class)) {
+				if ($virtualDir) {
+					if (isset($this->options["virtualDirs"][$virtualDir])) {
+						$filename = realpath("{$this->options["virtualDirs"][$virtualDir]}/{$subDir}/{$class}.php");
+						if ($filename)
+							include_once $filename;
+						else
+							throw new TierraTemplateException("Virtual directory '{$virtualDir}' found but class file '{$class}.php' was not found for {$debugInfo}");
+					}
+					else
+						throw new TierraTemplateException("Virtual directory '{$virtualDir}' not found in template options for {$debugInfo}");
+				}
+				else {
+					// search the virtual dirs for the class
+					if (isset($this->options["virtualDirs"])) {
+						foreach ($this->options["virtualDirs"] as $virtualDir => $path) {
+							if (file_exists("{$path}/{$class}.php")) {
+								include_once "{$path}/{$class}.php";
+								break;
+							}
+						}
+					}
+				}
+			}
+			
+			if (class_exists($class)) {
+				if (method_exists($class, $functionName))
+					return call_user_func_array(array($class, $functionName), $params);
+				else
+					throw new TierraTemplateException("Class found '{$class}' but function '{$functionName}' was not found for {$debugInfo}");
+			}
+			else
+				throw new TierraTemplateException("Class '{$class}' not found for {$debugInfo}");
 		}
 		
 		public function assign($name, $value) {

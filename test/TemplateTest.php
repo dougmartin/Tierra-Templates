@@ -12,6 +12,9 @@
 				"baseTemplateDir" => "templates",
 				"readFromCache" => true,
 				"cacheDir" => "cache",
+				"virtualDirs" => array(
+					"flam" => "externals"
+				)
 			);
 		}
 		
@@ -19,7 +22,7 @@
 		}
 		
 		public function checkOutput($templateContents, $expectedOutput, $dump=false) {
-			$output = TierraTemplate::GetDynamicTemplateOutput($templateContents);
+			$output = TierraTemplate::GetDynamicTemplateOutput($templateContents, $this->options);
 			if ($dump) {
 				echo "templateContents:\n";
 				var_dump($templateContents);
@@ -103,6 +106,28 @@
 		public function testLoadChildTemplate() {
 			$this->checkTemplateOutput("child.html", "grandparent parent child");
 		}
+		
+		public function testInternalFilterCall() {
+			$this->checkOutput("{@ 'test':strtoupper @}", "TEST");
+		}
+				
+		public function testExternalFilterCall() {
+			$this->checkOutput("{@ 'test':flam\\foo::bar @}", "TEST");
+		}
+		
+		public function testExternalFilterCallNoVirtualDir() {
+			$this->checkOutput("{@ 'test':foo::bar @}", "TEST");
+		}
+
+		public function testExternalFilterCallInSubDir() {
+			$this->checkOutput("{@ 'TEST':flam\\subdir\\bar::baz @}", "test");
+		}
+
+		/*
+		public function testExternalFilterCallNoClass() {
+			$this->checkOutput("{@ 'test':flam\\bar @}", "TEST");
+		}
+		*/
 				
 		
 	}

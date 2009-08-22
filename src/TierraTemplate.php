@@ -30,7 +30,7 @@
 			$baseTemplateDir = self::AddTrailingDirectorySeparator($baseTemplateDir);
 				
 			$this->__request = $this->getOption("request");
-			$this->__runtime = new TierraTemplateRuntime($this->__request);
+			$this->__runtime = new TierraTemplateRuntime($this->__request, $options);
 			$this->__templateFile = $templateFile;
 			$this->__baseTemplateDir = $baseTemplateDir;
 			$this->__cachedTemplatePath = false;
@@ -48,7 +48,20 @@
 				$templateContents = @file_get_contents($rawTemplatePath);
 				if ($templateContents === false)
 					throw new TierraTemplateException("Cannot read template: {$rawTemplatePath}");
-				self::ParseAndCache($options, $templateContents, $this->__cachedTemplatePath);
+					
+				$parser = new TierraTemplateParser($templateContents, $templateFile);
+				$parser->parse();
+				$src = TierraTemplateCodeGenerator::emit(TierraTemplateOptimizer::optimize($parser->getAST()));
+				
+				@mkdir(dirname($this->__cachedTemplatePath), $this->getOption("cacheDirPerms", 0777), true);
+				$handle = @fopen($this->__cachedTemplatePath, "w");
+				if ($handle) {
+					fwrite($handle, $src);
+					fclose($handle);
+					@chmod($this->__cachedTemplatePath,  $this->getOption("cachedTemplatePerms", 0666));
+				}
+				else
+					throw new TierraTemplateException("Cannot create cached template: {$this->__cachedTemplatePath}");							
 			}
 		}
 		
@@ -110,22 +123,6 @@
 					throw new TierraTemplateException("Cache directory cannot be created: {$cacheDir}");
 			}
 			return $cacheDir;
-		}
-		
-		public static function ParseAndCache($options, $templateContents, $cachedTemplatePath) {
-			$parser = new TierraTemplateParser($templateContents);
-			$parser->parse();
-			$src = TierraTemplateCodeGenerator::emit(TierraTemplateOptimizer::optimize($parser->getAST()));
-			
-			@mkdir(dirname($cachedTemplatePath), self::StaticGetOption($options, "cacheDirPerms", 0777), true);
-			$handle = @fopen($cachedTemplatePath, "w");
-			if ($handle) {
-				fwrite($handle, $src);
-				fclose($handle);
-				@chmod($cachedTemplatePath,  self::StaticGetOption($options, "cachedTemplatePerms", 0666));
-			}
-			else
-				throw new TierraTemplateException("Cannot create cached template: {$cachedTemplatePath}");			
 		}
 		
 		public function __set($name, $value) {

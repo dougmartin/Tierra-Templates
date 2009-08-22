@@ -239,6 +239,8 @@
 					$params = self::emitArray($node->params);
 					if (function_exists($node->method))
 						$code[] = "call_user_func_array('{$node->method}', {$params})";
+					else if ($node->isExternal)
+						$code[] = "\$this->__runtime->externalCall('{$node->method}', '{$node->class}', '{$node->virtualDir}', '" . str_replace("\\", "/", $node->subDir) . "', '" . str_replace("\\", "\\\\", $node->debugInfo) . "', {$params})";
 					else
 						// addslashes() to escape the possible namespace slashes in the method
 						$code[] = "\$this->__runtime->call('" . addslashes($node->method) . "', {$params})";
@@ -256,6 +258,10 @@
 						$code[] = "'{$node->identifier}'";
 					else if (in_array(strtolower($node->identifier), array("true", "false")))
 						$code[] = $node->identifier;
+					else if ($node->isExternal)
+						$code[] = "\$this->__runtime->externalIdentifier('{$node->identifier}', '{$node->class}', '{$node->virtualDir}', '" . str_replace("\\", "/", $node->subDir) . "', '" . str_replace("\\", "\\\\", $node->debugInfo) . "')";
+					else if ($node->identifier[0] == "$") 
+						$code[] = "\$this->__runtime->specialIdentifier('" . substr($node->identifier, 1) . "')";
 					else
 						$code[] = "\$this->__runtime->identifier('{$node->identifier}')";
 					break;

@@ -36,42 +36,42 @@
 			$this->assertFalse($frame->hasIdentifier("boom"));
 		}
 		
-		public function testSpecialValues() {
+		public function testspecialIdentifiers() {
 			$frame = new TierraTemplateStackFrame(array("foo", "bar", "baz"));
-			$this->assertEquals($frame->specialValue("count"), 3);
-			$this->assertEquals($frame->specialValue("this is a garbage value"), false);
+			$this->assertEquals($frame->specialIdentifier("count"), 3);
+			$this->assertEquals($frame->specialIdentifier("this is a garbage value"), false);
 			
 			// foo
-			$this->assertEquals($frame->specialValue(""), "foo");
-			$this->assertEquals($frame->specialValue("0"), 0);
-			$this->assertEquals($frame->specialValue("1"), 1);
-			$this->assertEquals($frame->specialValue("key"), 0);
-			$this->assertTrue($frame->specialValue("first"));
-			$this->assertFalse($frame->specialValue("last"));
-			$this->assertTrue($frame->specialValue("even"));
-			$this->assertFalse($frame->specialValue("odd"));
+			$this->assertEquals($frame->specialIdentifier(""), "foo");
+			$this->assertEquals($frame->specialIdentifier("0"), 0);
+			$this->assertEquals($frame->specialIdentifier("1"), 1);
+			$this->assertEquals($frame->specialIdentifier("key"), 0);
+			$this->assertTrue($frame->specialIdentifier("first"));
+			$this->assertFalse($frame->specialIdentifier("last"));
+			$this->assertTrue($frame->specialIdentifier("even"));
+			$this->assertFalse($frame->specialIdentifier("odd"));
 			
 			// bar
 			$frame->loop();
-			$this->assertEquals($frame->specialValue(""), "bar");
-			$this->assertEquals($frame->specialValue("0"), 1);
-			$this->assertEquals($frame->specialValue("1"), 2);
-			$this->assertEquals($frame->specialValue("key"), 1);
-			$this->assertFalse($frame->specialValue("first"));
-			$this->assertFalse($frame->specialValue("last"));
-			$this->assertFalse($frame->specialValue("even"));
-			$this->assertTrue($frame->specialValue("odd"));
+			$this->assertEquals($frame->specialIdentifier(""), "bar");
+			$this->assertEquals($frame->specialIdentifier("0"), 1);
+			$this->assertEquals($frame->specialIdentifier("1"), 2);
+			$this->assertEquals($frame->specialIdentifier("key"), 1);
+			$this->assertFalse($frame->specialIdentifier("first"));
+			$this->assertFalse($frame->specialIdentifier("last"));
+			$this->assertFalse($frame->specialIdentifier("even"));
+			$this->assertTrue($frame->specialIdentifier("odd"));
 
 			// baz
 			$frame->loop();
-			$this->assertEquals($frame->specialValue(""), "baz");
-			$this->assertEquals($frame->specialValue("0"), 2);
-			$this->assertEquals($frame->specialValue("1"), 3);
-			$this->assertEquals($frame->specialValue("key"), 2);
-			$this->assertFalse($frame->specialValue("first"));
-			$this->assertTrue($frame->specialValue("last"));
-			$this->assertTrue($frame->specialValue("even"));
-			$this->assertFalse($frame->specialValue("odd"));
+			$this->assertEquals($frame->specialIdentifier(""), "baz");
+			$this->assertEquals($frame->specialIdentifier("0"), 2);
+			$this->assertEquals($frame->specialIdentifier("1"), 3);
+			$this->assertEquals($frame->specialIdentifier("key"), 2);
+			$this->assertFalse($frame->specialIdentifier("first"));
+			$this->assertTrue($frame->specialIdentifier("last"));
+			$this->assertTrue($frame->specialIdentifier("even"));
+			$this->assertFalse($frame->specialIdentifier("odd"));
 		}
 		
 	}

@@ -296,5 +296,4 @@ HTML;
 			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "~", "foo", "{@", "bar", "@}", "~", "@]", ""), "Output template lexeme check");
 		}
 		
-		
 	}

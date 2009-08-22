@@ -6,13 +6,15 @@
 
 	class TierraTemplateParser {
 		
+		private $filename;
 		private $tokenizer;
 		private $ast;
 		private $blockStack;
 		
 		private $operatorTable;
 		
-		public function __construct($src) {
+		public function __construct($src, $filename=false) {
+			$this->filename = $filename;
 			$this->tokenizer = new TierraTemplateTokenizer($src);
 			$this->ast = new TierraTemplateAST();
 			$this->blockStack = array();
@@ -212,10 +214,10 @@
 								
 							// for filters convert chained identifiers to functions
 							if (($op == TierraTemplateTokenizer::COLON_TOKEN) && ($rightNode->type == TierraTemplateASTNode::IDENTIFIER_NODE)) {
-								$node = new TierraTemplateASTNode(TierraTemplateASTNode::FUNCTION_CALL_NODE);
-								$node->method = $rightNode->identifier;
-								$node->params = array();
-								$rightNode = $node;
+								$rightNode->type = TierraTemplateASTNode::FUNCTION_CALL_NODE;
+								$rightNode->method = $rightNode->identifier;
+								unset($rightNode->identifier);
+								$rightNode->params = array();
 							}
 							
 							$leftNode = new TierraTemplateASTNode(TierraTemplateASTNode::OPERATOR_NODE, array("op" => $op, "leftNode" => $leftNode, "rightNode" => $rightNode, "binary" => true));
@@ -264,8 +266,31 @@
 		
 		private function identifierNode() {
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::IDENTIFIER_NODE);
+			// save the file and line number for runtime external function call errors for filters 
+			$line = $this->tokenizer->getLineNumber();
 			$node->identifier = $this->tokenizer->match(TierraTemplateTokenizer::IDENTIFIER_TOKEN);
+			$node->isExternal = $this->isExternal($node->identifier);
+			if ($node->isExternal) {
+				$node->debugInfo = "{$node->identifier} on line {$line}" . ($this->filename ? " in the {$this->filename} template" : ""); 
+				list($node->identifier, $node->class, $node->virtualDir, $node->subDir) =  $this->parseExternal($node->identifier);
+			}
+			
 			return $node;
+		}
+		
+		private function isExternal($text) {
+			return ((strpos($text, "::") !== false) || (strpos($text, "\\") !== false));
+		}
+		
+		private function parseExternal($text) {
+			// if this is an external identifier verify its formatting
+			if (substr_count($text, "::") > 1)
+				$this->tokenizer->matchError("External identifiers and functions can only have one :: scope operator");
+				
+			// this matches: "foo::bar", "foo\\bar", "foo\\bar::baz", "foo\\bar\\baz::bam", "foo\\bar\\baz\\bam::boom"
+			preg_match('/((([A-Za-z_0-9][A-Za-z_0-9]*)\\\\)(([A-Za-z_0-9][A-Za-z_0-9\\\\]*)\\\\)*)*(([A-Za-z_][A-Za-z_0-9]*)::)*([A-Za-z_][A-Za-z_0-9]*)/', $text, $matches);
+			
+			return array($matches[8], $matches[7], $matches[3], $matches[5]);
 		}
 		
 		private function jsonAttributeNode() {
@@ -375,7 +400,6 @@
 					$node->value = $this->tokenizer->advance();
 					break;
 					
-				case TierraTemplateTokenizer::EXTERNAL_FUNCTION_CALL_TOKEN:
 				case TierraTemplateTokenizer::FUNCTION_CALL_TOKEN:
 					$node = $this->functionCallNode();
 					break;
@@ -451,9 +475,15 @@
 		private function functionCallNode($noParams=false) {
 			
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::FUNCTION_CALL_NODE);
-			$node->isExternal = $this->tokenizer->nextIs(TierraTemplateTokenizer::EXTERNAL_FUNCTION_CALL_TOKEN);
-			$node->method = $this->tokenizer->matches(array(TierraTemplateTokenizer::FUNCTION_CALL_TOKEN, TierraTemplateTokenizer::EXTERNAL_FUNCTION_CALL_TOKEN));
+			$line = $this->tokenizer->getLineNumber();
+			$node->method = $this->tokenizer->match(TierraTemplateTokenizer::FUNCTION_CALL_TOKEN);
 			$node->params = array();
+			
+			$node->isExternal = $this->isExternal($node->method);
+			if ($node->isExternal) {
+				$node->debugInfo = "{$node->method} on line {$line}" . ($this->filename ? " in the {$this->filename} template" : ""); 
+				list($node->method, $node->class, $node->virtualDir, $node->subDir) =  $this->parseExternal($node->method);
+			}
 			
 			// filters can optionally have no parameters when chained.  They look like identifiers to the tokenizer.
 			if ($noParams)

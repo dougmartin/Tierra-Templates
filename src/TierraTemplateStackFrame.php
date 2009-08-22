@@ -47,7 +47,7 @@
 			return $this->loopValue;
 		}
 		
-		public function specialValue($index) {
+		public function specialIdentifier($index) {
 			switch ($index) {
 				case "":
 					$value = $this->loopValue;

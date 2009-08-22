@@ -182,7 +182,7 @@ HTML;
 		}
 		
 		public function testBlockWithNamespacedFilter() {
-			self::checkEmit("[@ include foo if x:bar\\bam() @]", "<?php if (\$this->__runtime->call('bar\\\\bam', array(\$this->__runtime->identifier('x')))) { \$this->includeTemplate('foo'); }", "Block with built in filter");
+			self::checkEmit("[@ include foo if x:bar\\bam() @]", "<?php if (\$this->__runtime->externalCall('bam', '', 'bar', '', 'bar\\\\bam on line 1', array(\$this->__runtime->identifier('x')))) { \$this->includeTemplate('foo'); }", "Block with built in filter");
 		}
 		
 		public function testPageBlockWithDecorator() {
@@ -301,6 +301,11 @@ HTML;
 		public function testStrictOutputTemplateWithEscapedGenerator() {
 			$src = "{@ ~\\{@ bar @}~ @}";
 			self::checkEmit($src, "<?php echo '{@ bar @}';", "Escaped output template");
+		}
+
+		public function testExternalFilterCall() {
+			$src = "{@ 'test':foo::bar @}";
+			self::checkEmit($src, "<?php echo \$this->__runtime->externalCall('bar', 'foo', '', '', 'foo::bar on line 1', array('test'));", "External call filter");
 		}		
 	}
 	

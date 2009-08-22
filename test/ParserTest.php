@@ -432,4 +432,9 @@ SRC;
 			$src = "{@ foo; bar ? bam @}";	
 			self::checkSyntax($src, "Generator with multiple statements");
 		}		
+		
+		public function testExternalFilterCall() {
+			$src = "{@ 'test':foo::bar @}";
+			self::checkSyntax($src, "External call filter");
+		}				
 	}
