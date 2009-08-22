@@ -269,15 +269,38 @@
 			// save the file and line number for runtime external function call errors for filters 
 			$line = $this->tokenizer->getLineNumber();
 			$node->identifier = $this->tokenizer->match(TierraTemplateTokenizer::IDENTIFIER_TOKEN);
+			$node->debugInfo = "{$node->identifier} on line {$line}" . ($this->filename ? " in the {$this->filename} template" : ""); 
 			$node->isExternal = $this->isExternal($node->identifier);
-			if ($node->isExternal) {
-				$node->debugInfo = "{$node->identifier} on line {$line}" . ($this->filename ? " in the {$this->filename} template" : ""); 
-				list($node->identifier, $node->class, $node->virtualDir, $node->subDir) =  $this->parseExternal($node->identifier);
-			}
+			if ($node->isExternal)
+				list($node->identifier, $node->filename, $node->virtualDir, $node->subDir) =  $this->parseExternal($node->identifier);
 			
 			return $node;
 		}
 		
+		private function functionCallNode($noParams=false) {
+			
+			$node = new TierraTemplateASTNode(TierraTemplateASTNode::FUNCTION_CALL_NODE);
+			$line = $this->tokenizer->getLineNumber();
+			$node->method = $this->tokenizer->match(TierraTemplateTokenizer::FUNCTION_CALL_TOKEN);
+			$node->params = array();
+			$node->debugInfo = "{$node->method} on line {$line}" . ($this->filename ? " in the {$this->filename} template" : ""); 
+			
+			$node->isExternal = $this->isExternal($node->method);
+			if ($node->isExternal)
+				list($node->method, $node->filename, $node->virtualDir, $node->subDir) =  $this->parseExternal($node->method);
+			
+			// filters can optionally have no parameters when chained.  They look like identifiers to the tokenizer.
+			if ($noParams)
+				return node;
+				
+			$this->tokenizer->match(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
+			if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN))
+				$node->params[] = $this->expressionNode();
+			$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
+
+			return $node;
+		}
+
 		private function isExternal($text) {
 			return ((strpos($text, "::") !== false) || (strpos($text, "\\") !== false));
 		}
@@ -469,31 +492,6 @@
 					$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
 			}
 			
-			return $node;
-		}
-		
-		private function functionCallNode($noParams=false) {
-			
-			$node = new TierraTemplateASTNode(TierraTemplateASTNode::FUNCTION_CALL_NODE);
-			$line = $this->tokenizer->getLineNumber();
-			$node->method = $this->tokenizer->match(TierraTemplateTokenizer::FUNCTION_CALL_TOKEN);
-			$node->params = array();
-			
-			$node->isExternal = $this->isExternal($node->method);
-			if ($node->isExternal) {
-				$node->debugInfo = "{$node->method} on line {$line}" . ($this->filename ? " in the {$this->filename} template" : ""); 
-				list($node->method, $node->class, $node->virtualDir, $node->subDir) =  $this->parseExternal($node->method);
-			}
-			
-			// filters can optionally have no parameters when chained.  They look like identifiers to the tokenizer.
-			if ($noParams)
-				return node;
-				
-			$this->tokenizer->match(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
-			if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN))
-				$node->params[] = $this->expressionNode();
-			$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
-
 			return $node;
 		}
 		

@@ -1,8 +1,5 @@
 <?php
 
-	class Bar {
-		
-		public static function baz($text) {
-			return strtolower($text);
-		}
+	function __test_prefix_baz($text) {
+		return strtolower($text);
 	}

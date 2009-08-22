@@ -13,7 +13,14 @@
 				"readFromCache" => true,
 				"cacheDir" => "cache",
 				"virtualDirs" => array(
-					"flam" => "externals"
+					"flam" => array(
+						"path" => "externals",
+						"functionPrefix" => "__test_prefix_"
+					),
+					"flim" => array(
+						"path" => "externals/subdir",
+						"functionPrefix" => "__test_prefix_"
+					)
 				)
 			);
 		}
@@ -123,12 +130,9 @@
 			$this->checkOutput("{@ 'TEST':flam\\subdir\\bar::baz @}", "test");
 		}
 
-		/*
-		public function testExternalFilterCallNoClass() {
-			$this->checkOutput("{@ 'test':flam\\bar @}", "TEST");
+		public function testExternalFilterCallNoFilename() {
+			$this->checkOutput("{@ 'test':flam\\boom @}", "TEST");
 		}
-		*/
-				
 		
 	}
 	

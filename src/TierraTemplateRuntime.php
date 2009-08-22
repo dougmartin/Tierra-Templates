@@ -7,13 +7,23 @@
 		private $currentFrame;
 		private $request;
 		private $options;
+		private $loadedFunctions;
 		
 		public function __construct($request, $options) {
 			$this->request = $request;
 			$this->options = $options;
 			
+			// validate the virtual dirs
+			if (isset($options["virtualDirs"])) {
+				foreach ($options["virtualDirs"] as $virtualDir => $dirInfo) {
+					if (!isset($dirInfo["path"]))
+						throw new TierraTemplateException("No path given in options for '{$virtualDir}' virtualDir");
+				}
+			}
+			
 			$this->stackFrame = array();
 			$this->currentFrame = false;
+			$this->loadedFunctions = array();
 		}
 		
 		public function attr($var, $name) {
@@ -70,49 +80,59 @@
 			$this->currentFrame = count($this->stackFrame) > 0 ? $this->stackFrame[count($this->stackFrame) - 1] : false;
 		}
 		
-		public function call($functionName, $params=array()) {
-			if (function_exists($functionName)) {
-				array_unshift($params, $functionName);
-				return call_user_func_array(array("CMS", "Call"), $params);
-			}
-			throw new TierraTemplateException("Function not found: {$functionName}");
+		public function call($functionName, $debugInfo, $params=array()) {
+			if (function_exists($functionName))
+				return call_user_func_array($functionName, $params);
+			return $this->externalCall($functionName, "", "", "", $debugInfo, $params);
 		}
 		
-		public function externalCall($functionName, $class, $virtualDir, $subDir, $debugInfo, $params=array()) {
+		public function externalCall($functionName, $filename, $virtualDir, $subDir, $debugInfo, $params=array()) {
 			
-			if (!class_exists($class)) {
+			if (!$filename)
+				$filename = "index";
+			
+			$signature = "{$virtualDir}/{$subDir}/{$filename}/{$functionName}";
+			if (!isset($this->loadedFunctions[$signature])) {
 				if ($virtualDir) {
 					if (isset($this->options["virtualDirs"][$virtualDir])) {
-						$filename = realpath("{$this->options["virtualDirs"][$virtualDir]}/{$subDir}/{$class}.php");
-						if ($filename)
-							include_once $filename;
-						else
-							throw new TierraTemplateException("Virtual directory '{$virtualDir}' found but class file '{$class}.php' was not found for {$debugInfo}");
+						$dirInfo = $this->options["virtualDirs"][$virtualDir];
+						$path = realpath("{$dirInfo["path"]}/{$subDir}/{$filename}.php");
+						if (!$path)
+							throw new TierraTemplateException("Virtual directory '{$virtualDir}' found but function file was not found for {$debugInfo}");
+						
+						include_once $path;
+						
+						$this->loadedFunctions[$signature] = $this->addFunctionPrefix($dirInfo, $functionName);
 					}
 					else
 						throw new TierraTemplateException("Virtual directory '{$virtualDir}' not found in template options for {$debugInfo}");
 				}
 				else {
-					// search the virtual dirs for the class
 					if (isset($this->options["virtualDirs"])) {
-						foreach ($this->options["virtualDirs"] as $virtualDir => $path) {
-							if (file_exists("{$path}/{$class}.php")) {
-								include_once "{$path}/{$class}.php";
-								break;
+						foreach ($this->options["virtualDirs"] as $virtualDir => $dirInfo) {
+							$path = realpath("{$dirInfo["path"]}/{$subDir}/{$filename}.php");
+							if ($path) {
+								include_once $path;
+								if (function_exists($this->addFunctionPrefix($dirInfo, $functionName))) {
+									$this->loadedFunctions[$signature] = $this->addFunctionPrefix($dirInfo, $functionName);
+									break;
+								}
 							}
 						}
 					}
 				}
 			}
-			
-			if (class_exists($class)) {
-				if (method_exists($class, $functionName))
-					return call_user_func_array(array($class, $functionName), $params);
-				else
-					throw new TierraTemplateException("Class found '{$class}' but function '{$functionName}' was not found for {$debugInfo}");
+
+			if (isset($this->loadedFunctions[$signature])) {
+				if (function_exists($this->loadedFunctions[$signature]))
+					return call_user_func_array($this->loadedFunctions[$signature], $params);
 			}
-			else
-				throw new TierraTemplateException("Class '{$class}' not found for {$debugInfo}");
+			
+			throw new TierraTemplateException("External function not found for {$debugInfo}");
+		}
+		
+		private function addFunctionPrefix($dirInfo, $functionName) {
+			return isset($dirInfo["functionPrefix"]) ? "{$dirInfo["functionPrefix"]}{$functionName}" : $functionName; 
 		}
 		
 		public function assign($name, $value) {
