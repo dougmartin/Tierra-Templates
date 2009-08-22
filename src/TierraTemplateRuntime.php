@@ -88,6 +88,12 @@
 		
 		public function externalCall($functionName, $filename, $virtualDir, $subDir, $debugInfo, $params=array()) {
 			
+			if ("{$virtualDir}/{$subDir}/{$filename}" == "//request") {
+				if (method_exists($this->request, $functionName))
+					return call_user_func_array(array($this->request, $functionName), $params);
+				throw new TierraTemplateException("Internal function not found for {$debugInfo}");
+			}
+			
 			if (!$filename)
 				$filename = "index";
 			

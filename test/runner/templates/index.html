@@ -52,6 +52,18 @@
 	<p>Calling 'Goodbye' : lolify : bar\\test::upcase</p>
 	
 	{@ 'Goodbye' : lolify : bar\test::upcase @}
+	
+	<p>Testing internal request calls...</p>
+	<p>
+	{@ request::haveVar("test") ? "'test' variable exists" else "No 'test' variable exists" @}
+	</p>
+	<p>Setting test variable...</p>
+	<p>
+	{@ request::setVar("test", "foo"); request::haveVar("test") ? "'test' variable exists" else "No 'test' variable exists" @}
+	</p>
+	<p>
+	{@ `'test' variable is '{test}'` @}
+	</p>
 		
 [@ end content @]
 
