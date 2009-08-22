@@ -21,7 +21,7 @@
 {@ '{@ [{uri: "foo", text: "Foo"}, {uri: "bar", text: "Bar (404)"}] ? "<p>Test Links</p><ul>" `<li><a href="{uri}">{text}</a></li>` "</ul>" @}':htmlspecialchars  @} 
 	</pre>
 	
-	<p>Calling bar\\hello()</p>
+	<p>Calling bar\hello()</p>
 	
 	{@ bar\hello() @}
 	
@@ -29,17 +29,21 @@
 	
 	{@ hello() @}  	
 	
-	<p>Calling bar\\test::upcase('lower')</p>
+	<p>Calling bar\test::upcase('lower')</p>
 	
 	{@ bar\test::upcase('lower') @}
 	
-	<p>Calling bar\\upcase('lower')</p>
+	<p>Calling bar\upcase('lower')</p>
 	
 	{@ bar\upcase('lower') @}	
 	
-	<p>Calling foo\\goodbye()</p>
+	<p>Calling foo\goodbye()</p>
 	
 	{@ foo\goodbye() @}
+	
+	<p>Calling baz\boom::bam() (static method)</p>
+	
+	{@ baz\boom::bam() @}	
 	
 	<p>Calling 'UPPER':test::downcase</p>
 	
@@ -49,7 +53,7 @@
 	
 	{@ 'Hello':lolify @}	
 	
-	<p>Calling 'Goodbye' : lolify : bar\\test::upcase</p>
+	<p>Calling 'Goodbye' : lolify : bar\test::upcase</p>
 	
 	{@ 'Goodbye' : lolify : bar\test::upcase @}
 	

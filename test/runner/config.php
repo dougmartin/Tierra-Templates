@@ -12,6 +12,10 @@
 			"bar" => array(
 				"path" => "externals/bar",
 				"functionPrefix" => "__bar_"
-			)
+			),
+			"baz" => array(
+				"path" => "externals/baz",
+				"classPrefix" => "__baz_"
+			),
 		)
 	);

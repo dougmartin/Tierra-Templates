@@ -108,7 +108,10 @@
 						
 						include_once $path;
 						
-						$this->loadedFunctions[$signature] = $this->addFunctionPrefix($dirInfo, $functionName);
+						if (method_exists($this->addPrefix($dirInfo, $filename, "classPrefix"), $functionName))
+							$this->loadedFunctions[$signature] = array($this->addPrefix($dirInfo, $filename, "classPrefix"), $functionName);
+						else if (function_exists($this->addPrefix($dirInfo, $functionName, "functionPrefix")))
+							$this->loadedFunctions[$signature] = $this->addPrefix($dirInfo, $functionName, "functionPrefix");
 					}
 					else
 						throw new TierraTemplateException("Virtual directory '{$virtualDir}' not found in template options for {$debugInfo}");
@@ -119,8 +122,12 @@
 							$path = realpath("{$dirInfo["path"]}/{$subDir}/{$filename}.php");
 							if ($path) {
 								include_once $path;
-								if (function_exists($this->addFunctionPrefix($dirInfo, $functionName))) {
-									$this->loadedFunctions[$signature] = $this->addFunctionPrefix($dirInfo, $functionName);
+								if (method_exists($this->addPrefix($dirInfo, $filename, "classPrefix"), $functionName)) {
+									$this->loadedFunctions[$signature] = array($this->addPrefix($dirInfo, $filename, "classPrefix"), $functionName);
+									break;
+								}
+								else if (function_exists($this->addPrefix($dirInfo, $functionName, "functionPrefix"))) {
+									$this->loadedFunctions[$signature] = $this->addPrefix($dirInfo, $functionName, "functionPrefix");
 									break;
 								}
 							}
@@ -129,16 +136,14 @@
 				}
 			}
 
-			if (isset($this->loadedFunctions[$signature])) {
-				if (function_exists($this->loadedFunctions[$signature]))
-					return call_user_func_array($this->loadedFunctions[$signature], $params);
-			}
+			if (isset($this->loadedFunctions[$signature]))
+				return call_user_func_array($this->loadedFunctions[$signature], $params);
 			
 			throw new TierraTemplateException("External function not found for {$debugInfo}");
 		}
 		
-		private function addFunctionPrefix($dirInfo, $functionName) {
-			return isset($dirInfo["functionPrefix"]) ? "{$dirInfo["functionPrefix"]}{$functionName}" : $functionName; 
+		private function addPrefix($dirInfo, $text, $prefixSetting) {
+			return isset($dirInfo[$prefixSetting]) ? "{$dirInfo[$prefixSetting]}{$text}" : $text; 
 		}
 		
 		public function assign($name, $value) {
