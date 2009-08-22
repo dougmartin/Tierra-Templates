@@ -283,16 +283,6 @@ HTML;
 			self::checkEmit($src, "<?php \$this->__runtime->startGenerator(true); if (\$this->__runtime->identifier('foo')) { do { echo \$this->__runtime->identifier('bar'); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with empty head");
 		}
 		
-		public function testEscapedGenerator() {
-			$src = "\\{@ if foo ? bar @}";
-			self::checkEmit($src, "{@ if foo ? bar @}", "Escaped generator");
-		}
-		
-		public function testEscapedBlock() {
-			$src = "\\[@ start foo @]\\[@ end foo @]";
-			self::checkEmit($src, "[@ start foo @][@ end foo @]", "Escaped block");
-		}		
-		
 		public function testOutputTemplateWithEscapedGenerator() {
 			$src = "{@ `\\{foo}\\{@ bar @}` @}";
 			self::checkEmit($src, "<?php echo '{foo}{@ bar @}';", "Escaped output template");

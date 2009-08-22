@@ -382,18 +382,18 @@
 				$mode = $this->getMode();
 				switch ($mode) {
 					case self::HTML_MODE:
-						$chars = array();
-						$curChar = $this->skipSlash($this->curChar(), $chars);
+						$this->startSelection();
 												
-						// get everything up to the next comment, block or generator start 
+						// get everything up to the next comment, block or generator start
+						$curChar = $this->curChar(); 
 						$nextChar = $this->nextChar();
 						while (!$this->eof && !((($curChar == '[') || ($curChar == '{')) && (($nextChar == '#') || ($nextChar == '@')))) {
-							$chars[] = $curChar;
-							$curChar = $this->skipSlash($this->advanceChar(), $chars);
+							$this->advanceChar();
+							$curChar = $this->curChar();
 							$nextChar = $this->nextChar();
 						}
 						
-						$this->nextLexeme = implode("", $chars);
+						$this->nextLexeme = $this->endSelection();
 						$this->nextToken = self::HTML_TOKEN;
 						
 						if (!$this->eof) {
