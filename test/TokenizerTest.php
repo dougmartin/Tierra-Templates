@@ -30,7 +30,7 @@
 					$tokenizer->match($token);
 				}
 			}
-			catch (TierraTemplateTokenizerException $e) {
+			catch (TierraTemplateException $e) {
 				$this->assertTrue(false, $testMessage . " / " . $e->getMessage());
 			}
 			return $tokenizer;

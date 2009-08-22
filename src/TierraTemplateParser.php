@@ -466,6 +466,7 @@
 			}
 			else {
 				$node->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->conditionalGeneratorNode() : false;
+				// we only match else with ifs and don't allow only elses so that the IF_TOKEN loop code above can use the ELSE_TOKEN as a terminator
 				$node->ifFalse = ($node->ifTrue !== false) && $this->tokenizer->matchIf(TierraTemplateTokenizer::ELSE_TOKEN) ? $this->generatorNode() : false;
 			}
 			

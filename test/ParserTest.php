@@ -172,7 +172,7 @@
 		}		
 				
 		public function testUnnamedBlockOnlyForException() {
-			$this->setExpectedException('TierraTemplateTokenizerException');
+			$this->setExpectedException('TierraTemplateException');
 			foreach (array("extends", "include", "prepend", "append", "set") as $command)
 				self::checkBlockCommand($command, "Unnamed {$command} block");
 		}
@@ -219,7 +219,7 @@
 		}	
 
 		public function testDuplicateExtendsBlock() {
-			$this->setExpectedException('TierraTemplateTokenizerException');
+			$this->setExpectedException('TierraTemplateException');
 			$src = " [@ extends test @] foo [@ extends foo @] ";
 			self::checkSyntax($src, "Duplicate extends blocks with html is valid syntax");
 		}
@@ -436,5 +436,6 @@ SRC;
 		public function testExternalFilterCall() {
 			$src = "{@ 'test':foo::bar @}";
 			self::checkSyntax($src, "External call filter");
-		}				
+		}
+
 	}

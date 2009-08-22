@@ -1,5 +1,7 @@
 <?php
 
+	require_once dirname(__FILE__) . "/../src/TierraTemplateException.php";
+	
 	class TierraTemplateTokenizer {
 		
 		const UNKNOWN_TOKEN = "unknown";
@@ -240,7 +242,7 @@
 				$length = 100;
 			}
 			$message .= " <p>Context: <pre>" . htmlspecialchars(substr($this->src, $start, $length)) . "<font color='#ff0000'>*</font>" . htmlspecialchars(substr($this->src, $start + $offset, 100)) . "</pre></p>";
-			throw new TierraTemplateTokenizerException($message);
+			throw new TierraTemplateException($message);
 		}
 		
 		public function curChar($skipSlash=false) {
@@ -279,7 +281,7 @@
 		
 		public function endSelection() {
 			if (count($this->startSelectionIndices) == 0)
-				throw new TierraTemplateTokenizerException("endSelection() called without matching startSelection()");
+				throw new TierraTemplateException("endSelection() called without matching startSelection()");
 			$startIndex = array_pop($this->startSelectionIndices);
 			return substr($this->src, $startIndex, $this->streamIndex - $startIndex);
 		} 
@@ -547,6 +549,3 @@
 		
 	}
 	
-	class TierraTemplateTokenizerException extends Exception {
-		
-	}
