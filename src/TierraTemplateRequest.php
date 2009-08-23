@@ -38,23 +38,18 @@
 		}
 		
 		public function setVar($name, $value, $attrs=array()) {
-			if (count($attrs) == 0)
-				$this->__vars[$name] = $value;
-			else {
-				array_unshift($attrs, $name);
-				$this->setAttr($this->__vars, $attrs, $value);
+			$parent = &$this->__vars;
+			array_unshift($attrs, $name);
+			while ($attr = array_shift($attrs)) {
+				if (count($attrs) > 0) {
+					if (!isset($parent[$attr]))
+						$parent[$attr] = array();
+					$parent = &$parent[$attr];
+				}
+				else
+					$parent[$attr] = $value;
 			}
 			return $value;
-		}
-		
-		private function setAttr(&$parent, $attrs, $value) {
-			$attr = array_shift($attrs);
-			if (!isset($parent[$attr]))
-				$parent[$attr] = array();
-			if (count($attrs) > 0)
-				$this->setAttr($parent[$attr], $attrs, $value);
-			else
-				$parent[$attr] = $value;
 		}
 		
 		public function getVar($name, $default=false) {
