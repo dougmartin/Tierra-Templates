@@ -66,6 +66,15 @@
 	
 	{@ bam = 3; boom = 4; x[bam + 1][boom - 2].bim = "foo"; x[4][2].bim == "foo" ? "Yes, it worked!" else "ERROR!" @}
 	
+	<p>Object before assignment</p>
+	{@ o = baz\boom::getObject(); baz\boom::json(o) @}
+	
+	<p>Object after assignment</p>
+	{@ o.bar.boom = "2"; o.baz = {new: true}; o.bam.bim = "new bim"; baz\boom::json(o) @}
+
+	<p>getObject() after assignment</p>
+	{@ baz\boom::json(baz\boom::getObject()) @}
+	
 	<p>Testing internal request calls...</p>
 	<p>
 	{@ request::haveVar("test") ? "'test' variable exists" else "No 'test' variable exists" @}

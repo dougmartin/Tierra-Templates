@@ -58,7 +58,38 @@
 		}
 		
 		public function externalIdentifier($name, $filename, $virtualDir, $subDir, $debugInfo) {
-			$signature = $this->loadExternalIdentifier($name, $filename, $virtualDir, $subDir);
+			if (!$filename)
+				$filename = "index";
+
+			$signature = "{$virtualDir}/{$subDir}/{$filename}";
+			
+			if (!isset($this->loadedIdentifiers[$signature])) {
+				if ($virtualDir) {
+					if (isset($this->options["virtualDirs"][$virtualDir])) {
+						$dirInfo = $this->options["virtualDirs"][$virtualDir];
+						$path = realpath("{$dirInfo["path"]}/{$subDir}/{$filename}.php");
+						if ($path) {
+							include_once $path;
+							$this->loadedIdentifiers[$signature] = get_class_vars($this->addPrefix($dirInfo, $filename, "classPrefix"));
+						}
+					}
+				}
+				else {
+					if (isset($this->options["virtualDirs"])) {
+						foreach ($this->options["virtualDirs"] as $virtualDir => $dirInfo) {
+							$path = realpath("{$dirInfo["path"]}/{$subDir}/{$filename}.php");
+							if ($path) {
+								include_once $path;
+								$prefixedClassName = $this->addPrefix($dirInfo, $filename, "classPrefix");
+								$this->loadedIdentifiers[$signature] = get_class_vars($prefixedClassName);
+								if (isset($this->loadedIdentifiers[$signature][$name]))
+									break;
+							}
+						}
+					}
+				}
+			}
+			
 			return isset($this->loadedIdentifiers[$signature][$name]) ? $this->loadedIdentifiers[$signature][$name] : $false; 
 		}
 		
@@ -146,42 +177,6 @@
 			throw new TierraTemplateException("External function not found for {$debugInfo}");
 		}
 
-		private function loadExternalIdentifier($name, $filename, $virtualDir, $subDir) {
-			if (!$filename)
-				$filename = "index";
-
-			$signature = "{$virtualDir}/{$subDir}/{$filename}";
-			
-			if (!isset($this->loadedIdentifiers[$signature])) {
-				if ($virtualDir) {
-					if (isset($this->options["virtualDirs"][$virtualDir])) {
-						$dirInfo = $this->options["virtualDirs"][$virtualDir];
-						$path = realpath("{$dirInfo["path"]}/{$subDir}/{$filename}.php");
-						if ($path) {
-							include_once $path;
-							$this->loadedIdentifiers[$signature] = get_class_vars($this->addPrefix($dirInfo, $filename, "classPrefix"));
-						}
-					}
-				}
-				else {
-					if (isset($this->options["virtualDirs"])) {
-						foreach ($this->options["virtualDirs"] as $virtualDir => $dirInfo) {
-							$path = realpath("{$dirInfo["path"]}/{$subDir}/{$filename}.php");
-							if ($path) {
-								include_once $path;
-								$prefixedClassName = $this->addPrefix($dirInfo, $filename, "classPrefix");
-								$this->loadedIdentifiers[$signature] = get_class_vars($prefixedClassName);
-								if (isset($this->loadedIdentifiers[$signature][$name]))
-									break;
-							}
-						}
-					}
-				}
-			}
-			
-			return $signature;
-		}
-		
 		private function addPrefix($dirInfo, $text, $prefixSetting) {
 			return isset($dirInfo[$prefixSetting]) ? "{$dirInfo[$prefixSetting]}{$text}" : $text; 
 		}

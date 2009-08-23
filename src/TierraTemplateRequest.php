@@ -29,7 +29,7 @@
 		}
 		
 		public function setParam($name, $value, $to="request") {
-			$this->__settings[$to][$name] = $value;
+			return $this->__settings[$to][$name] = $value;
 		}
 		
 		public function getParams($from="request") {
@@ -42,12 +42,21 @@
 			array_unshift($attrs, $name);
 			while ($attr = array_shift($attrs)) {
 				if (count($attrs) > 0) {
-					if (!isset($parent[$attr]))
-						$parent[$attr] = array();
-					$parent = &$parent[$attr];
+					if (is_array($parent)) {
+						if (!isset($parent[$attr]))
+							$parent[$attr] = array();
+						$parent = &$parent[$attr];
+					}
+					else {
+						if (!isset($parent->$attr))
+							$parent->$attr = new stdClass;
+						$parent = &$parent->$attr;
+					}
 				}
-				else
+				else if (is_array($parent))
 					$parent[$attr] = $value;
+				else
+					$parent->$attr = $value;
 			}
 			return $value;
 		}
@@ -63,6 +72,7 @@
 		public function setVars($map) {
 			foreach ($map as $name => $value)
 				$this->setVar($name, $value);
+			return $map;
 		}
 		
 		public function getVars() {
@@ -91,7 +101,7 @@
 		}
 				
 		public function setSetting($name, $value) {
-			$this->__settings[$name] = $value;
+			return $this->__settings[$name] = $value;
 		}
 		
 		public function addSetting($name, $value) {
@@ -113,7 +123,7 @@
 		}		
 		
 		function setBlock($blockName, $blockContents) {
-			$this->__blocks[$blockName] = $blockContents;
+			return $this->__blocks[$blockName] = $blockContents;
 		}
 		
 		function appendBlock($blockName, $blockContents) {
