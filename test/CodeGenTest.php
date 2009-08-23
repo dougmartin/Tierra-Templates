@@ -146,7 +146,7 @@ HTML;
 		}
 
 		public function testBlockWithFunctionCallVarWithDotParam() {
-			self::checkEmit("[@ include foo if foo(bar.bam) @]", "<?php if (\$this->__runtime->call('foo', 'foo on line 1', array(\$this->__runtime->attr('bar', 'bam')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var with dot param");
+			self::checkEmit("[@ include foo if foo(bar.bam) @]", "<?php if (\$this->__runtime->call('foo', 'foo on line 1', array(\$this->__runtime->attr(\$this->__runtime->identifier('bar'), 'bam')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var with dot param");
 		}		
 		
 		public function testBlockWithOperator() {
@@ -158,23 +158,23 @@ HTML;
 		}
 
 		public function testBlockWithIndex() {
-			self::checkEmit("[@ include foo if x[1] @]", "<?php if (\$this->__runtime->attr('x', 1)) { \$this->includeTemplate('foo'); }", "Block with index");
+			self::checkEmit("[@ include foo if x[1] @]", "<?php if (\$this->__runtime->attr(\$this->__runtime->identifier('x'), 1)) { \$this->includeTemplate('foo'); }", "Block with index");
 		}			
 		
 		public function testBlockWithArrayIndexAndSingleLimit() {
-			self::checkEmit("[@ include foo if x[3]:1 @]", "<?php if (\$this->__runtime->limit(\$this->__runtime->attr('x', 3), 1)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
+			self::checkEmit("[@ include foo if x[3]:1 @]", "<?php if (\$this->__runtime->limit(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3), 1)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
 		}
 				
 		public function testBlockWithArrayIndexAndFullLimit() {
-			self::checkEmit("[@ include foo if x[3]:1,-3 @]", "<?php if (\$this->__runtime->limit(\$this->__runtime->attr('x', 3), 1, -3)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
+			self::checkEmit("[@ include foo if x[3]:1,-3 @]", "<?php if (\$this->__runtime->limit(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3), 1, -3)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
 		}
 
 		public function testBlockWithArrayIndexAndFilter() {
-			self::checkEmit("[@ include foo if x[3]:bar() @]", "<?php if (\$this->__runtime->call('bar', 'bar on line 1', array(\$this->__runtime->attr('x', 3)))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
+			self::checkEmit("[@ include foo if x[3]:bar() @]", "<?php if (\$this->__runtime->call('bar', 'bar on line 1', array(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3)))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
 		}
 					
 		public function testBlockWithArrayIndexAndFilters() {
-			self::checkEmit("[@ include foo if x[3]:bar(1,2):boom(3):bam() @]", "<?php if (\$this->__runtime->call('bam', 'bam on line 1', array(\$this->__runtime->call('boom', 'boom on line 1', array(\$this->__runtime->call('bar', 'bar on line 1', array(\$this->__runtime->attr('x', 3), 1, 2)), 3))))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
+			self::checkEmit("[@ include foo if x[3]:bar(1,2):boom(3):bam() @]", "<?php if (\$this->__runtime->call('bam', 'bam on line 1', array(\$this->__runtime->call('boom', 'boom on line 1', array(\$this->__runtime->call('bar', 'bar on line 1', array(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3), 1, 2)), 3))))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
 		}
 
 		public function testBlockWithBuiltInFilter() {
@@ -296,6 +296,17 @@ HTML;
 		public function testExternalFilterCall() {
 			$src = "{@ 'test':foo::bar @}";
 			self::checkEmit($src, "<?php echo \$this->__runtime->externalCall('bar', 'foo', '', '', 'foo::bar on line 1', array('test'));", "External call filter");
-		}		
+		}
+
+		public function testSimpleAttributeAssignment() {
+			$src = "{@ foo[baz + 1 ].bar = baz @}";
+			self::checkEmit($src, "<?php echo \$this->__runtime->assign('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar'));", "Simple attribute assignment");
+		}
+		
+		public function testAttributeAssignmentAndEcho() {
+			$src = "{@ baz = 3; foo[baz + 1 ].bar = baz; foo[baz + 1 ].bar @}";
+			self::checkEmit($src, "<?php \$this->__runtime->assign('baz', 3); \$this->__runtime->assign('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar')); echo \$this->__runtime->attr(\$this->__runtime->attr(\$this->__runtime->identifier('foo'), \$this->__runtime->identifier('baz') + 1), 'bar');", "Simple attribute assignment and echo");
+		}
+		
 	}
 	

@@ -238,7 +238,20 @@
 						$leftNode = $this->expressionOperatorNode($precedence + 1);
 						if (in_array($this->tokenizer->getNextLexeme(), $operator["operators"])) {
 							$op = $this->tokenizer->advance();
+							
+							// for assignments verify that the left node is an idenfitier
+							if ($op == TierraTemplateTokenizer::EQUAL_TOKEN) {
+								$leftMostNode = $this->getLeftMostAttributeNode($leftNode);
+								if ($leftMostNode->type == TierraTemplateASTNode::IDENTIFIER_NODE) {
+									if ($leftMostNode->isExternal)
+										$this->tokenizer->matchError("External variables cannot be assigned values");
+								}
+								else
+									$this->tokenizer->matchError("The left side of an assignment must be a variable");
+							}
+							
 							$rightNode = $this->expressionOperatorNode($precedence); // <-- same precedence level
+							
 							return new TierraTemplateASTNode(TierraTemplateASTNode::OPERATOR_NODE, array("op" => $op, "leftNode" => $leftNode, "rightNode" => $rightNode, "binary" => true));
 						}
 						return $leftNode;
@@ -262,6 +275,12 @@
 				return $this->identifierNode();
 			else
 				return $this->valueNode();
+		}
+		
+		public function getLeftMostAttributeNode($node) {
+			if (($node->type == TierraTemplateASTNode::OPERATOR_NODE) && (($node->op == TierraTemplateTokenizer::LEFT_BRACKET_TOKEN) || ($node->op == TierraTemplateTokenizer::DOT_TOKEN)))
+				return $this->getLeftMostAttributeNode($node->leftNode);
+			return $node;
 		}
 		
 		private function identifierNode() {

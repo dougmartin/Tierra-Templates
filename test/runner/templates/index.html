@@ -17,7 +17,7 @@
 	{@ [{uri: "foo", text: "Foo"}, {uri: "bar", text: "Bar (404)"}] ? "<p>Test Links</p><ul class='test-links'>" `<li><a href="{uri}">{text}</a></li>` "</ul>" @}
 	
 	<p>The "Test Links" list was generated with the following:</p> 
-	<pre>
+	<pre> 
 {@ '{@ [{uri: "foo", text: "Foo"}, {uri: "bar", text: "Bar (404)"}] ? "<p>Test Links</p><ul>" `<li><a href="{uri}">{text}</a></li>` "</ul>" @}':htmlspecialchars  @} 
 	</pre>
 	
@@ -56,6 +56,15 @@
 	<p>Calling 'Goodbye' : lolify : bar\test::upcase</p>
 	
 	{@ 'Goodbye' : lolify : bar\test::upcase @}
+	
+	<p>Getting baz\boom::bim (external static value)</p>
+	{@ baz\boom::bim @}
+	
+	<p>Setting of baz\boom::bim = "BOOM!" is not allowed</p>
+	
+	<p>Testing array assignment</p>
+	
+	{@ x[1][2][3] = "foo" @}
 	
 	<p>Testing internal request calls...</p>
 	<p>

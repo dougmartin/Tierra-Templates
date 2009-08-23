@@ -37,8 +37,24 @@
 			return $source ? array_slice($source, 0) : array();
 		}
 		
-		public function setVar($name, $value) {
-			$this->__vars[$name] = $value;
+		public function setVar($name, $value, $attrs=array()) {
+			if (count($attrs) == 0)
+				$this->__vars[$name] = $value;
+			else {
+				array_unshift($attrs, $name);
+				$this->setAttr($this->__vars, $attrs, $value);
+			}
+			return $value;
+		}
+		
+		private function setAttr(&$parent, $attrs, $value) {
+			$attr = array_shift($attrs);
+			if (!isset($parent[$attr]))
+				$parent[$attr] = array();
+			if (count($attrs) > 0)
+				$this->setAttr($parent[$attr], $attrs, $value);
+			else
+				$parent[$attr] = $value;
 		}
 		
 		public function getVar($name, $default=false) {

@@ -134,5 +134,10 @@
 			$this->checkOutput("{@ 'test':flam\\boom @}", "TEST");
 		}
 		
+		public function testSimpleAttributeAssignment() {
+			$this->options["readFromCache"] = false;
+			$this->checkOutput("{@ baz = 3; foo[baz + 1].bar = baz; foo[4].bar == baz ? 'yes' @}", "yes");
+		}
+		
 	}
 	

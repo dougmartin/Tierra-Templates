@@ -18,7 +18,7 @@
 		TierraTemplateRunner::Render($uri, $options);
 	}
 	catch (Exception $e) {
-		showError(true, $e->getMessage());
+		showError(true, "ERROR: " . $e->getMessage());
 	}
 	
 	// all done

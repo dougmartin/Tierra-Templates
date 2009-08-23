@@ -7,8 +7,6 @@
 		
 		private static $blockStack = array();
 		private static $isChildTemplate = false;
-		private static $returnIdentifierName = false;
-		private static $returnIdentifierNameStack = array();
 		private static $outputTemplateFunctions = array();
 		
 		private static $decorators = array(
@@ -44,8 +42,6 @@
 			
 			self::$isChildTemplate = isset($ast->parentTemplateName);
 			self::$blockStack = array();
-			self::$returnIdentifierName = false;
-			self::$returnIdentifierNameStack = array();
 			self::$outputTemplateFunctions = array();
 			
 			$chunks = array();
@@ -254,9 +250,7 @@
 					break;
 					
 				case TierraTemplateASTNode::IDENTIFIER_NODE:
-					if (self::$returnIdentifierName)
-						$code[] = "'{$node->identifier}'";
-					else if (in_array(strtolower($node->identifier), array("true", "false")))
+					if (in_array(strtolower($node->identifier), array("true", "false")))
 						$code[] = $node->identifier;
 					else if ($node->isExternal)
 						$code[] = "\$this->__runtime->externalIdentifier('{$node->identifier}', '{$node->filename}', '{$node->virtualDir}', '" . str_replace("\\", "/", $node->subDir) . "', '" . str_replace("\\", "\\\\", $node->debugInfo) . "')";
@@ -273,17 +267,16 @@
 							break;
 							
 						case TierraTemplateTokenizer::EQUAL_TOKEN:
-							self::setReturnIdentifierName(true);
-							$var = self::emitExpression($node->leftNode);
-							self::resetReturnIdentifierName();
-							$code[] = "\$this->__runtime->assign({$var}, " . self::emitExpression($node->rightNode) . ")";
+							$attrs = array();
+							$identifier = self::getIdentifier($node->leftNode, $attrs);
+							$code[] = "\$this->__runtime->assign({$identifier}, " . self::emitExpression($node->rightNode) . (count($attrs) > 0 ? ", array(" . implode(", ", $attrs) . ")" : "") . ")";
 							break;
 							
 						case TierraTemplateTokenizer::LEFT_BRACKET_TOKEN:
 						case TierraTemplateTokenizer::DOT_TOKEN:
-							self::setReturnIdentifierName(true);
-							$code[] = "\$this->__runtime->attr(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
-							self::resetReturnIdentifierName();
+							$leftExpression = self::emitExpression($node->leftNode);
+							$rightExpression = ($node->rightNode->type == TierraTemplateASTNode::IDENTIFIER_NODE ? "'{$node->rightNode->identifier}'" : self::emitExpression($node->rightNode)); 
+							$code[] = "\$this->__runtime->attr({$leftExpression}, {$rightExpression})";
 							break;
 							
 						case TierraTemplateTokenizer::COLON_TOKEN:
@@ -331,6 +324,26 @@
 			}
 			
 			return implode(" ", $code);
+		}
+		
+		public function getIdentifier($node, &$attrs) {
+			// walk down the parse tree to the left as long as its a attribute node 
+			if (($node->type == TierraTemplateASTNode::OPERATOR_NODE) && (($node->op == TierraTemplateTokenizer::LEFT_BRACKET_TOKEN) || ($node->op == TierraTemplateTokenizer::DOT_TOKEN)))
+				$identifier = self::getIdentifier($node->leftNode, $attrs);
+				
+			if (!isset($identifier)) {
+				// 	get the identifier at the bottom, the parser checks to make sure this is an identifier
+				$identifier = "'{$node->identifier}'";
+			}
+			else {
+				// return the right nodes (if any) on the way back up
+				if ($node->rightNode->type == TierraTemplateASTNode::IDENTIFIER_NODE)
+					$attrs[] = "'{$node->rightNode->identifier}'";
+				else
+					$attrs[] = self::emitExpression($node->rightNode);
+			}
+			
+			return $identifier;
 		}
 		
 		public function emitArray($a) {
@@ -461,15 +474,6 @@
 			if (!isset(self::$outputTemplateFunctions[$hash]))
 				self::$outputTemplateFunctions[$hash] = $code;
 			return $hash;			
-		}
-		
-		public static function setReturnIdentifierName($value) {
-			self::$returnIdentifierNameStack[] = self::$returnIdentifierName;
-			self::$returnIdentifierName = $value;	
-		}
-		
-		public static function resetReturnIdentifierName() {
-			self::$returnIdentifierName = array_pop(self::$returnIdentifierNameStack);	
 		}
 		
 	}	
