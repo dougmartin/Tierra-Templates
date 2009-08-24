@@ -111,6 +111,17 @@
 							$this->ast->addNode($this->generatorNode());
 						$this->tokenizer->match(TierraTemplateTokenizer::GENERATOR_END_TOKEN);
 						break;
+						
+					case TierraTemplateTokenizer::CODE_START_TOKEN:
+						$this->tokenizer->matchIf(TierraTemplateTokenizer::CODE_START_TOKEN);
+						if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::CODE_END_TOKEN))
+							$this->ast->addNode($this->codeNode());
+						$this->tokenizer->match(TierraTemplateTokenizer::CODE_END_TOKEN);
+						break;
+						
+					default:
+						$this->tokenizer->matchError("Unexpected " . $this->tokenizer->getNextToken());
+						break;
 				}
 			}
 			
@@ -451,6 +462,12 @@
 					break;
 			}
 			
+			return $node;
+		}
+		
+		private function codeNode() {
+			$node = new TierraTemplateASTNode(TierraTemplateASTNode::CODE_NODE);
+			$node->code = $this->expressionNode();
 			return $node;
 		}
 		

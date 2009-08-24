@@ -54,6 +54,7 @@
 			
 			// get the html and code chunks
 			foreach ($ast->getNodes() as $node) {
+				$code = false;
 				switch ($node->type) {
 					case TierraTemplateASTNode::HTML_NODE:
 						// this is taken care of in the optimizer but in case it isn't called first don't output html not in blocks in child templates
@@ -63,16 +64,18 @@
 						
 					case TierraTemplateASTNode::BLOCK_NODE:
 						$code = self::emitBlock($node);
-						if (strlen($code) > 0)
-							$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $code);
 						break;
 						
 					case TierraTemplateASTNode::GENERATOR_NODE:
 						$code = self::emitGenerator($node);
-						if (strlen($code) > 0)
-							$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $code);
+						break;
+						
+					case TierraTemplateASTNode::CODE_NODE:
+						$code = self::emitCode($node);
 						break;
 				}
+				if (strlen($code) > 0)
+					$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $code);
 			}
 			
 			// add the parent template include at the end
@@ -225,6 +228,16 @@
 			}
 			
 			return $code;
+		}
+		
+		public static function emitCode($node) {
+			if ($node->code->type == TierraTemplateASTNode::MULTI_EXPRESSION_NODE) {
+				$code = array();
+				foreach ($node->code as $expression)
+					$code[] = self::emitExpression($expression) . ";";
+				return implode(" ", $code);
+			}
+			return self::emitExpression($node->code) . ";";
 		}
 		
 		public static function emitExpression($node) {

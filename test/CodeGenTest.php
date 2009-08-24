@@ -308,5 +308,9 @@ HTML;
 			self::checkEmit($src, "<?php \$this->__runtime->assign('baz', 3); \$this->__runtime->assign('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar')); echo \$this->__runtime->attr(\$this->__runtime->attr(\$this->__runtime->identifier('foo'), \$this->__runtime->identifier('baz') + 1), 'bar');", "Simple attribute assignment and echo");
 		}
 		
+		public function testStatementTag() {
+			self::checkEmit("<@ foo = 1 @>", "<?php \$this->__runtime->assign('foo', 1);", "Test statement tag");
+		}
+		
 	}
 	

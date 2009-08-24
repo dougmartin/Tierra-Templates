@@ -8,8 +8,7 @@
 		const EOF_TOKEN = "end of file";
 		const HTML_TOKEN = "html";
 		const COMMENT_TOKEN = "comment";
-		const COMMENT_START_TOKEN = "comment start";
-		const COMMENT_END_TOKEN = "comment end";
+		const PHP_TOKEN = "php code";
 		const STRING_TOKEN = "string";
 		const FUNCTION_CALL_TOKEN = "function call";
 		const IDENTIFIER_TOKEN = "identifier";
@@ -24,6 +23,10 @@
 		const BLOCK_END_TOKEN = "@]";
 		const GENERATOR_START_TOKEN = "{@";
 		const GENERATOR_END_TOKEN = "@}";
+		const CODE_START_TOKEN = "<@";
+		const CODE_END_TOKEN = "@>";
+		const COMMENT_START_TOKEN = "comment start";
+		const COMMENT_END_TOKEN = "comment end";
 		
 		const COLON_TOKEN = ":";
 		const COMMA_TOKEN = ",";
@@ -65,6 +68,7 @@
 		const COMMENT_MODE = "COMMENT_MODE";
 		const BLOCK_MODE = "BLOCK_MODE";
 		const GENERATOR_MODE = "GENERATOR_MODE";
+		const CODE_MODE = "CODE_MODE";
 		const OUTPUT_TEMPLATE_MODE = "OUTPUT_TEMPLATE_MODE";
 		const STRICT_OUTPUT_TEMPLATE_MODE = "STRICT_OUTPUT_TEMPLATE_MODE";
 		
@@ -106,6 +110,8 @@
 				self::BLOCK_END_TOKEN,
 				self::GENERATOR_START_TOKEN,
 				self::GENERATOR_END_TOKEN,
+				self::CODE_START_TOKEN,
+				self::CODE_END_TOKEN,
 			);
 			
 			$this->singleTokens = array(
@@ -386,10 +392,10 @@
 					case self::HTML_MODE:
 						$this->startSelection();
 												
-						// get everything up to the next comment, block or generator start
+						// get everything up to the next comment, block, generator, php or code start token
 						$curChar = $this->curChar(); 
 						$nextChar = $this->nextChar();
-						while (!$this->eof && !((($curChar == '[') || ($curChar == '{')) && (($nextChar == '#') || ($nextChar == '@')))) {
+						while (!$this->eof && !((($curChar == '[') || ($curChar == '{') || ($curChar == '<')) && (($nextChar == '#') || ($nextChar == '@')))) {
 							$this->advanceChar();
 							$curChar = $this->curChar();
 							$nextChar = $this->nextChar();
@@ -402,12 +408,15 @@
 							if ($nextChar == '#') {
 								$this->pushMode(self::COMMENT_MODE);
 								$this->commentOpener = $curChar;
-								$this->commentCloser = $curChar == "[" ? "]" : "}";
+								$closers = array("[" => "]", "{" => "}", "<" => ">");
+								$this->commentCloser = $closers[$curChar];
 							}
 							else if ($curChar == '[')
 								$this->pushMode(self::BLOCK_MODE);
 							else if ($curChar == '{')
 								$this->pushMode(self::GENERATOR_MODE);
+							else if ($curChar == '<')
+								$this->pushMode(self::CODE_MODE);
 						}						
 						break;
 						
@@ -461,6 +470,24 @@
 							case self::RIGHT_BRACE_TOKEN:
 								if (($mode == self::GENERATOR_MODE) && ($this->getPreviousMode() == self::OUTPUT_TEMPLATE_MODE))
 									$this->popMode();
+								break;
+								
+							case self::BACKTICK_TOKEN:
+								$this->pushMode(self::OUTPUT_TEMPLATE_MODE);
+								break;
+							
+							case self::TILDE_TOKEN:
+								$this->pushMode(self::STRICT_OUTPUT_TEMPLATE_MODE);
+								break;
+						}
+						break;
+						
+					case self::CODE_MODE:
+						$this->advanceToken();
+						
+						switch ($this->nextToken) {
+							case self::CODE_END_TOKEN:
+								$this->popMode();
 								break;
 								
 							case self::BACKTICK_TOKEN:

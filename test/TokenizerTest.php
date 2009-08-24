@@ -296,4 +296,10 @@ HTML;
 			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "~", "foo", "{@", "bar", "@}", "~", "@]", ""), "Output template lexeme check");
 		}
 		
+		public function testCodeBlock() {
+			$src = "<@ foo @>";
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::CODE_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::CODE_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Code block");
+			self::checkLexemes($src, array("", "<@", "foo", "@>", ""), "Code block lexeme check");
+		}
+		
 	}

@@ -437,5 +437,11 @@ SRC;
 			$src = "{@ 'test':foo::bar @}";
 			self::checkSyntax($src, "External call filter");
 		}
+		
+		public function testCodeBlock() {
+			$src = "<@ foo @>";
+			self::checkSyntax($src, "Code block");
+		}
+				
 
 	}
