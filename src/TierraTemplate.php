@@ -19,6 +19,21 @@
 			// add the request object if not present to the options so it can be shared with parent templates
 			if (!isset($options["request"]))
 				$options["request"] = new TierraTemplateRequest();
+				
+			// add the built in externals
+			if (!isset($options["virtualDirs"]["_"])) {
+				// rebuild the array so our builtin is first when we loop on it
+				$virtualDirs["_"] = array(
+					"path" => dirname(__FILE__) . "/externals/builtin",
+					"classPrefix" => "TierraTemplateBuiltinExternals_",
+					"functionPrefix" => "TierraTemplateBuiltinExternals_",
+				);
+				if (isset($options["virtualDirs"])) {
+					foreach ($options["virtualDirs"] as $virtualDir => $dirInfo)
+						$virtualDirs[$virtualDir] = $dirInfo;
+				}
+				$options["virtualDirs"] = $virtualDirs;
+			}
 			$this->__options = $options;
 			
 			$templateFile = $this->getOption("templateFile");

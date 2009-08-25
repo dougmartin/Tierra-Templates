@@ -142,5 +142,9 @@
 			$this->checkOutput("<@ 'test' @>", "");
 		}
 		
+		public function testBuiltinCalls() {
+			$this->checkOutput("{@ 'this is a test':link('http://google.com', {id: 'foo', class: 'bar'}) @}", '<a id="foo" class="bar" href="http://google.com">this is a test</a>');
+		}
+		
 	}
 	

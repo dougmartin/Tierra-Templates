@@ -137,7 +137,7 @@
 						
 						include_once $path;
 						
-						if (method_exists($prefixedClassName = $this->addPrefix($dirInfo, $className, "classPrefix"), $functionName))
+						if (method_exists($prefixedClassName = $this->addPrefix($dirInfo, $className ? $className : "index", "classPrefix"), $functionName))
 							$this->loadedFunctions[$signature] = array($prefixedClassName, $functionName);
 						else if (function_exists($prefixedFunctionName = $this->addPrefix($dirInfo, $functionName, "functionPrefix")))
 							$this->loadedFunctions[$signature] = $prefixedFunctionName;
@@ -151,7 +151,7 @@
 							$path = $this->findExternalPath($dirInfo["path"], $subDir, $className, $functionName);
 							if ($path) {
 								include_once $path;
-								if (method_exists($prefixedClassName= $this->addPrefix($dirInfo, $className, "classPrefix"), $functionName)) {
+								if (method_exists($prefixedClassName = $this->addPrefix($dirInfo, $className ? $className : "index", "classPrefix"), $functionName)) {
 									$this->loadedFunctions[$signature] = array($prefixedClassName, $functionName);
 									$this->loadedIdentifiers["{$virtualDir}/{$subDir}/{$className}"] = $prefixedClassName;
 									break;
