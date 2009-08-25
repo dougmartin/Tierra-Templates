@@ -18,7 +18,7 @@
 			
 			// add the request object if not present to the options so it can be shared with parent templates
 			if (!isset($options["request"]))
-				$options["request"] = new TierraTemplateRequest();
+				$options["request"] = new TierraTemplateRequest($options);
 				
 			// add the built in externals
 			if (!isset($options["virtualDirs"]["_"])) {
@@ -87,6 +87,11 @@
 		public static function RenderTemplate($options) {
 			$template = self::LoadTemplate($options);
 			$template->render();
+		}
+		
+		public static function GetTemplateOutput($options) {
+			$template = self::LoadTemplate($options);
+			return $template->getOutput();
 		}
 		
 		public static function RenderDynamicTemplate($templateContents, $options=array()) {
@@ -181,6 +186,7 @@
 				ob_end_clean();
 				return $output;
 			}
+			return "";
 		}		
 		
 		public function includeTemplate($templateFile) {

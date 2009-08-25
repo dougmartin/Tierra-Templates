@@ -1,5 +1,7 @@
 <?php
 
+	require_once dirname(__FILE__) . "/hooks.php";
+
 	return array(
 		"srcDir" => dirname(__FILE__) . "/../../src",
 		"cacheDir" => dirname(__FILE__) . "/cache",
@@ -17,5 +19,11 @@
 				"path" => "externals/baz",
 				"classPrefix" => "__baz_"
 			),
+		),
+		"runnerHooks" => array(
+			"onStartup" => "onStartupHook",
+			"onPreOutput" => "onPreOutputHook",
+			"output" => "outputHook",
+			"filterOptions" => "filterOptionsHook"
 		)
 	);

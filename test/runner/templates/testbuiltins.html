@@ -1,6 +1,6 @@
 [@ extends "_page.html" @]
 
-{@ pageTitle = "Test Builtins" ? @}
+<@ pageTitle = "Test Builtins" @>
 
 [@ start content @]
 
@@ -8,6 +8,8 @@
 	<p>{@ "this is a test":link("http://google.com", {id: "foo", class: "bar"}) @}</p>
 	
 	<p>{@ "long test":_\truncate(7) @}</p>
+	
+	<p>{@ x = "I'll be there"; y = "just call me name"; `{x}, {x}, {y}, {x}...` @}</p>
 		
 [@ end content @]
 
