@@ -57,30 +57,28 @@
 			return ($this->currentFrame ? $this->currentFrame->specialIdentifier($name) : false);
 		}
 		
-		public function externalIdentifier($name, $filename, $virtualDir, $subDir, $debugInfo) {
-			if (!$filename)
-				$filename = "index";
+		public function externalIdentifier($name, $className, $virtualDir, $subDir, $debugInfo) {
 
-			$signature = "{$virtualDir}/{$subDir}/{$filename}";
+			$signature = "{$virtualDir}/{$subDir}/{$className}";
 			
 			if (!isset($this->loadedIdentifiers[$signature])) {
 				if ($virtualDir) {
 					if (isset($this->options["virtualDirs"][$virtualDir])) {
 						$dirInfo = $this->options["virtualDirs"][$virtualDir];
-						$path = realpath("{$dirInfo["path"]}/{$subDir}/{$filename}.php");
+						$path = $this->findExternalPath($dirInfo["path"], $subDir, $className);
 						if ($path) {
 							include_once $path;
-							$this->loadedIdentifiers[$signature] = get_class_vars($this->addPrefix($dirInfo, $filename, "classPrefix"));
+							$this->loadedIdentifiers[$signature] = get_class_vars($this->addPrefix($dirInfo, $className, "classPrefix"));
 						}
 					}
 				}
 				else {
 					if (isset($this->options["virtualDirs"])) {
 						foreach ($this->options["virtualDirs"] as $virtualDir => $dirInfo) {
-							$path = realpath("{$dirInfo["path"]}/{$subDir}/{$filename}.php");
+							$path = $this->findExternalPath($dirInfo["path"], $subDir, $className);
 							if ($path) {
 								include_once $path;
-								$prefixedClassName = $this->addPrefix($dirInfo, $filename, "classPrefix");
+								$prefixedClassName = $this->addPrefix($dirInfo, $className, "classPrefix");
 								$this->loadedIdentifiers[$signature] = get_class_vars($prefixedClassName);
 								if (isset($this->loadedIdentifiers[$signature][$name]))
 									break;
@@ -120,29 +118,26 @@
 			return $this->externalCall($functionName, "", "", "", $debugInfo, $params);
 		}
 		
-		public function externalCall($functionName, $filename, $virtualDir, $subDir, $debugInfo, $params=array()) {
+		public function externalCall($functionName, $className, $virtualDir, $subDir, $debugInfo, $params=array()) {
 			
-			if ("{$virtualDir}/{$subDir}/{$filename}" == "//request") {
+			if ("{$virtualDir}/{$subDir}/{$className}" == "//request") {
 				if (method_exists($this->request, $functionName))
 					return call_user_func_array(array($this->request, $functionName), $params);
 				throw new TierraTemplateException("Internal function not found for {$debugInfo}");
 			}
 			
-			if (!$filename)
-				$filename = "index";
-			
-			$signature = "{$virtualDir}/{$subDir}/{$filename}/{$functionName}";
+			$signature = "{$virtualDir}/{$subDir}/{$className}/{$functionName}";
 			if (!isset($this->loadedFunctions[$signature])) {
 				if ($virtualDir) {
 					if (isset($this->options["virtualDirs"][$virtualDir])) {
 						$dirInfo = $this->options["virtualDirs"][$virtualDir];
-						$path = realpath("{$dirInfo["path"]}/{$subDir}/{$filename}.php");
+						$path = $this->findExternalPath($dirInfo["path"], $subDir, $className, $functionName);
 						if (!$path)
 							throw new TierraTemplateException("Virtual directory '{$virtualDir}' found but function file was not found for {$debugInfo}");
 						
 						include_once $path;
 						
-						if (method_exists($prefixedClassName = $this->addPrefix($dirInfo, $filename, "classPrefix"), $functionName))
+						if (method_exists($prefixedClassName = $this->addPrefix($dirInfo, $className, "classPrefix"), $functionName))
 							$this->loadedFunctions[$signature] = array($prefixedClassName, $functionName);
 						else if (function_exists($prefixedFunctionName = $this->addPrefix($dirInfo, $functionName, "functionPrefix")))
 							$this->loadedFunctions[$signature] = $prefixedFunctionName;
@@ -153,12 +148,12 @@
 				else {
 					if (isset($this->options["virtualDirs"])) {
 						foreach ($this->options["virtualDirs"] as $virtualDir => $dirInfo) {
-							$path = realpath("{$dirInfo["path"]}/{$subDir}/{$filename}.php");
+							$path = $this->findExternalPath($dirInfo["path"], $subDir, $className, $functionName);
 							if ($path) {
 								include_once $path;
-								if (method_exists($prefixedClassName= $this->addPrefix($dirInfo, $filename, "classPrefix"), $functionName)) {
+								if (method_exists($prefixedClassName= $this->addPrefix($dirInfo, $className, "classPrefix"), $functionName)) {
 									$this->loadedFunctions[$signature] = array($prefixedClassName, $functionName);
-									$this->loadedIdentifiers["{$virtualDir}/{$subDir}/{$filename}"] = $prefixedClassName;
+									$this->loadedIdentifiers["{$virtualDir}/{$subDir}/{$className}"] = $prefixedClassName;
 									break;
 								}
 								else if (function_exists($prefixedFunctionName = $this->addPrefix($dirInfo, $functionName, "functionPrefix"))) {
@@ -175,6 +170,17 @@
 				return call_user_func_array($this->loadedFunctions[$signature], $params);
 			
 			throw new TierraTemplateException("External function not found for {$debugInfo}");
+		}
+		
+		private function findExternalPath($virtualPath, $subDir, $className, $functionName=false) {
+			$path = false;
+			if ($className)
+				$path = realpath("{$virtualPath}/{$subDir}/{$className}.php");
+			if (!$path && $functionName)
+				$path = realpath("{$virtualPath}/{$subDir}/{$functionName}.php");
+			if (!$path)
+				$path = realpath("{$virtualPath}/{$subDir}/index.php");
+			return $path;
 		}
 
 		private function addPrefix($dirInfo, $text, $prefixSetting) {
