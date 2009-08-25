@@ -295,12 +295,12 @@
 		}				
 		
 		public function testBlockWithDecorator() {
-			$src = "[@ include foo do memcache({for: '2 days', port: 12000, password: 'test'}) @]";	
+			$src = "[@ start foo do memcache({for: '2 days', port: 12000, password: 'test'}) @][@ end foo @]";	
 			self::checkSyntax($src, "Block with decorator");
 		}
 
 		public function testBlockWithDecorators() {
-			$src = "[@ include foo do gzip(), memcache({for: '2 days', port: 12000, password: 'test'}) @]";	
+			$src = "[@ start foo do gzip(), memcache({for: '2 days', port: 12000, password: 'test'}) @][@ end foo @]";	
 			self::checkSyntax($src, "Block with decorators");
 		}	
 

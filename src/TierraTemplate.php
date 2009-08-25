@@ -198,7 +198,8 @@
 			
 			$includedTemplate = self::LoadTemplate($this->__options);
 			$includedTemplate->render();
-		}			
+		}	
+
 	}
 	
 	

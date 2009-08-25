@@ -154,7 +154,7 @@ HTML;
 		}
 
 		public function testBlockWithAssign() {
-			self::checkEmit("[@ include foo if x = 1 < 3 @]", "<?php if (\$this->__runtime->assign('x', 1 < 3)) { \$this->includeTemplate('foo'); }", "Block with assignment");
+			self::checkEmit("[@ include foo if x = 1 < 3 @]", "<?php if (\$this->__request->setVar('x', 1 < 3)) { \$this->includeTemplate('foo'); }", "Block with assignment");
 		}
 
 		public function testBlockWithIndex() {
@@ -186,7 +186,7 @@ HTML;
 		}
 		
 		public function testPageBlockWithDecorator() {
-			$code = "<?php header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); ?> foo";
+			$code = "<?php if (\$this->__request->__startDecorator('append', 'nocache')) { header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); } ?> foo<?php \$this->__request->__endDecorator();";
 			$src = "[@ page do nocache({foo: 1}, 2, 3) @] foo";	
 			self::checkEmit($src, $code, "Block with decorator");
 		}			
@@ -198,19 +198,19 @@ HTML;
 		}
 
 		public function testPageBlockWitNoCacheDecorator() {
-			$code = "<?php header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); ?> foo";
+			$code = "<?php if (\$this->__request->__startDecorator('append', 'nocache')) { header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); } ?> foo<?php \$this->__request->__endDecorator();";
 			$src = "[@ page do nocache() @] foo";	
 			self::checkEmit($src, $code, "Block with nocache decorator");
 		}
 
 		public function testBlockWithWrapperDecorator() {
-			$src = "[@ start do testWrapper('1') @] foo [@ end @]";
-			self::checkEmit($src, "<?php if (1) { ?> foo <?php } /* end if (1) */", "Block with test wrapper decorators");
+			$src = "[@ start test do testWrapper('1') @] foo [@ end test @]";
+			self::checkEmit($src, "<?php if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(1) */' if (!\$this->__request->echoBlock('test')) { ?> foo <?php } if (\$this->__request->__endDecorator()) echo '/* end testwrapper(1) */'", "Block with test wrapper decorators");
 		}
 			
 		public function testBlockWithDoubleWrapperDecorator() {
-			$src = "[@ start do testWrapper('1'), testWrapper('2') @] foo [@ end @]";
-			self::checkEmit($src, "<?php if (1) { if (2) { ?> foo <?php } /* end if (2) */ } /* end if (1) */", "Block with two test wrapper decorators");
+			$src = "[@ start test do testWrapper('1'), testWrapper('2') @] foo [@ end test @]";
+			self::checkEmit($src, "<?php if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(1) */' if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(2) */' if (!\$this->__request->echoBlock('test')) { ?> foo <?php } if (\$this->__request->__endDecorator()) echo '/* end testwrapper(2) */' if (\$this->__request->__endDecorator()) echo '/* end testwrapper(1) */'", "Block with two test wrapper decorators");
 		}
 		
 		public function testSimpleGenerator() {
@@ -250,7 +250,7 @@ HTML;
 		
 		public function testGeneratorWithTemplateAssignment() {
 			$src = "{@ foo = `bar {baz ? bam} boom` @}";
-			self::checkEmit($src, "<?php if (!function_exists('otf_25babf696a1f4e5644f774f8145ebb54f75d5671')) { function otf_25babf696a1f4e5644f774f8145ebb54f75d5671(\$__template) { ob_start(); echo 'bar '; if (\$__template->__runtime->startGenerator(\$__template->__runtime->identifier('baz'))) { do { echo \$__template->__runtime->identifier('bam'); } while (\$__template->__runtime->loop()); } \$__template->__runtime->endGenerator(); echo ' boom'; \$__output = ob_get_contents(); ob_end_clean(); return \$__output;} }; echo \$this->__runtime->assign('foo', otf_25babf696a1f4e5644f774f8145ebb54f75d5671(\$this));", "Generator with template assignment");
+			self::checkEmit($src, "<?php if (!function_exists('otf_25babf696a1f4e5644f774f8145ebb54f75d5671')) { function otf_25babf696a1f4e5644f774f8145ebb54f75d5671(\$__template) { ob_start(); echo 'bar '; if (\$__template->__runtime->startGenerator(\$__template->__runtime->identifier('baz'))) { do { echo \$__template->__runtime->identifier('bam'); } while (\$__template->__runtime->loop()); } \$__template->__runtime->endGenerator(); echo ' boom'; \$__output = ob_get_contents(); ob_end_clean(); return \$__output;} }; echo \$this->__request->setVar('foo', otf_25babf696a1f4e5644f774f8145ebb54f75d5671(\$this));", "Generator with template assignment");
 		}
 		
 		public function testGeneratorWithNoOutput() {
@@ -260,7 +260,7 @@ HTML;
 
 		public function testGeneratorWithNoOutputAndAssignment() {
 			$src = "{@ foo = 1 ? @}";
-			self::checkEmit($src, "<?php \$this->__runtime->assign('foo', 1);", "Generator with no output and assignment");
+			self::checkEmit($src, "<?php \$this->__request->setVar('foo', 1);", "Generator with no output and assignment");
 		}
 		
 		public function testMultipleConditionals() {
@@ -290,16 +290,16 @@ HTML;
 
 		public function testSimpleAttributeAssignment() {
 			$src = "{@ foo[baz + 1 ].bar = baz @}";
-			self::checkEmit($src, "<?php echo \$this->__runtime->assign('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar'));", "Simple attribute assignment");
+			self::checkEmit($src, "<?php echo \$this->__request->setVar('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar'));", "Simple attribute assignment");
 		}
 		
 		public function testAttributeAssignmentAndEcho() {
 			$src = "{@ baz = 3; foo[baz + 1 ].bar = baz; foo[baz + 1 ].bar @}";
-			self::checkEmit($src, "<?php \$this->__runtime->assign('baz', 3); \$this->__runtime->assign('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar')); echo \$this->__runtime->attr(\$this->__runtime->attr(\$this->__runtime->identifier('foo'), \$this->__runtime->identifier('baz') + 1), 'bar');", "Simple attribute assignment and echo");
+			self::checkEmit($src, "<?php \$this->__request->setVar('baz', 3); \$this->__request->setVar('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar')); echo \$this->__runtime->attr(\$this->__runtime->attr(\$this->__runtime->identifier('foo'), \$this->__runtime->identifier('baz') + 1), 'bar');", "Simple attribute assignment and echo");
 		}
 		
 		public function testStatementTag() {
-			self::checkEmit("<@ foo = 1 @>", "<?php \$this->__runtime->assign('foo', 1);", "Test statement tag");
+			self::checkEmit("<@ foo = 1 @>", "<?php \$this->__request->setVar('foo', 1);", "Test statement tag");
 		}
 		
 	}

@@ -1,10 +1,10 @@
-[@ extends "_page.html" @]
+[@ extends "_page.html" @]  
 
-[@ page do gzip() @]
+[@ page do remove nocache() @]
 
 <@ pageTitle = "Test Builtins" @>
 
-[@ start content @]
+[@ start content do testwrapper(1) @]        
 
 	<p>Testing built in calls</p> 
 	<p>{@ "this is a test":link("http://google.com", {id: "foo", class: "bar"}) @}</p>
@@ -15,3 +15,4 @@
 		
 [@ end content @]
 
+ 

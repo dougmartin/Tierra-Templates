@@ -78,8 +78,8 @@
 								break;
 								
 							case "page":
-								if (!isset($this->ast->decorators))
-									$this->ast->decorators = isset($node->decorators) ? $node->decorators : array();
+								if (!isset($this->ast->pageBlock))
+									$this->ast->pageBlock = $node;
 								else
 									$this->tokenizer->matchError("Multiple page blocks found", $steamIndex);
 								break;
@@ -176,14 +176,30 @@
 
 			// get the decorators
 			if ($this->tokenizer->nextIs(TierraTemplateTokenizer::DO_TOKEN)) {
+				if (($node->command == "extends") || ($node->command == "include"))
+					$this->tokenizer->matchError(ucfirst($node->command) . " blocks cannot have decorators");
+					
 				$this->tokenizer->match(TierraTemplateTokenizer::DO_TOKEN);
 				$node->decorators = array();
 				while (!$this->tokenizer->nextIs(TierraTemplateTokenizer::BLOCK_END_TOKEN)) {
+					if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IDENTIFIER_TOKEN)) {
+						// we don't want these as keywords so match the lexeme not the token
+						$action = strtolower($this->tokenizer->advance());
+						if (!in_array($action, array("append", "add", "set", "remove")))
+							$this->tokenizer->matchError("Expected 'append', 'add', 'set' or 'remove'");
+					}
+					else
+						$action = "append";
+						
+					if (($node->command != "page") && (!$node->blockName))
+						$this->tokenizer->matchError("Decorator actions are only valid on named blocks");
+						 
 					$decorator = $this->functionCallNode();
 					$paramsCode = TierraTemplateCodeGenerator::emitArray($decorator->params);
 					if (strpos($paramsCode, "$"))
-						throw new TierraTemplateException("Block decorator parameters are not valid. They cannot contain variable references or function invocations as they are called at compile time.");
+						$this->tokenizer->matchError("Block decorator parameters are not valid. They cannot contain variable references or function invocations as they are called at compile time.");
 					$decorator->evaledParams = eval("return {$paramsCode};");
+					$decorator->action = $action;
 					$node->decorators[] = $decorator;
 					$this->tokenizer->matchIf(TierraTemplateTokenizer::COMMA_TOKEN);
 				}

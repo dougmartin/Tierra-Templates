@@ -10,7 +10,7 @@
 		protected function setUp() {
 			$this->options = array(
 				"baseTemplateDir" => "templates",
-				"readFromCache" => true,
+				"readFromCache" => false,
 				"cacheDir" => "cache",
 				"virtualDirs" => array(
 					"flam" => array(

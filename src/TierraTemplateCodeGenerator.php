@@ -11,7 +11,6 @@
 		
 		private static $decorators = array(
 			"nocache" => array("self", "noCacheDecorator"),
-			"gzip" => array("self", "gzipDecorator"),
 			"testwrapper" => array("self", "testWrapperDecorator")
 		);
 		
@@ -21,15 +20,15 @@
 		
 		public static function noCacheDecorator($context) {
 			if ($context["isStart"] && $context["isPage"])
-				return "header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache');";
-			return false;
+				return "if ({$context["guard"]}) { header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); }";
+			return "{$context["guard"]};";
 		}
 		
 		public static function testWrapperDecorator($context, $condition) {
 			if ($context["isStart"])
-				return "if ({$condition}) {";
+				return "if ({$context["guard"]}) echo '/* start testwrapper({$condition}) */'";
 			else
-				return "} /* end if ({$condition}) */";
+				return "if ({$context["guard"]}) echo '/* end testwrapper({$condition}) */'";
 		}
 		
 		public static function emit($ast) {
@@ -41,9 +40,11 @@
 			$chunks = array();
 
 			// call the decorators in reverse order at the start of the root page
-			foreach (self::getDecoratorCode($ast, true, true) as $decoratorCode) {
-				if (strlen($decoratorCode) > 0)
-					$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $decoratorCode);
+			if (isset($ast->pageBlock)) {
+				foreach (self::getDecoratorCode($ast->pageBlock, true, true) as $decoratorCode) {
+					if (strlen($decoratorCode) > 0)
+						$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $decoratorCode);
+				}
 			}
 			
 			// get the html and code chunks
@@ -77,9 +78,11 @@
 				$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, "\$this->includeTemplate('{$ast->parentTemplateName}');");
 			}
 			else {
-				foreach (self::getDecoratorCode($ast, true, false) as $decoratorCode) {
-					if (strlen($decoratorCode) > 0)
-						$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $decoratorCode);
+				if (isset($ast->pageBlock)) {
+					foreach (self::getDecoratorCode($ast->pageBlock, true, false) as $decoratorCode) {
+						if (strlen($decoratorCode) > 0)
+							$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $decoratorCode);
+					}
 				}
 			}
 			
@@ -210,13 +213,20 @@
 			$code = array();
 			if (isset($block->decorators)) {
 				foreach ($isStart ? $block->decorators : array_reverse($block->decorators) as $decorator) {
-					if (isset(self::$decorators[strtolower($decorator->method)])) {
-						$params = array_slice($decorator->evaledParams, 0); 
-						$context = array("isStart" => $isStart, "isPage" => $isPage);
-						array_unshift($params, $context); 
-						$decoratorCode = call_user_func_array(self::$decorators[strtolower($decorator->method)], $params);
-						if (strlen($decoratorCode) > 0)
-							$code[] = $decoratorCode;
+					$codeParams = isset($block->blockName) ? "'{$decorator->action}', '{$decorator->method}', '{$block->blockName}'" : "'{$decorator->action}', '{$decorator->method}'"; 
+					if ($decorator->action == "remove") {
+						if ($isStart)
+							$code[] = "\$this->__request->__decorator({$codeParams});";
+					}
+					else {
+						if (isset(self::$decorators[strtolower($decorator->method)])) {
+							$params = array_slice($decorator->evaledParams, 0); 
+							$context = array("isStart" => $isStart, "isPage" => $isPage, "guard" => $isStart ? "\$this->__request->__startDecorator({$codeParams})" : "\$this->__request->__endDecorator()");
+							array_unshift($params, $context); 
+							$decoratorCode = call_user_func_array(self::$decorators[strtolower($decorator->method)], $params);
+							if (strlen($decoratorCode) > 0)
+								$code[] = $decoratorCode;
+						}
 					}
 				}
 			}
@@ -276,7 +286,7 @@
 						case TierraTemplateTokenizer::EQUAL_TOKEN:
 							$attrs = array();
 							$identifier = self::getIdentifier($node->leftNode, $attrs);
-							$code[] = "\$this->__runtime->assign({$identifier}, " . self::emitExpression($node->rightNode) . (count($attrs) > 0 ? ", array(" . implode(", ", $attrs) . ")" : "") . ")";
+							$code[] = "\$this->__request->setVar({$identifier}, " . self::emitExpression($node->rightNode) . (count($attrs) > 0 ? ", array(" . implode(", ", $attrs) . ")" : "") . ")";
 							break;
 							
 						case TierraTemplateTokenizer::LEFT_BRACKET_TOKEN:

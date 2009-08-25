@@ -187,10 +187,6 @@
 			return isset($dirInfo[$prefixSetting]) ? "{$dirInfo[$prefixSetting]}{$text}" : $text; 
 		}
 		
-		public function assign($name, $value, $attrs=array()) {
-			return $this->request->setVar($name, $value, $attrs);
-		}
-		
 		public function limit($value, $start, $length=false) {
 			return is_array($value) ? ($length !== false ? array_slice($value, $start, $length) : array_slice($value, $start)) : $value;
 		}

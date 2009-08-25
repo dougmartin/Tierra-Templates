@@ -5,11 +5,15 @@
 		private $__vars;
 		private $__settings;
 		private $__blocks;
+		private $__decorators;
+		private $__decoratorStack;
 		
 		public function __construct($settings=array()) {
 			$this->__vars = array();
 			$this->__settings = $settings;
 			$this->__blocks = array();
+			$this->__decorators = array();
+			$this->__decoratorStack = array();
 			
 			$this->addSetting("server", $_SERVER);
 			$this->addSetting("get", $_GET);
@@ -160,4 +164,39 @@
 			header("Connection: close");
 		}
 		
+		// used by the code generator - do not call directly
+		public function __decorator($action, $method, $blockName = "") {
+			$this->__decorators[$blockName][$method] = $action;
+		}
+		
+		// $blockName is empty on page blocks 
+		public function __startDecorator($action, $method, $blockName = "") {
+			$result = false;
+			switch ($action) {
+				case "add":
+					if (!isset($this->__decorators[$blockName][$method])) {
+						$this->__decorators[$blockName][$method] = "add";
+						$result = true;
+					}
+					break;					
+					
+				case "append":
+					if (!isset($this->__decorators[$blockName][$method]) || ($this->__decorators[$blockName][$method] != "remove")) {
+						$this->__decorators[$blockName][$method] = "append";
+						$result = true;
+					}
+					break;					
+												
+				case "set":
+					$this->__decorators[$blockName][$method] = "set";
+					$result = true;
+					break;					
+			}
+			array_push($this->__decoratorStack, $result);
+			return $result;
+		}				
+		
+		public function __endDecorator() {
+			return array_pop($this->__decoratorStack);
+		}
 	}

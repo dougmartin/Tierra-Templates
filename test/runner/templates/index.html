@@ -5,7 +5,7 @@
 [@ append pageStyle @]
 
 	ul.test-links {
-		padding-left: 15px;
+		padding-left: 15px; 
 	}
 
 [@ end pageStyle @]
@@ -38,7 +38,7 @@
 	{@ bar\upcase('lower') @}	
 	
 	<p>Calling foo\goodbye()</p>
-	
+	 
 	{@ foo\goodbye() @}
 	
 	<p>Calling baz\boom::bam() (static method)</p>
@@ -91,4 +91,10 @@
 	{@ "this is a test":link("http://google.com", {id: "foo", class: "bar"}) @}
 		
 [@ end content @]
+
+[@ start footer do testwrapper(1) @]
+	<hr/>
+	homepage footer
+[@ end footer @]
+
 

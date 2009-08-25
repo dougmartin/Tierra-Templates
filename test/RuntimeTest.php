@@ -71,7 +71,7 @@
 		}
 
 		public function testAssign() {
-			$this->runtime->assign("foo", "bar");
+			$this->request->setVar("foo", "bar");
 			$this->assertEquals($this->request->foo, "bar");
 			$this->assertEquals($this->request->baz, false);
 		}
@@ -152,7 +152,7 @@
 		}
 		
 		public function testAssignWithGeneratorStack() {
-			$this->runtime->assign("foo", "bar");
+			$this->request->setVar("foo", "bar");
 			$this->assertEquals($this->request->foo, "bar");
 			$this->assertEquals($this->runtime->identifier("foo"), "bar");
 			
@@ -165,7 +165,7 @@
 					$this->assertEquals($this->runtime->identifier("foo"), "baz3");
 				
 					$this->assertEquals($this->runtime->identifier("bam"), "boom");
-					$this->runtime->assign("bam", "boomboom");
+					$this->request->setVar("bam", "boomboom");
 					$this->assertEquals($this->request->bam, "boomboom");
 					$this->assertEquals($this->runtime->identifier("bam"), "boom");
 				$this->runtime->endGenerator();
