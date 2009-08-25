@@ -74,6 +74,8 @@
 				// render the template
 				self::$options["request"] = self::$request;
 				self::$options["templateFile"] = self::$finalUri;
+				TierraTemplate::RenderTemplate(self::$options);
+				/*
 				$output = TierraTemplate::GetTemplateOutput(self::$options);
 				if ($filteredOutput = self::runHook("filterOutput", $output))
 					$output = $filteredOutput;
@@ -81,6 +83,7 @@
 				// output the template
 				if (!self::runHook("output", $output))
 					echo $output;
+				*/
 				
 				self::runHook("onPostOutput");
 			}

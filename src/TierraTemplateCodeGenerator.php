@@ -25,12 +25,6 @@
 			return false;
 		}
 		
-		public static function gzipDecorator($context) {
-			if (($context["isPage"]) && ($context["isStart"]))
-				return "ob_start('ob_gzhandler');";
-			return false;
-		}
-		
 		public static function testWrapperDecorator($context, $condition) {
 			if ($context["isStart"])
 				return "if ({$condition}) {";

@@ -165,17 +165,9 @@
 			return self::StaticGetOption($this->__options, $name, $default);
 		}
 		
-		public function render($bufferOutput=true) {
-			if ($this->__cachedTemplatePath) {
-				if ($bufferOutput)
-					ob_start();
+		public function render() {
+			if ($this->__cachedTemplatePath)
 				include $this->__cachedTemplatePath;
-				if ($bufferOutput) {
-					$output = ob_get_contents();
-					ob_end_clean();
-					echo $output;
-				}
-			}
 		}
 		
 		public function getOutput() {
@@ -205,7 +197,7 @@
 			$this->__options["templateFile"] = $templateFile;
 			
 			$includedTemplate = self::LoadTemplate($this->__options);
-			$includedTemplate->render(false);
+			$includedTemplate->render();
 		}			
 	}
 	

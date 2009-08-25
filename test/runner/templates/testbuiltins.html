@@ -1,10 +1,12 @@
 [@ extends "_page.html" @]
 
+[@ page do gzip() @]
+
 <@ pageTitle = "Test Builtins" @>
 
 [@ start content @]
 
-	<p>Testing built in calls</p>
+	<p>Testing built in calls</p> 
 	<p>{@ "this is a test":link("http://google.com", {id: "foo", class: "bar"}) @}</p>
 	
 	<p>{@ "long test":_\truncate(7) @}</p>

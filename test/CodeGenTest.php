@@ -197,20 +197,10 @@ HTML;
 			self::checkEmit($src, "", "Block with bad decorator");
 		}
 
-		public function testPageBlockWithGzipDecorator() {
-			$src = "[@ page do gzip() @] foo";	
-			self::checkEmit($src, "<?php ob_start('ob_gzhandler'); ?> foo", "Page block with gzip decorator");
-		}
-		
-		public function testNormalBlockWithGzipDecorator() {
-			$src = "[@ start do gzip() @] foo [@ end @]";	
-			self::checkEmit($src, " foo ", "Normal block with gzip decorator");
-		}
-		
-		public function testPageBlockWithGzipAndNoCacheDecorator() {
-			$code = "<?php ob_start('ob_gzhandler'); header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); ?> foo";
-			$src = "[@ page do gzip(), nocache() @] foo";	
-			self::checkEmit($src, $code, "Block with gzip and nocache decorators");
+		public function testPageBlockWitNoCacheDecorator() {
+			$code = "<?php header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); ?> foo";
+			$src = "[@ page do nocache() @] foo";	
+			self::checkEmit($src, $code, "Block with nocache decorator");
 		}
 
 		public function testBlockWithWrapperDecorator() {
