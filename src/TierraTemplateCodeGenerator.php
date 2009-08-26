@@ -41,7 +41,8 @@
 		}
 		
 		public static function memcacheDecorator($context, $options=array()) {
-			$key = isset($options["perRequest"]) && $options["perRequest"] ? "'block_{$context["blockName"]}_{$context["guid"]}_' . \$this->__request->getGuid()" : "'block_{$context["blockName"]}_{$context["guid"]}'";
+			$vary = isset($options["vary"]) ? addslashes($options["vary"]) : "none";
+			$key = $vary != "none" ? "'block_{$context["blockName"]}_{$context["guid"]}_' . \$this->__request->getGuid('{$vary}')" : "'block_{$context["blockName"]}_{$context["guid"]}'";
 			$debug = isset($options["debug"]) && $options["debug"] ? "true" : "false";
 			if ($context["isStart"]) {
 				return <<<CODE

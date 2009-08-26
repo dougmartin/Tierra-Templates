@@ -7,7 +7,7 @@
 		private $__blocks;
 		private $__decorators;
 		private $__decoratorStack;
-		private $__guid;
+		private $__guids;
 		
 		public function __construct($settings=array()) {
 			$this->__vars = array();
@@ -26,14 +26,38 @@
 			$this->addSetting("session", isset($_SESSION) ? $_SESSION : array());
 			$this->addSetting("cookie", $_COOKIE);
 			
-			$requestSignature = array($this->getParam("REQUEST_URI", "", "server"));
-			foreach (array("get", "post", "files", "request", "session", "cookie") as $setting)
-				$requestSignature[] = var_export($this->getSetting($setting), true);
-			$this->__guid = sha1(implode("", $requestSignature));
+			// demand filled in getGuid()
+			$this->__guids = array();
 		}
 		
-		public function getGuid() {
-			return $this->__guid;
+		public function getGuid($vary="url") {
+			if (isset($this->__guids[$vary]))
+				return $this->__guids[$vary];
+				
+			$requestSignature = array();
+			if ($vary != "") {
+				foreach (explode(",", $vary != "all" ? $vary : "url, get, post, files, request, session, cookie") as $setting) {
+					$setting = trim($setting);
+					if (!isset($this->__guids[$setting])) {
+						if ($setting == "url")
+							$this->__guids[$setting] = sha1($this->getParam("REQUEST_URI", "", "server"));
+						else if (($bracketPos = strpos($setting, "[")) !== false) {
+							$param = substr($setting, $bracketPos + 1, -1);
+							if (($param[0] == "'") || ($param[0] == '"'))
+								$param = substr($param, 1, -1);
+							$from = substr($setting, 0, $bracketPos);
+							$this->__guids[$setting] = sha1(var_export($this->getParam($param, false, $from), true));
+						}
+						else
+							$this->__guids[$setting] = sha1(var_export($this->getSetting($setting), true));
+					}
+					$requestSignature[] = $this->__guids[$setting];
+				}
+			}
+			
+			$this->__guids[$vary] = sha1(implode("", $requestSignature));
+			
+			return $this->__guids[$vary];
 		}
 		
 		public function getParam($name, $default=false, $from="request") {
