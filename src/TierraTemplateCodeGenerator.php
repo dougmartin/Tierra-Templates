@@ -47,33 +47,39 @@
 			if ($context["isStart"]) {
 				return <<<CODE
 				
-					\$this->__scratchPad->blockContents = false;
-					if (!isset(\$this->__scratchPad->memcache) && class_exists("Memcache")) {
-						\$this->__scratchPad->memcache = new Memcache();
-						if ($debug)
-							echo "<!-- connecting to memcached -->";
-						if (@\$this->__scratchPad->memcache->connect('127.0.0.1')) {
+					if (!isset(\$this->__request->__scratchPad->memcacheDecorator))
+						\$this->__request->__scratchPad->memcacheDecorator = new stdClass;
+					if (!isset(\$this->__request->__scratchPad->memcacheDecorator->memcache)) {
+						if (class_exists("Memcache")) {
+							\$this->__request->__scratchPad->memcacheDecorator->memcache = new Memcache();
 							if ($debug)
-								echo "<!-- getting block from memcached: " . $key . " -->";
-							\$this->__scratchPad->blockContents = @\$this->__scratchPad->memcache->get({$key});
+								echo "<!-- connecting to memcached -->";
+							if (!@\$this->__request->__scratchPad->memcacheDecorator->memcache->connect('127.0.0.1')) {
+								\$this->__request->__scratchPad->memcacheDecorator->memcache = false;
+								if ($debug)
+									echo "<!-- unable to connect to memcached -->";
+							} 
 						}
 						else {
-							unset(\$this->__scratchPad->memcache);
+							\$this->__request->__scratchPad->memcacheDecorator->memcache = false;
 							if ($debug)
-								echo "<!-- unable to connect to memcached -->";
-						} 
+								echo "<!-- Memcache class does not exist -->"; 
+						}
 					}
-					else {
+					if (\$this->__request->__scratchPad->memcacheDecorator->memcache) {
 						if ($debug)
-							echo "<!-- Memcache class does not exist -->"; 
+							echo "<!-- getting block from memcached: " . $key . " -->";
+						\$this->__request->__scratchPad->memcacheDecorator->blockContents = @\$this->__request->__scratchPad->memcacheDecorator->memcache->get({$key});
 					}
-					if (\$this->__scratchPad->blockContents !== false) {
+					else
+						\$this->__request->__scratchPad->memcacheDecorator->blockContents = false;
+					if (\$this->__request->__scratchPad->memcacheDecorator->blockContents !== false) {
 						if ($debug)
 							echo "<!-- got block from memcached -->"; 
-						echo \$this->__scratchPad->blockContents;
+						echo \$this->__request->__scratchPad->memcacheDecorator->blockContents;
 					}
 					else {
-						if (isset(\$this->__scratchPad->memcache)) {
+						if (\$this->__request->__scratchPad->memcacheDecorator->memcache) {
 							if ($debug)
 								echo "<!-- did not get block, starting memcache output buffering -->"; 
 							ob_start();
@@ -86,13 +92,13 @@ CODE;
 					$expire = "strtotime('" . addslashes($expire) . "') - time()";
 				return <<<CODE
 				
-						if (isset(\$this->__scratchPad->memcache)) {
-							\$this->__scratchPad->blockContents = ob_get_contents();
+						if (\$this->__request->__scratchPad->memcacheDecorator->memcache) {
+							\$this->__request->__scratchPad->memcacheDecorator->blockContents = ob_get_contents();
 							ob_end_clean(); 
 							if ($debug)
 								echo "<!-- completing memcache output buffering and saving block -->"; 
-							@\$this->__scratchPad->memcache->set({$key}, \$this->__scratchPad->blockContents, 0, {$expire});
-							echo \$this->__scratchPad->blockContents;
+							@\$this->__request->__scratchPad->memcacheDecorator->memcache->set({$key}, \$this->__request->__scratchPad->memcacheDecorator->blockContents, 0, {$expire});
+							echo \$this->__request->__scratchPad->memcacheDecorator->blockContents;
 						}
 					}
 CODE;

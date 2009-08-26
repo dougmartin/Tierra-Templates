@@ -13,7 +13,6 @@
 		public $__cachedTemplatePath;
 		public $__runtime;
 		public $__request;
-		public $__scratchPad;
 		
 		public function __construct($options=array()) {
 			
@@ -50,7 +49,6 @@
 			$this->__templateFile = $templateFile;
 			$this->__baseTemplateDir = $baseTemplateDir;
 			$this->__cachedTemplatePath = false;
-			$this->__scratchPad = new stdClass;
 			
 			$rawTemplatePath = $baseTemplateDir . $templateFile;
 			$rawTemplateInfo = @stat($rawTemplatePath);

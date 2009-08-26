@@ -8,6 +8,7 @@
 		private $__decorators;
 		private $__decoratorStack;
 		private $__guids;
+		public $__scratchPad;
 		
 		public function __construct($settings=array()) {
 			$this->__vars = array();
@@ -28,6 +29,9 @@
 			
 			// demand filled in getGuid()
 			$this->__guids = array();
+
+			// used by decorators as a namespace for temp variables
+			$this->__scratchPad = new stdClass;
 		}
 		
 		public function getGuid($vary="url") {
