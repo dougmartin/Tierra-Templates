@@ -10,7 +10,8 @@
 
 	// get the relative url from this script
 	$scriptDir = dirname($_SERVER["SCRIPT_NAME"]);
-	$uri = substr(urldecode($_SERVER["REQUEST_URI"]), strlen($scriptDir) > 1 ? strlen($scriptDir) : 0);
+	$baseUri = ($questionPos = strpos($_SERVER["REQUEST_URI"], "?")) !== false ? substr($_SERVER["REQUEST_URI"], 0, $questionPos) : $_SERVER["REQUEST_URI"]; 
+	$uri = substr(urldecode($baseUri), strlen($scriptDir) > 1 ? strlen($scriptDir) : 0);
 	
 	// render the page
 	showError(!@include_once $options["srcDir"] . "/TierraTemplateRunner.php", "Unable to find TierraTemplateRunner.php in {$options["srcDir"]}");
