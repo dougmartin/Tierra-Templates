@@ -68,7 +68,7 @@
 						$path = $this->findExternalPath($dirInfo["path"], $subDir, $className);
 						if ($path) {
 							include_once $path;
-							$this->loadedIdentifiers[$signature] = get_class_vars($this->addPrefix($dirInfo, $className, "classPrefix"));
+							$this->loadedIdentifiers[$signature] = get_class_vars($this->addPrefix($dirInfo, $className ? $className : "index", "classPrefix"));
 						}
 					}
 				}
@@ -78,8 +78,7 @@
 							$path = $this->findExternalPath($dirInfo["path"], $subDir, $className);
 							if ($path) {
 								include_once $path;
-								$prefixedClassName = $this->addPrefix($dirInfo, $className, "classPrefix");
-								$this->loadedIdentifiers[$signature] = get_class_vars($prefixedClassName);
+								$this->loadedIdentifiers[$signature] = get_class_vars($this->addPrefix($dirInfo, $className ? $className : "index", "classPrefix"));
 								if (isset($this->loadedIdentifiers[$signature][$name]))
 									break;
 							}
@@ -88,7 +87,7 @@
 				}
 			}
 			
-			return isset($this->loadedIdentifiers[$signature][$name]) ? $this->loadedIdentifiers[$signature][$name] : $false; 
+			return isset($this->loadedIdentifiers[$signature][$name]) ? $this->loadedIdentifiers[$signature][$name] : false; 
 		}
 		
 		public function startGenerator($expression) {
