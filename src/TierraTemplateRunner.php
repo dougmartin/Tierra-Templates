@@ -31,10 +31,10 @@
 				self::$finalUri = $filteredUri;  
 				
 			// find the template
-			self::$templatePath = realpath(self::$options["baseTemplateDir"] . self::$finalUri);
+			self::$templatePath = self::getRealpath(self::$options["baseTemplateDir"] . self::$finalUri);
 			if (self::$templatePath && is_dir(self::$templatePath)) {
 				if (substr(self::$finalUri, -1) == "/") {
-					self::$templatePath = realpath(self::$options["baseTemplateDir"] . self::$finalUri . "index.html");
+					self::$templatePath = self::getRealpath(self::$options["baseTemplateDir"] . self::$finalUri . "index.html");
 					if (self::$templatePath)
 						self::$finalUri .= "index.html";	
 				}
@@ -44,13 +44,13 @@
 				}
 			}
 			else if (!self::$templatePath) {
-				self::$templatePath = realpath(self::$options["baseTemplateDir"] . self::$finalUri . ".html");
+				self::$templatePath = self::getRealpath(self::$options["baseTemplateDir"] . self::$finalUri . ".html");
 				if (self::$templatePath)
 					self::$finalUri .= ".html";	
 			}
 			
 			if ($filteredTemplatePath = self::runHook("filterTemplatePath", self::$templatePath))
-				self::$templatePath = realpath($filteredTemplatePath);
+				self::$templatePath = self::getRealpath($filteredTemplatePath);
 			
 			// if the template is not found look for the 404 template
 			if (self::$templatePath === false) {
@@ -59,7 +59,7 @@
 				$fileNotFoundTemplate = isset(self::$options["fileNotFoundTemplate"]) ? self::$options["fileNotFoundTemplate"] : "/_404.html";
 				if ($filteredFileNotFoundTemplate = self::runHook("filterFileNotFoundTemplate", $fileNotFoundTemplate))
 					$fileNotFoundTemplate = $filteredFileNotFoundTemplate;
-				self::$templatePath = realpath(self::$options["baseTemplateDir"] . $fileNotFoundTemplate);
+				self::$templatePath = self::getRealpath(self::$options["baseTemplateDir"] . $fileNotFoundTemplate);
 				if (self::$templatePath)
 					self::$finalUri = $fileNotFoundTemplate;
 			}
@@ -74,8 +74,6 @@
 				// render the template
 				self::$options["request"] = self::$request;
 				self::$options["templateFile"] = self::$finalUri;
-				TierraTemplate::RenderTemplate(self::$options);
-				/*
 				$output = TierraTemplate::GetTemplateOutput(self::$options);
 				if ($filteredOutput = self::runHook("filterOutput", $output))
 					$output = $filteredOutput;
@@ -83,7 +81,6 @@
 				// output the template
 				if (!self::runHook("output", $output))
 					echo $output;
-				*/
 				
 				self::runHook("onPostOutput");
 			}
@@ -115,6 +112,11 @@
 				return @call_user_func_array(self::$options["runnerHooks"][$name], $params);
 			}
 			return false;
+		}
+		
+		public static function getRealPath($path) {
+			$realPath = realpath($path);
+			return $realPath && file_exists($realPath) ? $realPath : false;
 		}
 		
 	}

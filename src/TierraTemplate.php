@@ -50,7 +50,7 @@
 			$this->__baseTemplateDir = $baseTemplateDir;
 			$this->__cachedTemplatePath = false;
 			
-			$rawTemplatePath = $baseTemplateDir . $templateFile;
+			$rawTemplatePath = realpath($baseTemplateDir . $templateFile);
 			$rawTemplateInfo = @stat($rawTemplatePath);
 			$this->__cachedTemplatePath = self::GetCacheDir($options) . $templateFile . ".php";
 			$cachedTemplateInfo = @stat($this->__cachedTemplatePath);
