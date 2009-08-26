@@ -110,11 +110,11 @@ HTML;
 		}
 		
 		public function testBlockInChild() {
-			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ end foo @]", "<?php if (!\$this->__request->echoBlock('foo')) { ob_start(); ?> bar <?php \$this->__request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Block in child");
+			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ end foo @]", "<?php if (!\$this->__request->haveBlock('foo')) { ob_start(); ?> bar <?php \$this->__request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Block in child");
 		}			
 
 		public function testBlocksInBlocksInChild() {
-			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ start baz @] bam [@ end baz @] [@ end foo @]", "<?php if (!\$this->__request->echoBlock('foo')) { ob_start(); ?> bar <?php if (!\$this->__request->echoBlock('baz')) { ob_start(); ?> bam <?php \$this->__request->setBlock('baz', ob_get_contents()); ob_end_clean(); \$this->__request->echoBlock('baz'); } ?> <?php \$this->__request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Blocks in block in child");
+			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ start baz @] bam [@ end baz @] [@ end foo @]", "<?php if (!\$this->__request->haveBlock('foo')) { ob_start(); ?> bar <?php if (!\$this->__request->echoBlock('baz')) { ob_start(); ?> bam <?php \$this->__request->setBlock('baz', ob_get_contents()); ob_end_clean(); \$this->__request->echoBlock('baz'); } ?> <?php \$this->__request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Blocks in block in child");
 		}
 		
 		public function testAppendInParent() {
@@ -205,12 +205,12 @@ HTML;
 
 		public function testBlockWithWrapperDecorator() {
 			$src = "[@ start test do testWrapper('1') @] foo [@ end test @]";
-			self::checkEmit($src, "<?php if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(1) */' if (!\$this->__request->echoBlock('test')) { ?> foo <?php } if (\$this->__request->__endDecorator()) echo '/* end testwrapper(1) */'", "Block with test wrapper decorators");
+			self::checkEmit($src, "<?php if (!\$this->__request->echoBlock('test')) { if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(1) */'; ?> foo <?php if (\$this->__request->__endDecorator()) echo '/* end testwrapper(1) */'; }", "Block with test wrapper decorators");
 		}
 			
 		public function testBlockWithDoubleWrapperDecorator() {
 			$src = "[@ start test do testWrapper('1'), testWrapper('2') @] foo [@ end test @]";
-			self::checkEmit($src, "<?php if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(1) */' if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(2) */' if (!\$this->__request->echoBlock('test')) { ?> foo <?php } if (\$this->__request->__endDecorator()) echo '/* end testwrapper(2) */' if (\$this->__request->__endDecorator()) echo '/* end testwrapper(1) */'", "Block with two test wrapper decorators");
+			self::checkEmit($src, "<?php if (!\$this->__request->echoBlock('test')) { if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(1) */'; if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(2) */'; ?> foo <?php if (\$this->__request->__endDecorator()) echo '/* end testwrapper(2) */'; if (\$this->__request->__endDecorator()) echo '/* end testwrapper(1) */'; }", "Block with two test wrapper decorators");
 		}
 		
 		public function testSimpleGenerator() {

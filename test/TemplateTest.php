@@ -146,5 +146,9 @@
 			$this->checkOutput("{@ 'this is a test':link('http://google.com', {id: 'foo', class: 'bar'}) @}", '<a id="foo" class="bar" href="http://google.com">this is a test</a>');
 		}
 		
+		public function testDecoratorGuid() {
+			$this->checkOutput("[@ start foo do showguid() @] bar [@ end foo @]", "<p>guid for foo: 1f9e539887f123d934b77021a14ae3a9468f1f78</p> bar ");
+		}
+		
 	}
 	

@@ -10,6 +10,7 @@
 		private $tokenizer;
 		private $ast;
 		private $blockStack;
+		private $baseGuid;
 		
 		private $operatorTable;
 		
@@ -18,6 +19,7 @@
 			$this->tokenizer = new TierraTemplateTokenizer($src);
 			$this->ast = new TierraTemplateAST();
 			$this->blockStack = array();
+			$this->baseGuid = sha1($src . $filename); 
 			
 			// all operators in ascending order of precedence
 			$this->operatorTable = array(
@@ -134,6 +136,7 @@
 		private function blockNode() {
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::BLOCK_NODE);
 			$node->command = strtolower($this->tokenizer->match(TierraTemplateTokenizer::IDENTIFIER_TOKEN, "Expected block command"));
+			$node->blockName = false;
 			
 			switch ($node->command) {
 				case "extends":
@@ -144,9 +147,7 @@
 				case "start":
 				case "else":
 				case "end":
-					if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN))
-						$node->blockName = false;
-					else
+					if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN))
 						$node->blockName = $this->tokenizer->matchesElse(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN), false);
 					break;
 					
@@ -156,7 +157,7 @@
 					break;
 					
 				case "page":
-					// nothing to do here, no parameters to page
+					// nothing to do here
 					break;
 					
 				default:
@@ -181,6 +182,7 @@
 					
 				$this->tokenizer->match(TierraTemplateTokenizer::DO_TOKEN);
 				$node->decorators = array();
+				$node->guid = sha1($this->baseGuid . $node->blockName);
 				while (!$this->tokenizer->nextIs(TierraTemplateTokenizer::BLOCK_END_TOKEN)) {
 					if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IDENTIFIER_TOKEN)) {
 						// we don't want these as keywords so match the lexeme not the token
@@ -191,7 +193,7 @@
 					else
 						$action = "append";
 						
-					if (($node->command != "page") && (!$node->blockName))
+					if (($node->command != "page") && !$node->blockName)
 						$this->tokenizer->matchError("Decorator actions are only valid on named blocks");
 						 
 					$decorator = $this->functionCallNode();
@@ -545,30 +547,6 @@
 					$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
 			}
 			
-			return $node;
-		}
-		
-		private function filterNode() {
-			switch ($this->tokenizer->getNextToken()) {
-				case TierraTemplateTokenizer::IDENTIFIER_TOKEN:
-					$node = $this->functionCallNode($noParams=true);
-					break;
-					
-				case TierraTemplateTokenizer::FUNCTION_CALL_TOKEN:
-					$node = $this->functionCallNode();
-					break;
-					
-				case TierraTemplateTokenizer::INTEGER_TOKEN:
-					$node = new TierraTemplateASTNode(TierraTemplateASTNode::LIMIT_NODE);
-					$node->start = $this->tokenizer->advance();
-					if ($this->tokenizer->matchIf(TierraTemplateTokenizer::COMMA_TOKEN))
-						$node->num = $this->tokenizer->match(TierraTemplateTokenizer::INTEGER_TOKEN);
-					break;
-					
-				default:
-					$this->tokenizer->matchError("expected filter not found");
-					break;
-			}
 			return $node;
 		}
 		

@@ -2,7 +2,7 @@
 
 [@ page do remove nocache() @]
 
-<@ pageTitle = "Test Builtins" @>
+<@ pageTitle = "Test Builtins" @>    
 
 [@ start content do testwrapper(1) @]        
 
@@ -14,5 +14,10 @@
 	<p>{@ x = "I'll be there"; y = "just call me name"; `{x}, {x}, {y}, {x}...` @}</p>
 		
 [@ end content @]
+
+[@ start footer @]  
+footer
+[@ end footer @]
+
 
  

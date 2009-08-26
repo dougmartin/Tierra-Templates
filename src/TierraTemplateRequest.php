@@ -7,6 +7,7 @@
 		private $__blocks;
 		private $__decorators;
 		private $__decoratorStack;
+		private $__guid;
 		
 		public function __construct($settings=array()) {
 			$this->__vars = array();
@@ -16,13 +17,23 @@
 			$this->__decoratorStack = array();
 			
 			$this->addSetting("server", $_SERVER);
+			$this->addSetting("env", $_ENV);
+			
 			$this->addSetting("get", $_GET);
 			$this->addSetting("post", $_POST);
 			$this->addSetting("files", $_FILES);
 			$this->addSetting("request", $_REQUEST);
 			$this->addSetting("session", isset($_SESSION) ? $_SESSION : array());
-			$this->addSetting("env", $_ENV);
 			$this->addSetting("cookie", $_COOKIE);
+			
+			$requestSignature = array($this->getParam("REQUEST_URI", "", "server"));
+			foreach (array("get", "post", "files", "request", "session", "cookie") as $setting)
+				$requestSignature[] = var_export($this->getSetting($setting), true);
+			$this->__guid = sha1(implode("", $requestSignature));
+		}
+		
+		public function getGuid() {
+			return $this->__guid;
 		}
 		
 		public function getParam($name, $default=false, $from="request") {

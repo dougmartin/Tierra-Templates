@@ -11,7 +11,9 @@
 		
 		private static $decorators = array(
 			"nocache" => array("self", "noCacheDecorator"),
-			"testwrapper" => array("self", "testWrapperDecorator")
+			"testwrapper" => array("self", "testWrapperDecorator"),
+			"showguid" => array("self", "showGuidDecorator"),
+			"memcache" => array("self", "memcacheDecorator")
 		);
 		
 		public static function addDecorator($name, $method) {
@@ -26,9 +28,75 @@
 		
 		public static function testWrapperDecorator($context, $condition) {
 			if ($context["isStart"])
-				return "if ({$context["guard"]}) echo '/* start testwrapper({$condition}) */'";
+				return "if ({$context["guard"]}) echo '/* start testwrapper({$condition}) */';";
 			else
-				return "if ({$context["guard"]}) echo '/* end testwrapper({$condition}) */'";
+				return "if ({$context["guard"]}) echo '/* end testwrapper({$condition}) */';";
+		}
+		
+		public static function showGuidDecorator($context) {
+			if ($context["isStart"])
+				return "if ({$context["guard"]}) echo '<p>guid for {$context["blockName"]}: {$context["guid"]}</p>';";
+			else
+				return "{$context["guard"]};";
+		}
+		
+		public static function memcacheDecorator($context, $options=array()) {
+			$key = isset($options["perRequest"]) && $options["perRequest"] ? "'block_{$context["blockName"]}_{$context["guid"]}_' . \$this->__request->getGuid()" : "'block_{$context["blockName"]}_{$context["guid"]}'";
+			$debug = isset($options["debug"]) && $options["debug"] ? "true" : "false";
+			if ($context["isStart"]) {
+				return <<<CODE
+				
+					\$this->__scratchPad->blockContents = false;
+					if (!isset(\$this->__scratchPad->memcache) && class_exists("Memcache")) {
+						\$this->__scratchPad->memcache = new Memcache();
+						if ($debug)
+							echo "<!-- connecting to memcached -->";
+						if (@\$this->__scratchPad->memcache->connect('127.0.0.1')) {
+							if ($debug)
+								echo "<!-- getting block from memcached: " . $key . " -->";
+							\$this->__scratchPad->blockContents = @\$this->__scratchPad->memcache->get({$key});
+						}
+						else {
+							unset(\$this->__scratchPad->memcache);
+							if ($debug)
+								echo "<!-- unable to connect to memcached -->";
+						} 
+					}
+					else {
+						if ($debug)
+							echo "<!-- Memcache class does not exist -->"; 
+					}
+					if (\$this->__scratchPad->blockContents !== false) {
+						if ($debug)
+							echo "<!-- got block from memcached -->"; 
+						echo \$this->__scratchPad->blockContents;
+					}
+					else {
+						if (isset(\$this->__scratchPad->memcache)) {
+							if ($debug)
+								echo "<!-- did not get block, starting memcache output buffering -->"; 
+							ob_start();
+						}
+CODE;
+			} 
+			else {
+				$expire = isset($options["expire"]) ? $options["expire"] : 60;
+				if (is_string($expire))
+					$expire = "strtotime('" . addslashes($expire) . "') - time()";
+				return <<<CODE
+				
+						if (isset(\$this->__scratchPad->memcache)) {
+							\$this->__scratchPad->blockContents = ob_get_contents();
+							ob_end_clean(); 
+							if ($debug)
+								echo "<!-- completing memcache output buffering and saving block -->"; 
+							@\$this->__scratchPad->memcache->set({$key}, \$this->__scratchPad->blockContents, 0, {$expire});
+							echo \$this->__scratchPad->blockContents;
+						}
+					}
+CODE;
+			}
+			
 		}
 		
 		public static function emit($ast) {
@@ -115,12 +183,6 @@
 		private static function emitBlock($node) {
 			$code = array();
 			
-			// call the decorators in reverse order at the start of the block
-			foreach (self::getDecoratorCode($node, false, true) as $decoratorCode) {
-				if (strlen($decoratorCode) > 0)
-					$code[] = $decoratorCode;
-			}
-			
 			// emit the opening common code by command
 			switch ($node->command) {
 				case "include":
@@ -157,9 +219,11 @@
 				case "else":
 				case "start":
 					if ($node->blockName !== false) {
-						$code[] = "if (!\$this->__request->echoBlock('{$node->blockName}')) {";
-						
-						// buffer all blocks in child templates
+						// don't echo top level blocks in child templates
+						if (self::$isChildTemplate && (count(self::$blockStack) == 1))
+							$code[] = "if (!\$this->__request->haveBlock('{$node->blockName}')) {";
+						else
+							$code[] = "if (!\$this->__request->echoBlock('{$node->blockName}')) {";
 						if (self::$isChildTemplate)
 							$code[] = "ob_start();";
 					}
@@ -172,9 +236,22 @@
 					break;
 			}
 			
+			// call the decorators in reverse order at the start of the block
+			foreach (self::getDecoratorCode($node, false, true) as $decoratorCode) {
+				if (strlen($decoratorCode) > 0)
+					$code[] = $decoratorCode;
+			}
+			
 			// figure out what do with the past block contents at the end
 			if ($node->command == "end") {
 				$openingBlock = array_pop(self::$blockStack);
+				
+				// add code generator decorator calls after the block is closed
+				foreach (self::getDecoratorCode($openingBlock, false, false) as $decoratorCode) {
+					if (strlen($decoratorCode) > 0)
+						$code[] = $decoratorCode;
+				}
+				
 				switch ($openingBlock->command) {
 					case "else":
 					case "start":
@@ -199,11 +276,6 @@
 						break;
 				}
 				
-				// add code generator decorator calls after the block is closed
-				foreach (self::getDecoratorCode($openingBlock, false, false) as $decoratorCode) {
-					if (strlen($decoratorCode) > 0)
-						$code[] = $decoratorCode;
-				}
 			}
 			
 			return implode(" ", $code);
@@ -213,7 +285,7 @@
 			$code = array();
 			if (isset($block->decorators)) {
 				foreach ($isStart ? $block->decorators : array_reverse($block->decorators) as $decorator) {
-					$codeParams = isset($block->blockName) ? "'{$decorator->action}', '{$decorator->method}', '{$block->blockName}'" : "'{$decorator->action}', '{$decorator->method}'"; 
+					$codeParams = $block->blockName ? "'{$decorator->action}', '{$decorator->method}', '{$block->blockName}'" : "'{$decorator->action}', '{$decorator->method}'"; 
 					if ($decorator->action == "remove") {
 						if ($isStart)
 							$code[] = "\$this->__request->__decorator({$codeParams});";
@@ -221,7 +293,13 @@
 					else {
 						if (isset(self::$decorators[strtolower($decorator->method)])) {
 							$params = array_slice($decorator->evaledParams, 0); 
-							$context = array("isStart" => $isStart, "isPage" => $isPage, "guard" => $isStart ? "\$this->__request->__startDecorator({$codeParams})" : "\$this->__request->__endDecorator()");
+							$context = array(
+								"isStart" => $isStart, 
+								"isPage" => $isPage, 
+								"blockName" => $block->blockName,
+								"guid" => $block->guid, 
+								"guard" => $isStart ? "\$this->__request->__startDecorator({$codeParams})" : "\$this->__request->__endDecorator()"
+							);
 							array_unshift($params, $context); 
 							$decoratorCode = call_user_func_array(self::$decorators[strtolower($decorator->method)], $params);
 							if (strlen($decoratorCode) > 0)
@@ -478,21 +556,16 @@
 					
 				// we wrap the output template in a function if we are not echoing the output and the template has at least one generator so we can return its value
 				if (!$echoOutput && $hasGenerator) {
-					$functionName = self::saveOutputTemplate(implode(" ", $code));
+					$functionName = "otf_" . sha1(implode(" ", $code));
+					if (!isset(self::$outputTemplateFunctions[$functionName]))
+						self::$outputTemplateFunctions[$functionName] = implode(" ", $code);
 					$code = array("{$functionName}(\$this)");
 				}
 					
 			}			
 			return implode(" ", $code);
 		}
-		
-		public static function saveOutputTemplate($code) {
-			$hash = "otf_" . sha1($code);
-			if (!isset(self::$outputTemplateFunctions[$hash]))
-				self::$outputTemplateFunctions[$hash] = $code;
-			return $hash;			
-		}
-		
+
 	}	
 	
 	

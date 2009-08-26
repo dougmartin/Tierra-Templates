@@ -8,9 +8,9 @@
 		padding-left: 15px; 
 	}
 
-[@ end pageStyle @]
+[@ end pageStyle @]  
 
-[@ start content @]
+[@ start content do memcache({expire: "1 hour", perRequest: true, debug: true}) @] 
 
 	<h2>Welcome to the Test Runner</h2>
 	
@@ -92,7 +92,7 @@
 		
 [@ end content @]
 
-[@ start footer do testwrapper(1) @]
+[@ start footer do testwrapper(1) @] 
 	<hr/>
 	homepage footer
 [@ end footer @]
