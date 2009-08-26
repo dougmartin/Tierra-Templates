@@ -283,6 +283,8 @@ CODE;
 						break;
 				}
 				
+				if (isset($node->conditional))
+					$code[] = "}";
 			}
 			
 			return implode(" ", $code);
