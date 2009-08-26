@@ -171,14 +171,21 @@
 			throw new TierraTemplateException("External function not found for {$debugInfo}");
 		}
 		
+		// on BSD systems prior to 5.3 realpath() does not look at the last component of the path when seeing if it exists so we need to add the file_exists calls
 		private function findExternalPath($virtualPath, $subDir, $className, $functionName=false) {
 			$path = false;
-			if ($className)
+			if ($className) {
 				$path = realpath("{$virtualPath}/{$subDir}/{$className}.php");
-			if (!$path && $functionName)
+				$path = file_exists($path) ? $path : false;
+			}
+			if (!$path && $functionName) {
 				$path = realpath("{$virtualPath}/{$subDir}/{$functionName}.php");
-			if (!$path)
+				$path = file_exists($path) ? $path : false;
+			}
+			if (!$path) {
 				$path = realpath("{$virtualPath}/{$subDir}/index.php");
+				$path = file_exists($path) ? $path : false;
+			}
 			return $path;
 		}
 
