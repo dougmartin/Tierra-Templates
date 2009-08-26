@@ -212,8 +212,12 @@
 		
 		private function expressionNode() {
 			$expressions[] = $this->expressionOperatorNode(0);
-			while ($this->tokenizer->matchIf(TierraTemplateTokenizer::SEMICOLON_TOKEN))
+			while ($this->tokenizer->matchIf(TierraTemplateTokenizer::SEMICOLON_TOKEN)) {
+				// for valueless generators
+				if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN))
+					break;
 				$expressions[] = $this->expressionOperatorNode(0);
+			}
 				
 			if (count($expressions) > 1) {
 				$node = new TierraTemplateASTNode(TierraTemplateASTNode::MULTI_EXPRESSION_NODE);
