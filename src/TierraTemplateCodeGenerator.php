@@ -283,7 +283,7 @@ CODE;
 						break;
 				}
 				
-				if (isset($node->conditional))
+				if (isset($openingBlock->conditional))
 					$code[] = "}";
 			}
 			
