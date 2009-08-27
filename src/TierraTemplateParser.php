@@ -141,7 +141,7 @@
 			switch ($node->command) {
 				case "extends":
 				case "include":
-					$node->templateName = $this->tokenizer->matches(array(TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN), "Expected string or identifier for template name");
+					$node->templateName = $this->expressionNode();
 					break;
 					
 				case "start":

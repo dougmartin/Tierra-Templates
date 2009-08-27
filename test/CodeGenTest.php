@@ -110,11 +110,11 @@ HTML;
 		}
 		
 		public function testBlockInChild() {
-			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ end foo @]", "<?php if (!\$this->__request->haveBlock('foo')) { ob_start(); ?> bar <?php \$this->__request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Block in child");
+			self::checkEmit("[@ extends 'bam' @] [@ start foo @] bar [@ end foo @]", "<?php if (!\$this->__request->haveBlock('foo')) { ob_start(); ?> bar <?php \$this->__request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Block in child");
 		}			
 
 		public function testBlocksInBlocksInChild() {
-			self::checkEmit("[@ extends bam @] [@ start foo @] bar [@ start baz @] bam [@ end baz @] [@ end foo @]", "<?php if (!\$this->__request->haveBlock('foo')) { ob_start(); ?> bar <?php if (!\$this->__request->echoBlock('baz')) { ob_start(); ?> bam <?php \$this->__request->setBlock('baz', ob_get_contents()); ob_end_clean(); \$this->__request->echoBlock('baz'); } ?> <?php \$this->__request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Blocks in block in child");
+			self::checkEmit("[@ extends 'bam' @] [@ start foo @] bar [@ start baz @] bam [@ end baz @] [@ end foo @]", "<?php if (!\$this->__request->haveBlock('foo')) { ob_start(); ?> bar <?php if (!\$this->__request->echoBlock('baz')) { ob_start(); ?> bam <?php \$this->__request->setBlock('baz', ob_get_contents()); ob_end_clean(); \$this->__request->echoBlock('baz'); } ?> <?php \$this->__request->setBlock('foo', ob_get_contents()); ob_end_clean(); } \$this->includeTemplate('bam');", "Blocks in block in child");
 		}
 		
 		public function testAppendInParent() {
@@ -122,7 +122,7 @@ HTML;
 		}
 				
 		public function testAppendInChild() {
-			self::checkEmit("[@ extends bam @] [@ append foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->appendBlock('foo', ob_get_contents()); ob_end_clean(); \$this->includeTemplate('bam');", "Append in child");
+			self::checkEmit("[@ extends 'bam' @] [@ append foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->appendBlock('foo', ob_get_contents()); ob_end_clean(); \$this->includeTemplate('bam');", "Append in child");
 		}
 
 		public function testPrependInParent() {
@@ -130,59 +130,59 @@ HTML;
 		}
 				
 		public function testPrependInChild() {
-			self::checkEmit("[@ extends bam @] [@ prepend foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->prependBlock('foo', ob_get_contents()); ob_end_clean(); \$this->includeTemplate('bam');", "Append in child");
+			self::checkEmit("[@ extends 'bam' @] [@ prepend foo @] bar [@ end foo @]", "<?php ob_start(); ?> bar <?php \$this->__request->prependBlock('foo', ob_get_contents()); ob_end_clean(); \$this->includeTemplate('bam');", "Append in child");
 		}
 
 		public function testBlockWithFunctionCallNoParams() {
-			self::checkEmit("[@ include foo if foo() @]", "<?php if (\$this->__runtime->call('foo', 'foo on line 1', array())) { \$this->includeTemplate('foo'); }", "Block with function call and no params");
+			self::checkEmit("[@ include 'foo' if foo() @]", "<?php if (\$this->__runtime->call('foo', 'foo on line 1', array())) { \$this->includeTemplate('foo'); }", "Block with function call and no params");
 		}
 			
 		public function testBlockWithFunctionCallOneParam() {
-			self::checkEmit("[@ include foo if foo(2) @]", "<?php if (\$this->__runtime->call('foo', 'foo on line 1', array(2))) { \$this->includeTemplate('foo'); }", "Block with function call with one param");
+			self::checkEmit("[@ include 'foo' if foo(2) @]", "<?php if (\$this->__runtime->call('foo', 'foo on line 1', array(2))) { \$this->includeTemplate('foo'); }", "Block with function call with one param");
 		}
 
 		public function testBlockWithFunctionCallVarParam() {
-			self::checkEmit("[@ include foo if foo(bar) @]", "<?php if (\$this->__runtime->call('foo', 'foo on line 1', array(\$this->__runtime->identifier('bar')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var param");
+			self::checkEmit("[@ include 'foo' if foo(bar) @]", "<?php if (\$this->__runtime->call('foo', 'foo on line 1', array(\$this->__runtime->identifier('bar')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var param");
 		}
 
 		public function testBlockWithFunctionCallVarWithDotParam() {
-			self::checkEmit("[@ include foo if foo(bar.bam) @]", "<?php if (\$this->__runtime->call('foo', 'foo on line 1', array(\$this->__runtime->attr(\$this->__runtime->identifier('bar'), 'bam')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var with dot param");
+			self::checkEmit("[@ include 'foo' if foo(bar.bam) @]", "<?php if (\$this->__runtime->call('foo', 'foo on line 1', array(\$this->__runtime->attr(\$this->__runtime->identifier('bar'), 'bam')))) { \$this->includeTemplate('foo'); }", "Block with function call with one var with dot param");
 		}		
 		
 		public function testBlockWithOperator() {
-			self::checkEmit("[@ include foo if x < 3 @]", "<?php if (\$this->__runtime->identifier('x') < 3) { \$this->includeTemplate('foo'); }", "Block with operator");
+			self::checkEmit("[@ include 'foo' if x < 3 @]", "<?php if (\$this->__runtime->identifier('x') < 3) { \$this->includeTemplate('foo'); }", "Block with operator");
 		}
 
 		public function testBlockWithAssign() {
-			self::checkEmit("[@ include foo if x = 1 < 3 @]", "<?php if (\$this->__request->setVar('x', 1 < 3)) { \$this->includeTemplate('foo'); }", "Block with assignment");
+			self::checkEmit("[@ include 'foo' if x = 1 < 3 @]", "<?php if (\$this->__request->setVar('x', 1 < 3)) { \$this->includeTemplate('foo'); }", "Block with assignment");
 		}
 
 		public function testBlockWithIndex() {
-			self::checkEmit("[@ include foo if x[1] @]", "<?php if (\$this->__runtime->attr(\$this->__runtime->identifier('x'), 1)) { \$this->includeTemplate('foo'); }", "Block with index");
+			self::checkEmit("[@ include 'foo' if x[1] @]", "<?php if (\$this->__runtime->attr(\$this->__runtime->identifier('x'), 1)) { \$this->includeTemplate('foo'); }", "Block with index");
 		}			
 		
 		public function testBlockWithArrayIndexAndSingleLimit() {
-			self::checkEmit("[@ include foo if x[3]:1 @]", "<?php if (\$this->__runtime->limit(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3), 1)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
+			self::checkEmit("[@ include 'foo' if x[3]:1 @]", "<?php if (\$this->__runtime->limit(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3), 1)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
 		}
 				
 		public function testBlockWithArrayIndexAndFullLimit() {
-			self::checkEmit("[@ include foo if x[3]:1,-3 @]", "<?php if (\$this->__runtime->limit(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3), 1, -3)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
+			self::checkEmit("[@ include 'foo' if x[3]:1,-3 @]", "<?php if (\$this->__runtime->limit(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3), 1, -3)) { \$this->includeTemplate('foo'); }", "Block with array index and single limit");
 		}
 
 		public function testBlockWithArrayIndexAndFilter() {
-			self::checkEmit("[@ include foo if x[3]:bar() @]", "<?php if (\$this->__runtime->call('bar', 'bar on line 1', array(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3)))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
+			self::checkEmit("[@ include 'foo' if x[3]:bar() @]", "<?php if (\$this->__runtime->call('bar', 'bar on line 1', array(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3)))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
 		}
 					
 		public function testBlockWithArrayIndexAndFilters() {
-			self::checkEmit("[@ include foo if x[3]:bar(1,2):boom(3):bam() @]", "<?php if (\$this->__runtime->call('bam', 'bam on line 1', array(\$this->__runtime->call('boom', 'boom on line 1', array(\$this->__runtime->call('bar', 'bar on line 1', array(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3), 1, 2)), 3))))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
+			self::checkEmit("[@ include 'foo' if x[3]:bar(1,2):boom(3):bam() @]", "<?php if (\$this->__runtime->call('bam', 'bam on line 1', array(\$this->__runtime->call('boom', 'boom on line 1', array(\$this->__runtime->call('bar', 'bar on line 1', array(\$this->__runtime->attr(\$this->__runtime->identifier('x'), 3), 1, 2)), 3))))) { \$this->includeTemplate('foo'); }", "Block with array index and filter");
 		}
 
 		public function testBlockWithBuiltInFilter() {
-			self::checkEmit("[@ include foo if x:substr(2,-2) @]", "<?php if (call_user_func_array('substr', array(\$this->__runtime->identifier('x'), 2, -2))) { \$this->includeTemplate('foo'); }", "Block with built in filter");
+			self::checkEmit("[@ include 'foo' if x:substr(2,-2) @]", "<?php if (call_user_func_array('substr', array(\$this->__runtime->identifier('x'), 2, -2))) { \$this->includeTemplate('foo'); }", "Block with built in filter");
 		}
 		
 		public function testBlockWithNamespacedFilter() {
-			self::checkEmit("[@ include foo if x:bar\\bam() @]", "<?php if (\$this->__runtime->externalCall('bam', '', 'bar', '', 'bar\\\\bam on line 1', array(\$this->__runtime->identifier('x')))) { \$this->includeTemplate('foo'); }", "Block with built in filter");
+			self::checkEmit("[@ include 'foo' if x:bar\\bam() @]", "<?php if (\$this->__runtime->externalCall('bam', '', 'bar', '', 'bar\\\\bam on line 1', array(\$this->__runtime->identifier('x')))) { \$this->includeTemplate('foo'); }", "Block with built in filter");
 		}
 		
 		public function testPageBlockWithDecorator() {
@@ -302,5 +302,12 @@ HTML;
 			self::checkEmit("<@ foo = 1 @>", "<?php \$this->__request->setVar('foo', 1);", "Test statement tag");
 		}
 		
+		public function testExtendsWithIdentifier() {
+			self::checkEmit("[@ extends foo @]", "<?php \$this->includeTemplate(\$this->__runtime->identifier('foo'));", "Extends with identifier");
+		}
+		
+		public function testExtendsWithCall() {
+			self::checkEmit("[@ extends foo() @]", "<?php \$this->includeTemplate(\$this->__runtime->call('foo', 'foo on line 1', array()));", "Extends with call");
+		}
 	}
 	

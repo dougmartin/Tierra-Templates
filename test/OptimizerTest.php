@@ -52,24 +52,24 @@
 		}		
 		
 		public function testExtendsWithHTML() {
-			$astBefore = TestHelpers::GetParsedAST("[@ extends bar @] foo");
-			$astAfter = TestHelpers::MakeAST(array(), array("parentTemplateName" => "bar"));
+			$astBefore = TestHelpers::GetParsedAST("[@ extends 'bar' @] foo");
+			$astAfter = TestHelpers::MakeAST(array(), array("parentTemplateName" => TestHelpers::MakeASTNode(TierraTemplateASTNode::LITERAL_NODE, array("tokenType" => "string", "value" => "bar"))));
 			$this->assertEquals(TierraTemplateOptimizer::optimize($astBefore), $astAfter, "Test extends with html");
 		}
 
 		public function testHTMLWithExtendsAtEnd() {
-			$astBefore = TestHelpers::GetParsedAST("foo [@ extends bar @]");
-			$astAfter = TestHelpers::MakeAST(array(), array("parentTemplateName" => "bar"));
+			$astBefore = TestHelpers::GetParsedAST("foo [@ extends 'bar' @]");
+			$astAfter = TestHelpers::MakeAST(array(), array("parentTemplateName" => TestHelpers::MakeASTNode(TierraTemplateASTNode::LITERAL_NODE, array("tokenType" => "string", "value" => "bar"))));
 			$this->assertEquals(TierraTemplateOptimizer::optimize($astBefore), $astAfter, "Test html with extends at end");
 		}	
 
 		public function testExtendsWithBlockWithHTML() {
-			$astBefore = TestHelpers::GetParsedAST("[@ extends bar @] foo [@ start bam @] boom bim [@ end bam @] boom ");
+			$astBefore = TestHelpers::GetParsedAST("[@ extends 'bar' @] foo [@ start bam @] boom bim [@ end bam @] boom ");
 			$astAfter = TestHelpers::MakeAST(array(
 												TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "start", "blockName" => "bam")),
 												TestHelpers::MakeASTNode(TierraTemplateASTNode::HTML_NODE, array("html" => " boom bim ")),
 												TestHelpers::MakeASTNode(TierraTemplateASTNode::BLOCK_NODE, array("command" => "end", "blockName" => "bam")),
-											), array("parentTemplateName" => "bar"));
+											), array("parentTemplateName" => TestHelpers::MakeASTNode(TierraTemplateASTNode::LITERAL_NODE, array("tokenType" => "string", "value" => "bar"))));
 			$optimizedAST = TierraTemplateOptimizer::optimize($astBefore);
 			$this->assertEquals($optimizedAST, $astAfter, "Test extends with block with html");
 		}		

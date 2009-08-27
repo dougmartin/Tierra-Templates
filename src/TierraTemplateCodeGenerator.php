@@ -150,7 +150,7 @@ CODE;
 			
 			// add the parent template include at the end
 			if (self::$isChildTemplate) {
-				$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, "\$this->includeTemplate('{$ast->parentTemplateName}');");
+				$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, "\$this->includeTemplate(" . self::emitExpression($ast->parentTemplateName) . ");");
 			}
 			else {
 				if (isset($ast->pageBlock)) {
@@ -195,7 +195,7 @@ CODE;
 				case "include":
 					if (isset($node->conditional))
 						$code[] = "if (" . self::emitExpression($node->conditional) . ") {";
-					$code[] = "\$this->includeTemplate('{$node->templateName}');";
+					$code[] = "\$this->includeTemplate(" . self::emitExpression($node->templateName) . ");";
 					if (isset($node->conditional))
 						$code[] = "}";
 					break;
@@ -288,6 +288,10 @@ CODE;
 			}
 			
 			return implode(" ", $code);
+		}
+		
+		public static function emitTemplateInclude($node) {
+			return "\$this->includeTemplate(" . self::emitExpression($node->templateName) . ");";
 		}
 		
 		public static function getDecoratorCode($block, $isPage, $isStart) {
