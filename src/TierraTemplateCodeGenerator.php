@@ -200,6 +200,26 @@ CODE;
 						$code[] = "}";
 					break;
 					
+				case "echo":
+					if (isset($node->conditional))
+						$code[] = "if (" . self::emitExpression($node->conditional) . ") {";
+						
+					foreach (self::getDecoratorCode($node, false, true) as $decoratorCode) {
+						if (strlen($decoratorCode) > 0)
+							$code[] = $decoratorCode;
+					}
+					
+					$code[] = "\$this->__request->echoBlock('{$node->blockName}');";
+						
+					foreach (self::getDecoratorCode($node, false, false) as $decoratorCode) {
+						if (strlen($decoratorCode) > 0)
+							$code[] = $decoratorCode;
+					}
+
+					if (isset($node->conditional))
+						$code[] = "}";
+					break;
+					
 				case "else":
 					if (isset($node->conditional))
 						$code[] = "} elseif (" . self::emitExpression($node->conditional) . ") {";
@@ -243,10 +263,12 @@ CODE;
 					break;
 			}
 			
-			// call the decorators in reverse order at the start of the block
-			foreach (self::getDecoratorCode($node, false, true) as $decoratorCode) {
-				if (strlen($decoratorCode) > 0)
-					$code[] = $decoratorCode;
+			if ($node->command != "echo") {
+				// call the decorators in reverse order at the start of the block
+				foreach (self::getDecoratorCode($node, false, true) as $decoratorCode) {
+					if (strlen($decoratorCode) > 0)
+						$code[] = $decoratorCode;
+				}
 			}
 			
 			// figure out what do with the past block contents at the end

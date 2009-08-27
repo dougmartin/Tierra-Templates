@@ -309,5 +309,17 @@ HTML;
 		public function testExtendsWithCall() {
 			self::checkEmit("[@ extends foo() @]", "<?php \$this->includeTemplate(\$this->__runtime->call('foo', 'foo on line 1', array()));", "Extends with call");
 		}
+		
+		public function testEchoBlock() {
+			self::checkEmit("[@ echo foo @]", "<?php \$this->__request->echoBlock('foo');", "Echo block");
+		}
+		
+		public function testEchoBlockWithConditional() {
+			self::checkEmit("[@ echo foo if bar @]", "<?php if (\$this->__runtime->identifier('bar')) { \$this->__request->echoBlock('foo'); }", "Echo block with conditional");
+		}
+		
+		public function testEchoBlockWithConditionalAndDecorator() {
+			self::checkEmit("[@ echo foo if bar do testwrapper(1) @]", "<?php if (\$this->__runtime->identifier('bar')) { if (\$this->__request->__startDecorator('append', 'testwrapper', 'foo')) echo '/* start testwrapper(1) */'; \$this->__request->echoBlock('foo'); if (\$this->__request->__endDecorator()) echo '/* end testwrapper(1) */'; }", "Echo block with conditional and decorator");  
+		}
 	}
 	
