@@ -16,7 +16,8 @@
 		public function checkEmit($src, $testSrc, $message, $dump=false) {
 			$ast = TestHelpers::GetParsedAST($src);
 			$optimizedAST = TierraTemplateOptimizer::optimize($ast);
-			$emittedSrc = TierraTemplateCodeGenerator::emit($optimizedAST);
+			$codeGenerator = new TierraTemplateCodeGenerator();
+			$emittedSrc = $codeGenerator->emit($optimizedAST);
 			if ($dump) {
 				echo "\n{$message}\n";
 				echo "src:\n";

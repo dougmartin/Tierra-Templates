@@ -24,7 +24,7 @@
 			if (!isset($options["virtualDirs"]["_"])) {
 				// rebuild the array so our builtin is first when we loop on it
 				$virtualDirs["_"] = array(
-					"path" => dirname(__FILE__) . "/externals/builtin",
+					"path" => dirname(__FILE__) . "/externals/calls",
 					"classPrefix" => "TierraTemplateBuiltinExternals_",
 					"functionPrefix" => "TierraTemplateBuiltinExternals_",
 				);
@@ -64,9 +64,11 @@
 				if ($templateContents === false)
 					throw new TierraTemplateException("Cannot read template: {$rawTemplatePath}");
 					
-				$parser = new TierraTemplateParser($templateContents, $templateFile);
-				$parser->parse();
-				$src = TierraTemplateCodeGenerator::emit(TierraTemplateOptimizer::optimize($parser->getAST()));
+				// the pipeline in action
+				$parser = new TierraTemplateParser($options, $templateContents, $templateFile);
+				$codeGenerator = new TierraTemplateCodeGenerator($options);
+				$optimizer = new TierraTemplateOptimizer($options); 
+				$src = $codeGenerator->emit($optimizer->optimize($parser->parse()));
 				
 				@mkdir(dirname($this->__cachedTemplatePath), $this->getOption("cacheDirPerms", 0777), true);
 				$handle = @fopen($this->__cachedTemplatePath, "w");

@@ -6,6 +6,7 @@
 
 	class TierraTemplateParser {
 		
+		private $options;
 		private $filename;
 		private $tokenizer;
 		private $ast;
@@ -13,10 +14,13 @@
 		private $baseGuid;
 		
 		private $operatorTable;
+		private $codeGenerator;
 		
-		public function __construct($src, $filename=false) {
+		public function __construct($options, $src, $filename=false) {
+			$this->options = $options;
 			$this->filename = $filename;
 			$this->tokenizer = new TierraTemplateTokenizer($src);
+			$this->codeGenerator = new TierraTemplateCodeGenerator($src);
 			$this->ast = new TierraTemplateAST();
 			$this->blockStack = array();
 			$this->baseGuid = sha1($src . $filename); 
@@ -40,10 +44,6 @@
 				array("operators" => array("."), "associative" => "left", "binary" => true),
 				array("operators" => array("["), "associative" => "left", "binary" => true),
 			);
-		}
-		
-		public function getAST() {
-			return $this->ast;
 		}
 		
 		public function parse() {
@@ -131,6 +131,8 @@
 			$numBlocksInStack = count($this->blockStack); 
 			if ($numBlocksInStack != 0)
 				$this->tokenizer->matchError($numBlocksInStack == 1 ? "Unclosed block found" : "{$numBlocksInStack} unclosed blocks found");
+				
+			return $this->ast;
 		}
 		
 		private function blockNode() {
@@ -198,7 +200,7 @@
 						$this->tokenizer->matchError("Decorator actions are only valid on named blocks");
 						 
 					$decorator = $this->functionCallNode();
-					$paramsCode = TierraTemplateCodeGenerator::emitArray($decorator->params);
+					$paramsCode = $this->codeGenerator->emitArray($decorator->params);
 					if (strpos($paramsCode, "$"))
 						$this->tokenizer->matchError("Block decorator parameters are not valid. They cannot contain variable references or function invocations as they are called at compile time.");
 					$decorator->evaledParams = eval("return {$paramsCode};");

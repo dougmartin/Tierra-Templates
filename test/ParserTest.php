@@ -6,17 +6,21 @@
 	 
 	class ParserTest extends PHPUnit_Framework_TestCase {
 		
+		protected $options;
+		
 		protected function setUp() {
+			$this->options = array();
 		}
 		
 		protected function tearDown() {
 		}
 		
 		public function checkSyntax($src, $message, $dump=false) {
+			$actualAst = false;
 			try {
 				$isValid = true;
-				$parser = new TierraTemplateParser($src);
-				$parser->parse();
+				$parser = new TierraTemplateParser($this->options, $src);
+				$actualAst = $parser->parse();
 			} 
 			catch (TierraTemplateParserException $e) {
 				$isValid = false;
@@ -26,15 +30,16 @@
 				echo "src:\n";
 				var_dump($src);
 				echo "ast:\n";
-				var_dump($parser->getAST());
+				var_dump($actualAst);
 			}
 			$this->assertTrue($isValid, $message);
 		}
 		
 		public function checkAST($src, $ast, $message, $dump = false) {
+			$actualAst = false;
 			try {
-				$parser = new TierraTemplateParser($src);
-				$parser->parse();
+				$parser = new TierraTemplateParser($this->options, $src);
+				$actualAst = $parser->parse();
 			} 
 			catch (TierraTemplateParserException $e) {}
 			if ($dump) {
@@ -44,7 +49,7 @@
 				echo "passed ast:\n";
 				var_dump($ast);
 			}
-			$this->assertEquals($parser->getAST(), $ast, $message);
+			$this->assertEquals($actualAst, $ast, $message);
 		}
 		
 		public function checkBlockCommand($command, $testName, $blockName=false, $isString=false, $dump=false) {

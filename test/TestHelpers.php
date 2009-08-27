@@ -13,9 +13,8 @@
 			return new TierraTemplateASTNode($type, $attributes);
 		}		
 		
-		public static function GetParsedAST($src) {
-			$parser = new TierraTemplateParser($src);
-			$parser->parse();
-			return $parser->getAST();
+		public static function GetParsedAST($src, $options=array()) {
+			$parser = new TierraTemplateParser($options, $src);
+			return $parser->parse();
 		}
 	}

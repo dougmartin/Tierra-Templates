@@ -5,42 +5,50 @@
 	
 	class TierraTemplateCodeGenerator {
 		
-		private static $blockStack = array();
-		private static $isChildTemplate = false;
-		private static $outputTemplateFunctions = array();
+		private $options;
+		private $blockStack;
+		private $isChildTemplate;
+		private $outputTemplateFunctions;
 		
-		private static $decorators = array(
+		public function __construct($options=array()) {
+			$this->options = $options;
+			$this->blockStack = array();
+			$this->isChildTemplate = false;
+			$this->outputTemplateFunctions = array();
+		}		
+		
+		private $decorators = array(
 			"nocache" => array("self", "noCacheDecorator"),
 			"testwrapper" => array("self", "testWrapperDecorator"),
 			"showguid" => array("self", "showGuidDecorator"),
 			"memcache" => array("self", "memcacheDecorator")
 		);
 		
-		public static function addDecorator($name, $method) {
-			self::$decorators[strtolower($name)] = $method;
+		public function addDecorator($name, $method) {
+			$this->decorators[strtolower($name)] = $method;
 		}
 		
-		public static function noCacheDecorator($context) {
+		public function noCacheDecorator($context) {
 			if ($context["isStart"] && $context["isPage"])
 				return "if ({$context["guard"]}) { header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); }";
 			return "{$context["guard"]};";
 		}
 		
-		public static function testWrapperDecorator($context, $condition) {
+		public function testWrapperDecorator($context, $condition) {
 			if ($context["isStart"])
 				return "if ({$context["guard"]}) echo '/* start testwrapper({$condition}) */';";
 			else
 				return "if ({$context["guard"]}) echo '/* end testwrapper({$condition}) */';";
 		}
 		
-		public static function showGuidDecorator($context) {
+		public function showGuidDecorator($context) {
 			if ($context["isStart"])
 				return "if ({$context["guard"]}) echo '<p>guid for {$context["blockName"]}: {$context["guid"]}</p>';";
 			else
 				return "{$context["guard"]};";
 		}
 		
-		public static function memcacheDecorator($context, $options=array()) {
+		public function memcacheDecorator($context, $options=array()) {
 			$vary = isset($options["vary"]) ? addslashes($options["vary"]) : "none";
 			$key = $vary != "none" ? "'block_{$context["blockName"]}_{$context["guid"]}_' . \$this->__request->getGuid('{$vary}')" : "'block_{$context["blockName"]}_{$context["guid"]}'";
 			$debug = isset($options["debug"]) && $options["debug"] ? "true" : "false";
@@ -106,17 +114,17 @@ CODE;
 			
 		}
 		
-		public static function emit($ast) {
+		public function emit($ast) {
 			
-			self::$isChildTemplate = isset($ast->parentTemplateName);
-			self::$blockStack = array();
-			self::$outputTemplateFunctions = array();
+			$this->isChildTemplate = isset($ast->parentTemplateName);
+			$this->blockStack = array();
+			$this->outputTemplateFunctions = array();
 			
 			$chunks = array();
 
 			// call the decorators in reverse order at the start of the root page
 			if (isset($ast->pageBlock)) {
-				foreach (self::getDecoratorCode($ast->pageBlock, true, true) as $decoratorCode) {
+				foreach ($this->getDecoratorCode($ast->pageBlock, true, true) as $decoratorCode) {
 					if (strlen($decoratorCode) > 0)
 						$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $decoratorCode);
 				}
@@ -128,20 +136,20 @@ CODE;
 				switch ($node->type) {
 					case TierraTemplateASTNode::HTML_NODE:
 						// this is taken care of in the optimizer but in case it isn't called first don't output html not in blocks in child templates
-						if (!self::$isChildTemplate || (count(self::$blockStack) > 0))
+						if (!$this->isChildTemplate || (count($this->blockStack) > 0))
 							$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::HTML_CHUNK, $node->html);
 						break;
 						
 					case TierraTemplateASTNode::BLOCK_NODE:
-						$code = self::emitBlock($node);
+						$code = $this->emitBlock($node);
 						break;
 						
 					case TierraTemplateASTNode::GENERATOR_NODE:
-						$code = self::emitGenerator($node);
+						$code = $this->emitGenerator($node);
 						break;
 						
 					case TierraTemplateASTNode::CODE_NODE:
-						$code = self::emitCode($node);
+						$code = $this->emitCode($node);
 						break;
 				}
 				if (strlen($code) > 0)
@@ -149,12 +157,12 @@ CODE;
 			}
 			
 			// add the parent template include at the end
-			if (self::$isChildTemplate) {
-				$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, "\$this->includeTemplate(" . self::emitExpression($ast->parentTemplateName) . ");");
+			if ($this->isChildTemplate) {
+				$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, "\$this->includeTemplate(" . $this->emitExpression($ast->parentTemplateName) . ");");
 			}
 			else {
 				if (isset($ast->pageBlock)) {
-					foreach (self::getDecoratorCode($ast->pageBlock, true, false) as $decoratorCode) {
+					foreach ($this->getDecoratorCode($ast->pageBlock, true, false) as $decoratorCode) {
 						if (strlen($decoratorCode) > 0)
 							$chunks[] = new TierraTemplateCodeGeneratorChunk(TierraTemplateCodeGeneratorChunk::PHP_CHUNK, $decoratorCode);
 					}
@@ -162,9 +170,9 @@ CODE;
 			}
 			
 			// and then add any saved output template functions to the start of the code
-			if (count(self::$outputTemplateFunctions) > 0) {
+			if (count($this->outputTemplateFunctions) > 0) {
 				$code = array();
-				foreach (self::$outputTemplateFunctions as $otfName => $otfCode) {
+				foreach ($this->outputTemplateFunctions as $otfName => $otfCode) {
 					$otfCode = str_replace('$this->', '$__template->', $otfCode);
 					$code[] = "if (!function_exists('{$otfName}')) { function {$otfName}(\$__template) { ob_start(); {$otfCode} \$__output = ob_get_contents(); ob_end_clean(); return \$__output;} };";
 				}
@@ -187,31 +195,31 @@ CODE;
 			return implode("", $code);
 		}
 		
-		private static function emitBlock($node) {
+		private function emitBlock($node) {
 			$code = array();
 			
 			// emit the opening common code by command
 			switch ($node->command) {
 				case "include":
 					if (isset($node->conditional))
-						$code[] = "if (" . self::emitExpression($node->conditional) . ") {";
-					$code[] = "\$this->includeTemplate(" . self::emitExpression($node->templateName) . ");";
+						$code[] = "if (" . $this->emitExpression($node->conditional) . ") {";
+					$code[] = "\$this->includeTemplate(" . $this->emitExpression($node->templateName) . ");";
 					if (isset($node->conditional))
 						$code[] = "}";
 					break;
 					
 				case "echo":
 					if (isset($node->conditional))
-						$code[] = "if (" . self::emitExpression($node->conditional) . ") {";
+						$code[] = "if (" . $this->emitExpression($node->conditional) . ") {";
 						
-					foreach (self::getDecoratorCode($node, false, true) as $decoratorCode) {
+					foreach ($this->getDecoratorCode($node, false, true) as $decoratorCode) {
 						if (strlen($decoratorCode) > 0)
 							$code[] = $decoratorCode;
 					}
 					
 					$code[] = "\$this->__request->echoBlock('{$node->blockName}');";
 						
-					foreach (self::getDecoratorCode($node, false, false) as $decoratorCode) {
+					foreach ($this->getDecoratorCode($node, false, false) as $decoratorCode) {
 						if (strlen($decoratorCode) > 0)
 							$code[] = $decoratorCode;
 					}
@@ -222,13 +230,13 @@ CODE;
 					
 				case "else":
 					if (isset($node->conditional))
-						$code[] = "} elseif (" . self::emitExpression($node->conditional) . ") {";
+						$code[] = "} elseif (" . $this->emitExpression($node->conditional) . ") {";
 					else
 						$code[] = "} else {";
 						
 					// replace the previous block
-					array_pop(self::$blockStack);
-					self::$blockStack[] = $node;
+					array_pop($this->blockStack);
+					$this->blockStack[] = $node;
 					break;
 					
 				case "start":
@@ -236,8 +244,8 @@ CODE;
 				case "append":
 				case "set":
 					if (isset($node->conditional))
-						$code[] = "if (" . self::emitExpression($node->conditional) . ") {";
-					self::$blockStack[] = $node;
+						$code[] = "if (" . $this->emitExpression($node->conditional) . ") {";
+					$this->blockStack[] = $node;
 					break;
 			}
 			
@@ -247,11 +255,11 @@ CODE;
 				case "start":
 					if ($node->blockName !== false) {
 						// don't echo top level blocks in child templates
-						if (self::$isChildTemplate && (count(self::$blockStack) == 1))
+						if ($this->isChildTemplate && (count($this->blockStack) == 1))
 							$code[] = "if (!\$this->__request->haveBlock('{$node->blockName}')) {";
 						else
 							$code[] = "if (!\$this->__request->echoBlock('{$node->blockName}')) {";
-						if (self::$isChildTemplate)
+						if ($this->isChildTemplate)
 							$code[] = "ob_start();";
 					}
 					break;
@@ -265,7 +273,7 @@ CODE;
 			
 			if ($node->command != "echo") {
 				// call the decorators in reverse order at the start of the block
-				foreach (self::getDecoratorCode($node, false, true) as $decoratorCode) {
+				foreach ($this->getDecoratorCode($node, false, true) as $decoratorCode) {
 					if (strlen($decoratorCode) > 0)
 						$code[] = $decoratorCode;
 				}
@@ -273,10 +281,10 @@ CODE;
 			
 			// figure out what do with the past block contents at the end
 			if ($node->command == "end") {
-				$openingBlock = array_pop(self::$blockStack);
+				$openingBlock = array_pop($this->blockStack);
 				
 				// add code generator decorator calls after the block is closed
-				foreach (self::getDecoratorCode($openingBlock, false, false) as $decoratorCode) {
+				foreach ($this->getDecoratorCode($openingBlock, false, false) as $decoratorCode) {
 					if (strlen($decoratorCode) > 0)
 						$code[] = $decoratorCode;
 				}
@@ -286,10 +294,10 @@ CODE;
 					case "start":
 						if ($node->blockName !== false) {
 							// saved the buffered blocks in child templates
-							if (self::$isChildTemplate) {
+							if ($this->isChildTemplate) {
 								$code[] = "\$this->__request->setBlock('{$node->blockName}', ob_get_contents()); ob_end_clean();";
 								// output blocks within blocks so it is buffered in the outer block
-								if (count(self::$blockStack) > 0)
+								if (count($this->blockStack) > 0)
 									$code[] = "\$this->__request->echoBlock('{$node->blockName}');";
 							}
 							$code[] = "}";
@@ -300,7 +308,7 @@ CODE;
 					case "append":
 					case "set":
 						$code[] = "\$this->__request->{$openingBlock->command}Block('{$node->blockName}', ob_get_contents()); ob_end_clean();";
-						if (!self::$isChildTemplate)
+						if (!$this->isChildTemplate)
 							$code[] = "\$this->__request->echoBlock('{$node->blockName}');";
 						break;
 				}
@@ -312,11 +320,11 @@ CODE;
 			return implode(" ", $code);
 		}
 		
-		public static function emitTemplateInclude($node) {
-			return "\$this->includeTemplate(" . self::emitExpression($node->templateName) . ");";
+		public function emitTemplateInclude($node) {
+			return "\$this->includeTemplate(" . $this->emitExpression($node->templateName) . ");";
 		}
 		
-		public static function getDecoratorCode($block, $isPage, $isStart) {
+		public function getDecoratorCode($block, $isPage, $isStart) {
 			$code = array();
 			if (isset($block->decorators)) {
 				foreach ($isStart ? $block->decorators : array_reverse($block->decorators) as $decorator) {
@@ -326,7 +334,7 @@ CODE;
 							$code[] = "\$this->__request->__decorator({$codeParams});";
 					}
 					else {
-						if (isset(self::$decorators[strtolower($decorator->method)])) {
+						if (isset($this->decorators[strtolower($decorator->method)])) {
 							$params = array_slice($decorator->evaledParams, 0); 
 							$context = array(
 								"isStart" => $isStart, 
@@ -336,7 +344,7 @@ CODE;
 								"guard" => $isStart ? "\$this->__request->__startDecorator({$codeParams})" : "\$this->__request->__endDecorator()"
 							);
 							array_unshift($params, $context); 
-							$decoratorCode = call_user_func_array(self::$decorators[strtolower($decorator->method)], $params);
+							$decoratorCode = call_user_func_array($this->decorators[strtolower($decorator->method)], $params);
 							if (strlen($decoratorCode) > 0)
 								$code[] = $decoratorCode;
 						}
@@ -347,22 +355,22 @@ CODE;
 			return $code;
 		}
 		
-		public static function emitCode($node) {
+		public function emitCode($node) {
 			if ($node->code->type == TierraTemplateASTNode::MULTI_EXPRESSION_NODE) {
 				$code = array();
 				foreach ($node->code as $expression)
-					$code[] = self::emitExpression($expression) . ";";
+					$code[] = $this->emitExpression($expression) . ";";
 				return implode(" ", $code);
 			}
-			return self::emitExpression($node->code) . ";";
+			return $this->emitExpression($node->code) . ";";
 		}
 		
-		public static function emitExpression($node) {
+		public function emitExpression($node) {
 			$code = array();
 			
 			switch ($node->type) {
 				case TierraTemplateASTNode::FUNCTION_CALL_NODE:
-					$params = self::emitArray($node->params);
+					$params = $this->emitArray($node->params);
 					if (function_exists($node->method))
 						$code[] = "call_user_func_array('{$node->method}', {$params})";
 					else if ($node->isExternal)
@@ -393,60 +401,60 @@ CODE;
 				case TierraTemplateASTNode::OPERATOR_NODE:
 					switch ($node->op) {
 						case TierraTemplateTokenizer::COMMA_TOKEN:
-							$code[] = self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode);
+							$code[] = $this->emitExpression($node->leftNode) . ", " . $this->emitExpression($node->rightNode);
 							break;
 							
 						case TierraTemplateTokenizer::EQUAL_TOKEN:
 							$attrs = array();
-							$identifier = self::getIdentifier($node->leftNode, $attrs);
-							$code[] = "\$this->__request->setVar({$identifier}, " . self::emitExpression($node->rightNode) . (count($attrs) > 0 ? ", array(" . implode(", ", $attrs) . ")" : "") . ")";
+							$identifier = $this->getIdentifier($node->leftNode, $attrs);
+							$code[] = "\$this->__request->setVar({$identifier}, " . $this->emitExpression($node->rightNode) . (count($attrs) > 0 ? ", array(" . implode(", ", $attrs) . ")" : "") . ")";
 							break;
 							
 						case TierraTemplateTokenizer::LEFT_BRACKET_TOKEN:
 						case TierraTemplateTokenizer::DOT_TOKEN:
-							$leftExpression = self::emitExpression($node->leftNode);
-							$rightExpression = ($node->rightNode->type == TierraTemplateASTNode::IDENTIFIER_NODE ? "'{$node->rightNode->identifier}'" : self::emitExpression($node->rightNode)); 
+							$leftExpression = $this->emitExpression($node->leftNode);
+							$rightExpression = ($node->rightNode->type == TierraTemplateASTNode::IDENTIFIER_NODE ? "'{$node->rightNode->identifier}'" : $this->emitExpression($node->rightNode)); 
 							$code[] = "\$this->__runtime->attr({$leftExpression}, {$rightExpression})";
 							break;
 							
 						case TierraTemplateTokenizer::COLON_TOKEN:
 							if (($node->rightNode->type == TierraTemplateASTNode::OPERATOR_NODE) && ($node->rightNode->op == ",")) {
-								$code[] = "\$this->__runtime->limit(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode->leftNode) . ", " . self::emitExpression($node->rightNode->rightNode) . ")";
+								$code[] = "\$this->__runtime->limit(" . $this->emitExpression($node->leftNode) . ", " . $this->emitExpression($node->rightNode->leftNode) . ", " . $this->emitExpression($node->rightNode->rightNode) . ")";
 							}
 							else {
 								if ($node->rightNode->type == TierraTemplateASTNode::FUNCTION_CALL_NODE) {
 									// reverse the order of the function calls and pass the value of the expression as the first parameter
 									array_unshift($node->rightNode->params, $node->leftNode);
-									$code[] = self::emitExpression($node->rightNode);
+									$code[] = $this->emitExpression($node->rightNode);
 								}
 								else
-									$code[] = "\$this->__runtime->limit(" . self::emitExpression($node->leftNode) . ", " . self::emitExpression($node->rightNode) . ")";
+									$code[] = "\$this->__runtime->limit(" . $this->emitExpression($node->leftNode) . ", " . $this->emitExpression($node->rightNode) . ")";
 							}
 							break;
 							
 						default:
 							if ($node->binary)
-								$code[] = self::emitExpression($node->leftNode) . " " . $node->op . " " . self::emitExpression($node->rightNode);
+								$code[] = $this->emitExpression($node->leftNode) . " " . $node->op . " " . $this->emitExpression($node->rightNode);
 							else  
-								$code[] = $node->op . self::emitExpression($node->rightNode);
+								$code[] = $node->op . $this->emitExpression($node->rightNode);
 							break;
 					}
 					break;
 					
 				case TierraTemplateASTNode::ARRAY_NODE:
-					$code[] = "array(" . ($node->elements ? self::emitExpression($node->elements) : "" ) . ")";
+					$code[] = "array(" . ($node->elements ? $this->emitExpression($node->elements) : "" ) . ")";
 					break;
 					
 				case TierraTemplateASTNode::JSON_NODE:
-					$code[] = self::emitNamedArray($node->attributes);
+					$code[] = $this->emitNamedArray($node->attributes);
 					break;
 					
 				case TierraTemplateASTNode::JSON_ATTRIBUTE_NODE:
-					$code[] = $node->name . ": " . self::emitExpression($node->value);
+					$code[] = $node->name . ": " . $this->emitExpression($node->value);
 					break;		
 
 				case TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE:
-					$code[] = self::emitOutputTemplate($node, false);
+					$code[] = $this->emitOutputTemplate($node, false);
 					break;					
 					
 				default:
@@ -459,7 +467,7 @@ CODE;
 		public function getIdentifier($node, &$attrs) {
 			// walk down the parse tree to the left as long as its a attribute node 
 			if (($node->type == TierraTemplateASTNode::OPERATOR_NODE) && (($node->op == TierraTemplateTokenizer::LEFT_BRACKET_TOKEN) || ($node->op == TierraTemplateTokenizer::DOT_TOKEN)))
-				$identifier = self::getIdentifier($node->leftNode, $attrs);
+				$identifier = $this->getIdentifier($node->leftNode, $attrs);
 				
 			if (!isset($identifier)) {
 				// 	get the identifier at the bottom, the parser checks to make sure this is an identifier
@@ -470,7 +478,7 @@ CODE;
 				if ($node->rightNode->type == TierraTemplateASTNode::IDENTIFIER_NODE)
 					$attrs[] = "'{$node->rightNode->identifier}'";
 				else
-					$attrs[] = self::emitExpression($node->rightNode);
+					$attrs[] = $this->emitExpression($node->rightNode);
 			}
 			
 			return $identifier;
@@ -479,19 +487,19 @@ CODE;
 		public function emitArray($a) {
 			$code = array();
 			foreach ($a as $item)
-				$code[] = self::emitExpression($item);
+				$code[] = $this->emitExpression($item);
 			return "array(" . implode(", ", $code) . ")";
 		}
 		
 		private function emitNamedArray($a) {
 			$code = array();
 			foreach ($a as $name => $value)
-				$code[] = "\"{$name}\" => " . self::emitExpression($value);
+				$code[] = "\"{$name}\" => " . $this->emitExpression($value);
 			return "array(" . implode(", ", $code) . ")";
 		}		
 
 		// noEcho is used when emit generators from without an output template
-		public static function emitGenerator($node, $noEcho=false) {
+		public function emitGenerator($node, $noEcho=false) {
 			$code = array();
 
 			// the expression can be empty, eg {@ if foo ? bar @}
@@ -499,7 +507,7 @@ CODE;
 			if ($node->expression && ($node->expression->type == TierraTemplateASTNode::MULTI_EXPRESSION_NODE)) {
 				$expression = array_pop($node->expression->expressions);
 				foreach ($node->expression->expressions as $preExpression)
-					$code[] = self::emitExpression($preExpression) . ";";
+					$code[] = $this->emitExpression($preExpression) . ";";
 			}
 			
 			// if this generator has no output then output the head
@@ -507,31 +515,31 @@ CODE;
 				if (!$expression)
 					$code[] =  $noEcho ? "true" : "echo true;";
 				else if ($expression->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE)
-					$code[] =  self::emitOutputTemplate($expression, true);
+					$code[] =  $this->emitOutputTemplate($expression, true);
 				else
-					$code[] =  $noEcho ? self::emitExpression($expression) : "echo " . self::emitExpression($expression) . ";";
+					$code[] =  $noEcho ? $this->emitExpression($expression) : "echo " . $this->emitExpression($expression) . ";";
 			}
 			// if the generator explicitly has no output by using a trailing ? then just emit the expression
 			else if ($node->ifTrue && (count($node->ifTrue->elements) == 0) && (!$node->ifFalse || (count($node->ifFalse->elements) == 0)) && (count($node->conditionals) == 0)) {
-				$code[] = ($expression ? self::emitExpression($expression) : "true") . ";";
+				$code[] = ($expression ? $this->emitExpression($expression) : "true") . ";";
 			}
 			else if (count($node->conditionals) > 0) {
-				$code[] = "\$this->__runtime->startGenerator(" .  ($expression ? self::emitExpression($expression) : "true") .  ");";
+				$code[] = "\$this->__runtime->startGenerator(" .  ($expression ? $this->emitExpression($expression) : "true") .  ");";
 				$ifs = array();
 				foreach ($node->conditionals as $conditional)
-					$ifs[] = "if (" .  self::emitExpression($conditional->expression) .  ") { " . ($conditional->ifTrue !== false ? self::emitGeneratorOutput($conditional->ifTrue) : "") . " }";
+					$ifs[] = "if (" .  $this->emitExpression($conditional->expression) .  ") { " . ($conditional->ifTrue !== false ? $this->emitGeneratorOutput($conditional->ifTrue) : "") . " }";
 				if ($node->ifFalse !== false)
-					$ifs[] = "{ " . self::emitGenerator($node->ifFalse) . " }";
+					$ifs[] = "{ " . $this->emitGenerator($node->ifFalse) . " }";
 				$code[] = implode(" else ", $ifs);
 				$code[] = "\$this->__runtime->endGenerator();";
 			}
 			else {
-				$code[] = "if (\$this->__runtime->startGenerator(" .  ($expression ? self::emitExpression($expression) : "true") .  ")) {";
+				$code[] = "if (\$this->__runtime->startGenerator(" .  ($expression ? $this->emitExpression($expression) : "true") .  ")) {";
 				if ($node->ifTrue !== false)
-					$code[] = self::emitGeneratorOutput($node->ifTrue);
+					$code[] = $this->emitGeneratorOutput($node->ifTrue);
 				$code[] = "}";
 				if ($node->ifFalse !== false)
-					$code[] = "else { " . self::emitGenerator($node->ifFalse) . " }";
+					$code[] = "else { " . $this->emitGenerator($node->ifFalse) . " }";
 				$code[] = "\$this->__runtime->endGenerator();";
 			}
 			
@@ -540,30 +548,30 @@ CODE;
 			return implode(" ", $code);
 		}
 		
-		public static function emitGeneratorOutput($node) {
+		public function emitGeneratorOutput($node) {
 			$code = array();
 			$numElements = count($node->elements);
 			
 			$preElement = ($numElements > 1 ? $node->elements[0] : false);
 			if ($preElement)
-				$code[] = self::emitGeneratorOrOutputTemplate($preElement);
+				$code[] = $this->emitGeneratorOrOutputTemplate($preElement);
 				
 			$loopElement = ($numElements > 1 ? $node->elements[1] : ($numElements > 0 ? $node->elements[0] : false));
 			if ($loopElement)
-				$code[] = "do { " . self::emitGeneratorOrOutputTemplate($loopElement) ." } while (\$this->__runtime->loop());";
+				$code[] = "do { " . $this->emitGeneratorOrOutputTemplate($loopElement) ." } while (\$this->__runtime->loop());";
 			
 			$postElement = ($numElements > 2 ? $node->elements[2] : false);
 			if ($postElement)
-				$code[] = self::emitGeneratorOrOutputTemplate($postElement);
+				$code[] = $this->emitGeneratorOrOutputTemplate($postElement);
 
 			return implode(" ", $code);
 		}
 		
-		public static function emitGeneratorOrOutputTemplate($node) {
-			return $node->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE ? self::emitOutputTemplate($node, true) : self::emitGenerator($node);
+		public function emitGeneratorOrOutputTemplate($node) {
+			return $node->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE ? $this->emitOutputTemplate($node, true) : $this->emitGenerator($node);
 		}
 		
-		public static function emitOutputTemplate($node, $echoOutput) {
+		public function emitOutputTemplate($node, $echoOutput) {
 			$code = array();
 			
 			if (count($node->outputItems) > 0) {
@@ -577,14 +585,14 @@ CODE;
 								$code[] = "echo " . implode(" . ", $output) . ";";
 								$output = array();
 							}
-							$code[] = self::emitGenerator($item);
+							$code[] = $this->emitGenerator($item);
 							$hasGenerator = true;
 						}
 						else
-							$output[] = self::emitGenerator($item, true);
+							$output[] = $this->emitGenerator($item, true);
 					}
 					else
-						$output[] = self::emitExpression($item);
+						$output[] = $this->emitExpression($item);
 				}
 				if (count($output) > 0)
 					$code[] = $echoOutput || $hasGenerator ? ("echo " . implode(" . ", $output) . ";") : implode(" . ", $output);
@@ -592,8 +600,8 @@ CODE;
 				// we wrap the output template in a function if we are not echoing the output and the template has at least one generator so we can return its value
 				if (!$echoOutput && $hasGenerator) {
 					$functionName = "otf_" . sha1(implode(" ", $code));
-					if (!isset(self::$outputTemplateFunctions[$functionName]))
-						self::$outputTemplateFunctions[$functionName] = implode(" ", $code);
+					if (!isset($this->outputTemplateFunctions[$functionName]))
+						$this->outputTemplateFunctions[$functionName] = implode(" ", $code);
 					$code = array("{$functionName}(\$this)");
 				}
 					

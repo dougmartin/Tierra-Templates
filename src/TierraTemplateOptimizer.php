@@ -4,7 +4,13 @@
 	
 	class TierraTemplateOptimizer {
 		
-		public static function optimize($ast) {
+		private $options;
+		
+		public function __construct($options=array()) {
+			$this->options = $options;
+		}				
+		
+		public function optimize($ast) {
 			
 			/*
 			 * TODO:
