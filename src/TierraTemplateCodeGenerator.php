@@ -2,6 +2,7 @@
 
 	require_once dirname(__FILE__) . "/../src/TierraTemplateAST.php";
 	require_once dirname(__FILE__) . "/../src/TierraTemplateException.php";
+	require_once dirname(__FILE__) . "/../src/TierraTemplateRuntime.php";
 	
 	class TierraTemplateCodeGenerator {
 		
@@ -9,109 +10,51 @@
 		private $blockStack;
 		private $isChildTemplate;
 		private $outputTemplateFunctions;
+		private $runtime;
 		
 		public function __construct($options=array()) {
 			$this->options = $options;
 			$this->blockStack = array();
 			$this->isChildTemplate = false;
 			$this->outputTemplateFunctions = array();
+
+			// use to call the decorators
+			$this->runtime = new TierraTemplateRuntime(false, $options);
 		}		
+
 		
-		private $decorators = array(
-			"nocache" => array("self", "noCacheDecorator"),
-			"testwrapper" => array("self", "testWrapperDecorator"),
-			"showguid" => array("self", "showGuidDecorator"),
-			"memcache" => array("self", "memcacheDecorator")
-		);
-		
-		public function addDecorator($name, $method) {
-			$this->decorators[strtolower($name)] = $method;
-		}
-		
-		public function noCacheDecorator($context) {
-			if ($context["isStart"] && $context["isPage"])
-				return "if ({$context["guard"]}) { header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); }";
-			return "{$context["guard"]};";
-		}
-		
-		public function testWrapperDecorator($context, $condition) {
-			if ($context["isStart"])
-				return "if ({$context["guard"]}) echo '/* start testwrapper({$condition}) */';";
-			else
-				return "if ({$context["guard"]}) echo '/* end testwrapper({$condition}) */';";
-		}
-		
-		public function showGuidDecorator($context) {
-			if ($context["isStart"])
-				return "if ({$context["guard"]}) echo '<p>guid for {$context["blockName"]}: {$context["guid"]}</p>';";
-			else
-				return "{$context["guard"]};";
-		}
-		
-		public function memcacheDecorator($context, $options=array()) {
-			$vary = isset($options["vary"]) ? addslashes($options["vary"]) : "none";
-			$key = $vary != "none" ? "'block_{$context["blockName"]}_{$context["guid"]}_' . \$this->__request->getGuid('{$vary}')" : "'block_{$context["blockName"]}_{$context["guid"]}'";
-			$debug = isset($options["debug"]) && $options["debug"] ? "true" : "false";
-			if ($context["isStart"]) {
-				return <<<CODE
-				
-					if (!isset(\$this->__request->__scratchPad->memcacheDecorator))
-						\$this->__request->__scratchPad->memcacheDecorator = new stdClass;
-					if (!isset(\$this->__request->__scratchPad->memcacheDecorator->memcache)) {
-						if (class_exists("Memcache")) {
-							\$this->__request->__scratchPad->memcacheDecorator->memcache = new Memcache();
-							if ($debug)
-								echo "<!-- connecting to memcached -->";
-							if (!@\$this->__request->__scratchPad->memcacheDecorator->memcache->connect('127.0.0.1')) {
-								\$this->__request->__scratchPad->memcacheDecorator->memcache = false;
-								if ($debug)
-									echo "<!-- unable to connect to memcached -->";
-							} 
-						}
-						else {
-							\$this->__request->__scratchPad->memcacheDecorator->memcache = false;
-							if ($debug)
-								echo "<!-- Memcache class does not exist -->"; 
-						}
-					}
-					if (\$this->__request->__scratchPad->memcacheDecorator->memcache) {
-						if ($debug)
-							echo "<!-- getting block from memcached: " . $key . " -->";
-						\$this->__request->__scratchPad->memcacheDecorator->blockContents = @\$this->__request->__scratchPad->memcacheDecorator->memcache->get({$key});
-					}
-					else
-						\$this->__request->__scratchPad->memcacheDecorator->blockContents = false;
-					if (\$this->__request->__scratchPad->memcacheDecorator->blockContents !== false) {
-						if ($debug)
-							echo "<!-- got block from memcached -->"; 
-						echo \$this->__request->__scratchPad->memcacheDecorator->blockContents;
+		public function getDecoratorCode($block, $isPage, $isStart) {
+			$code = array();
+			if (isset($block->decorators)) {
+				foreach ($isStart ? $block->decorators : array_reverse($block->decorators) as $decorator) {
+					$codeParams = $block->blockName ? "'{$decorator->action}', '{$decorator->method}', '{$block->blockName}'" : "'{$decorator->action}', '{$decorator->method}'"; 
+					if ($decorator->action == "remove") {
+						if ($isStart)
+							$code[] = "\$this->__request->__decorator({$codeParams});";
 					}
 					else {
-						if (\$this->__request->__scratchPad->memcacheDecorator->memcache) {
-							if ($debug)
-								echo "<!-- did not get block, starting memcache output buffering -->"; 
-							ob_start();
-						}
-CODE;
-			} 
-			else {
-				$expire = isset($options["expire"]) ? $options["expire"] : 60;
-				if (is_string($expire))
-					$expire = "strtotime('" . addslashes($expire) . "') - time()";
-				return <<<CODE
-				
-						if (\$this->__request->__scratchPad->memcacheDecorator->memcache) {
-							\$this->__request->__scratchPad->memcacheDecorator->blockContents = ob_get_contents();
-							ob_end_clean(); 
-							if ($debug)
-								echo "<!-- completing memcache output buffering and saving block -->"; 
-							@\$this->__request->__scratchPad->memcacheDecorator->memcache->set({$key}, \$this->__request->__scratchPad->memcacheDecorator->blockContents, 0, {$expire});
-							echo \$this->__request->__scratchPad->memcacheDecorator->blockContents;
-						}
+						$params = array_slice($decorator->evaledParams, 0); 
+						$context = array(
+							"isStart" => $isStart, 
+							"isPage" => $isPage, 
+							"blockName" => $block->blockName,
+							"guid" => $block->guid, 
+							"guard" => $isStart ? "\$this->__request->__startDecorator({$codeParams})" : "\$this->__request->__endDecorator()",
+							"options" => $this->options
+						);
+						array_unshift($params, $context); 
+						$method = substr($decorator->method, -strlen("Decorator")) != "Decorator" ? $decorator->method . "Decorator" : $decorator->method;  
+						if ($decorator->isExternal)
+							$decoratorCode = $this->runtime->externalCall($method, $decorator->filename, $decorator->virtualDir, $decorator->subDir, $decorator->debugInfo, $params);
+						else
+							$decoratorCode = $this->runtime->call($method, $decorator->debugInfo, $params);
+						if (strlen($decoratorCode) > 0)
+							$code[] = $decoratorCode;
 					}
-CODE;
+				}
 			}
 			
+			return $code;
 		}
 		
 		public function emit($ast) {
@@ -322,37 +265,6 @@ CODE;
 		
 		public function emitTemplateInclude($node) {
 			return "\$this->includeTemplate(" . $this->emitExpression($node->templateName) . ");";
-		}
-		
-		public function getDecoratorCode($block, $isPage, $isStart) {
-			$code = array();
-			if (isset($block->decorators)) {
-				foreach ($isStart ? $block->decorators : array_reverse($block->decorators) as $decorator) {
-					$codeParams = $block->blockName ? "'{$decorator->action}', '{$decorator->method}', '{$block->blockName}'" : "'{$decorator->action}', '{$decorator->method}'"; 
-					if ($decorator->action == "remove") {
-						if ($isStart)
-							$code[] = "\$this->__request->__decorator({$codeParams});";
-					}
-					else {
-						if (isset($this->decorators[strtolower($decorator->method)])) {
-							$params = array_slice($decorator->evaledParams, 0); 
-							$context = array(
-								"isStart" => $isStart, 
-								"isPage" => $isPage, 
-								"blockName" => $block->blockName,
-								"guid" => $block->guid, 
-								"guard" => $isStart ? "\$this->__request->__startDecorator({$codeParams})" : "\$this->__request->__endDecorator()"
-							);
-							array_unshift($params, $context); 
-							$decoratorCode = call_user_func_array($this->decorators[strtolower($decorator->method)], $params);
-							if (strlen($decoratorCode) > 0)
-								$code[] = $decoratorCode;
-						}
-					}
-				}
-			}
-			
-			return $code;
 		}
 		
 		public function emitCode($node) {

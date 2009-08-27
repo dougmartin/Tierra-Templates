@@ -12,7 +12,21 @@
 		
 		public function __construct($request, $options) {
 			$this->request = $request;
-			$this->options = $options;
+			
+			// add the built in externals
+			if (!isset($options["virtualDirs"]["_"])) {
+				// rebuild the array so our builtin is first when we loop on it
+				$virtualDirs["_"] = array(
+					"path" => dirname(__FILE__) . "/internals",
+					"classPrefix" => "TierraTemplateInternals_",
+					"functionPrefix" => "TierraTemplateInternals_",
+				);
+				if (isset($options["virtualDirs"])) {
+					foreach ($options["virtualDirs"] as $virtualDir => $dirInfo)
+						$virtualDirs[$virtualDir] = $dirInfo;
+				}
+				$options["virtualDirs"] = $virtualDirs;
+			}			
 			
 			// validate the virtual dirs
 			if (isset($options["virtualDirs"])) {
@@ -21,6 +35,8 @@
 						throw new TierraTemplateException("No path given in options for '{$virtualDir}' virtualDir");
 				}
 			}
+			
+			$this->options = $options;
 			
 			$this->stackFrame = array();
 			$this->currentFrame = false;
@@ -118,7 +134,7 @@
 		}
 		
 		public function externalCall($functionName, $className, $virtualDir, $subDir, $debugInfo, $params=array()) {
-			
+
 			if ("{$virtualDir}/{$subDir}/{$className}" == "//request") {
 				if (method_exists($this->request, $functionName))
 					return call_user_func_array(array($this->request, $functionName), $params);

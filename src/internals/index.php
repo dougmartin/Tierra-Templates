@@ -7,9 +7,9 @@
 	 * to the list of virtual dirs:
 	 * 
 	 * $virtualDirs["_"] = array(
-	 *    "path" => dirname(__FILE__) . "/externals/builtin",
-	 *    "classPrefix" => "TierraTemplateBuiltinExternals_",
-	 *    "functionPrefix" => "TierraTemplateBuiltinExternals_",
+	 *    "path" => dirname(__FILE__) . "/internals",
+	 *    "classPrefix" => "TierraTemplateInternals_",
+	 *    "functionPrefix" => "TierraTemplateInternals_",
 	 * );
 	 *
 	 * The class name must match the classPrefix + filename.  Since no classname is used in a builtin call
@@ -22,7 +22,7 @@
 	 * 
 	 */
 
-	class TierraTemplateBuiltinExternals_index {
+	class TierraTemplateInternals_index {
 	
 		public static function Truncate($text, $max_length = -1, $more = "...") {
 			if (($max_length > -1) && (strlen($text) > $max_length)) {
@@ -296,7 +296,102 @@
 			return self::Total($var) == 1 ? $forOne : $forMany;
 		}
 
+		//
+		// block decorators
+		//
 		
+		public function noCacheDecorator($context) {
+			if ($context["isStart"] && $context["isPage"])
+				return "if ({$context["guard"]}) { header('Expires: Sun, 03 Oct 1971 00:00:00 GMT'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Cache-Control: post-check=0, pre-check=0', false); header('Pragma: no-cache'); }";
+			return "{$context["guard"]};";
+		}
+		
+		public function testWrapperDecorator($context, $condition) {
+			if ($context["isStart"])
+				return "if ({$context["guard"]}) echo '/* start testwrapper({$condition}) */';";
+			else
+				return "if ({$context["guard"]}) echo '/* end testwrapper({$condition}) */';";
+		}
+		
+		public function showGuidDecorator($context) {
+			if ($context["isStart"])
+				return "if ({$context["guard"]}) echo '<p>guid for {$context["blockName"]}: {$context["guid"]}</p>';";
+			else
+				return "{$context["guard"]};";
+		}
+		
+		public function memcacheDecorator($context, $options=array()) {
+			$vary = isset($options["vary"]) ? addslashes($options["vary"]) : "none";
+			$key = $vary != "none" ? "'block_{$context["blockName"]}_{$context["guid"]}_' . \$this->__request->getGuid('{$vary}')" : "'block_{$context["blockName"]}_{$context["guid"]}'";
+			$debug = isset($options["debug"]) && $options["debug"] ? "true" : "false";
+			
+			$memcacheSettings = isset($context["options"]["userSettings"]["decorators"]["memcache"]) ? $context["options"]["userSettings"]["decorators"]["memcache"] : array();
+			$host = isset($memcacheSettings["host"]) ? $memcacheSettings["host"] : "127.0.0.1";
+			$port = isset($memcacheSettings["port"]) ? $memcacheSettings["port"] : 11211; 
+			$timeout = isset($memcacheSettings["timeout"]) ? $memcacheSettings["timeout"] : 1;
+			$defaultExpire = isset($memcacheSettings["defaultExpire"]) ? $memcacheSettings["defaultExpire"] : 300;
+
+			$expire = isset($options["expire"]) ? $options["expire"] : $defaultExpire;
+			if (is_string($expire))
+				$expire = "strtotime('" . addslashes($expire) . "') - time()";
+			
+			if ($context["isStart"]) {
+				return <<<CODE
+				
+					if (!isset(\$this->__request->__scratchPad->memcacheDecorator))
+						\$this->__request->__scratchPad->memcacheDecorator = new stdClass;
+					if (!isset(\$this->__request->__scratchPad->memcacheDecorator->memcache)) {
+						if (class_exists("Memcache")) {
+							\$this->__request->__scratchPad->memcacheDecorator->memcache = new Memcache();
+							if ($debug)
+								echo "<!-- connecting to memcached on {$host}:{$port} with {$timeout} second(s) timeout -->";
+							if (!@\$this->__request->__scratchPad->memcacheDecorator->memcache->connect('{$host}', {$port}, {$timeout})) {
+								\$this->__request->__scratchPad->memcacheDecorator->memcache = false;
+								if ($debug)
+									echo "<!-- unable to connect to memcached -->";
+							} 
+						}
+						else {
+							\$this->__request->__scratchPad->memcacheDecorator->memcache = false;
+							if ($debug)
+								echo "<!-- Memcache class does not exist -->"; 
+						}
+					}
+					if (\$this->__request->__scratchPad->memcacheDecorator->memcache) {
+						if ($debug)
+							echo "<!-- getting block from memcached: " . $key . " -->";
+						\$this->__request->__scratchPad->memcacheDecorator->blockContents = @\$this->__request->__scratchPad->memcacheDecorator->memcache->get({$key});
+					}
+					else
+						\$this->__request->__scratchPad->memcacheDecorator->blockContents = false;
+					if (\$this->__request->__scratchPad->memcacheDecorator->blockContents !== false) {
+						if ($debug)
+							echo "<!-- got block from memcached -->"; 
+						echo \$this->__request->__scratchPad->memcacheDecorator->blockContents;
+					}
+					else {
+						if (\$this->__request->__scratchPad->memcacheDecorator->memcache) {
+							if ($debug)
+								echo "<!-- did not get block, starting memcache output buffering -->"; 
+							ob_start();
+						}
+CODE;
+			} 
+			else {
+				return <<<CODE
+						if (\$this->__request->__scratchPad->memcacheDecorator->memcache) {
+							\$this->__request->__scratchPad->memcacheDecorator->blockContents = ob_get_contents();
+							ob_end_clean(); 
+							if ($debug)
+								echo "<!-- completing memcache output buffering and saving block -->"; 
+							@\$this->__request->__scratchPad->memcacheDecorator->memcache->set({$key}, \$this->__request->__scratchPad->memcacheDecorator->blockContents, 0, {$expire});
+							echo \$this->__request->__scratchPad->memcacheDecorator->blockContents;
+						}
+					}
+CODE;
+			}
+			
+		}
 	}
 
 ?>

@@ -20,7 +20,7 @@
 			$this->options = $options;
 			$this->filename = $filename;
 			$this->tokenizer = new TierraTemplateTokenizer($src);
-			$this->codeGenerator = new TierraTemplateCodeGenerator($src);
+			$this->codeGenerator = new TierraTemplateCodeGenerator($options);
 			$this->ast = new TierraTemplateAST();
 			$this->blockStack = array();
 			$this->baseGuid = sha1($src . $filename); 

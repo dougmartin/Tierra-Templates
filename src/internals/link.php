@@ -11,14 +11,14 @@
 	 * to the list of virtual dirs:
 	 * 
 	 * $virtualDirs["_"] = array(
-	 *    "path" => dirname(__FILE__) . "/externals/builtin",
-	 *    "classPrefix" => "TierraTemplateBuiltinExternals_",
-	 *    "functionPrefix" => "TierraTemplateBuiltinExternals_",
+	 *    "path" => dirname(__FILE__) . "/internals",
+	 *    "classPrefix" => "TierraTemplateInternals_",
+	 *    "functionPrefix" => "TierraTemplateInternals_",
 	 * );
 	 * 
 	 */
 
-	function TierraTemplateBuiltinExternals_Link($text, $href, $options=false) {
+	function TierraTemplateInternals_Link($text, $href, $options=false) {
 		if ($options === false)
 			$options = array("href" => $href);
 		else

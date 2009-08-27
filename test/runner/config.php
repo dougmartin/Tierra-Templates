@@ -25,5 +25,12 @@
 			"onPreOutput" => "onPreOutputHook",
 			"output" => "outputHook",
 			"filterOptions" => "filterOptionsHook"
+		),
+		"userSettings" => array(
+			"decorators" => array(
+				"memcache" => array(
+					"timeout" => 5
+				)
+			)
 		)
 	);
