@@ -417,7 +417,7 @@
 		}		
 
 		// noEcho is used when emit generators from without an output template
-		public function emitGenerator($node, $noEcho=false) {
+		public function emitGenerator($node, $echoOutput=true) {
 			$code = array();
 
 			// the expression can be empty, eg {@ if foo ? bar @}
@@ -431,12 +431,12 @@
 			// if this generator has no output then output the head
 			if (($node->ifTrue === false) && ($node->ifFalse === false) && (count($node->conditionals) == 0)) {
 				if (!$expression)
-					$code[] =  $noEcho ? "true" : "echo true;";
+					$code[] =  $echoOutput ? "echo true;" : "true";
 				else if ($expression->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE)
 					$code[] =  $this->emitOutputTemplate($expression, true);
 				else {
 					$emitedExpression = $this->emitExpression($expression);
-					if ($noEcho)
+					if (!$echoOutput)
 						$code[] =  $emitedExpression;
 					else if ($this->isLiteralGeneratorValue($expression))
 						$code[] = "echo $emitedExpression;";
@@ -524,7 +524,7 @@
 							$code[] = $this->emitGenerator($item);
 						}
 						else {
-							$output = $this->emitGenerator($item, true);
+							$output = $this->emitGenerator($item, false);
 							$code[] = $echoOutput ? "\$this->__request->output({$output});" : $output;
 						}
 					}
