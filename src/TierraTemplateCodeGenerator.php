@@ -438,7 +438,7 @@
 					$emitedExpression = $this->emitExpression($expression);
 					if ($noEcho)
 						$code[] =  $emitedExpression;
-					else if ($expression->type == TierraTemplateASTNode::LITERAL_NODE)
+					else if ($this->isLiteralGeneratorValue($expression))
 						$code[] = "echo $emitedExpression;";
 					else
 						$code[] = "\$this->__request->output({$emitedExpression});";
@@ -469,6 +469,12 @@
 			}
 			
 			return implode(" ", $code);
+		}
+		
+		public function isLiteralGeneratorValue($node) {
+			if (($node->type == TierraTemplateASTNode::OPERATOR_NODE) && in_array($node->op, array(TierraTemplateTokenizer::LEFT_BRACKET_TOKEN, TierraTemplateTokenizer::DOT_TOKEN, TierraTemplateTokenizer::COLON_TOKEN)))
+				return $this->isLiteralGeneratorValue($node->leftNode);
+			return $node->type == TierraTemplateASTNode::LITERAL_NODE;
 		}
 		
 		public function emitGeneratorOutput($node) {

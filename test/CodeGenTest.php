@@ -276,7 +276,7 @@ HTML;
 
 		public function testExternalFilterCall() {
 			$src = "{@ 'test':foo::bar @}";
-			self::checkEmit($src, "<?php \$this->__request->output(\$this->__runtime->externalCall('bar', 'foo', '', '', 'foo::bar on line 1', array('test')));", "External call filter");
+			self::checkEmit($src, "<?php echo \$this->__runtime->externalCall('bar', 'foo', '', '', 'foo::bar on line 1', array('test'));", "External call filter");
 		}
 
 		public function testSimpleAttributeAssignment() {

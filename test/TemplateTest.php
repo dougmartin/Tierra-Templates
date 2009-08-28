@@ -143,7 +143,7 @@
 		}
 		
 		public function testBuiltinCalls() {
-			$this->checkOutput("{@ 'this is a test':link('http://google.com', {id: 'foo', class: 'bar'}):noescape @}", '<a id="foo" class="bar" href="http://google.com">this is a test</a>');
+			$this->checkOutput("{@ 'this is a test':link('http://google.com', {id: 'foo', class: 'bar'}) @}", '<a id="foo" class="bar" href="http://google.com">this is a test</a>');
 		}
 		
 		public function testDecoratorGuid() {

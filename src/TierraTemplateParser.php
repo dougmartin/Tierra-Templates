@@ -252,6 +252,7 @@
 							if (($op == TierraTemplateTokenizer::COLON_TOKEN) && ($rightNode->type == TierraTemplateASTNode::IDENTIFIER_NODE)) {
 								$rightNode->type = TierraTemplateASTNode::FUNCTION_CALL_NODE;
 								$rightNode->method = $rightNode->identifier;
+								$rightNode->isFilter = true;
 								unset($rightNode->identifier);
 								$rightNode->params = array();
 							}
@@ -332,11 +333,12 @@
 			return $node;
 		}
 		
-		private function functionCallNode($noParams=false) {
+		private function functionCallNode() {
 			
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::FUNCTION_CALL_NODE);
 			$line = $this->tokenizer->getLineNumber();
 			$node->method = $this->tokenizer->match(TierraTemplateTokenizer::FUNCTION_CALL_TOKEN);
+			$node->isFilter = false;
 			$node->params = array();
 			$node->debugInfo = "{$node->method} on line {$line}" . ($this->filename ? " in the {$this->filename} template" : ""); 
 			
@@ -344,10 +346,6 @@
 			if ($node->isExternal)
 				list($node->method, $node->filename, $node->virtualDir, $node->subDir) =  $this->parseExternal($node->method);
 			
-			// filters can optionally have no parameters when chained.  They look like identifiers to the tokenizer.
-			if ($noParams)
-				return node;
-				
 			$this->tokenizer->match(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
 			if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN))
 				$node->params[] = $this->expressionNode();
