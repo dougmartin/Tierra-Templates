@@ -20,7 +20,6 @@
 			if (!isset($options["request"]))
 				$options["request"] = new TierraTemplateRequest($options);
 				
-
 			$this->__options = $options;
 			
 			$templateFile = $this->getOption("templateFile");
@@ -160,14 +159,13 @@
 		}
 		
 		public function getOutput() {
-			if ($this->__cachedTemplatePath) {
-				ob_start();
-				include $this->__cachedTemplatePath;
-				$output = ob_get_contents();
-				ob_end_clean();
-				return $output;
-			}
-			return "";
+			if (!$this->__cachedTemplatePath)
+				return "";
+			ob_start();
+			include $this->__cachedTemplatePath;
+			$output = ob_get_contents();
+			ob_end_clean();
+			return $output;
 		}		
 		
 		public function includeTemplate($templateFile) {
