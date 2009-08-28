@@ -282,14 +282,20 @@
 			
 			switch ($node->type) {
 				case TierraTemplateASTNode::FUNCTION_CALL_NODE:
-					$params = $this->emitArray($node->params);
-					if (function_exists($node->method))
-						$code[] = "call_user_func_array('{$node->method}', {$params})";
-					else if ($node->isExternal)
-						$code[] = "\$this->__runtime->externalCall('{$node->method}', '{$node->filename}', '{$node->virtualDir}', '" . str_replace("\\", "/", $node->subDir) . "', '" . str_replace("\\", "\\\\", $node->debugInfo) . "', {$params})";
-					else
-						// addslashes() to escape the possible namespace slashes in the method
-						$code[] = "\$this->__runtime->call('" . addslashes($node->method) . "', '" . str_replace("\\", "\\\\", $node->debugInfo) . "', {$params})";
+					if (in_array(strtolower($node->method), array("escape", "noescape"))) {
+						$firstParam = count($node->params) > 0 ? $this->emitExpression($node->params[0]) : "";
+						$code[] = "\$this->__request->" . strtolower($node->method) . "({$firstParam})";
+					}
+					else {
+						$params = $this->emitArray($node->params);
+						if (function_exists($node->method))
+							$code[] = "call_user_func_array('{$node->method}', {$params})";
+						else if ($node->isExternal)
+							$code[] = "\$this->__runtime->externalCall('{$node->method}', '{$node->filename}', '{$node->virtualDir}', '" . str_replace("\\", "/", $node->subDir) . "', '" . str_replace("\\", "\\\\", $node->debugInfo) . "', {$params})";
+						else
+							// addslashes() to escape the possible namespace slashes in the method
+							$code[] = "\$this->__runtime->call('" . addslashes($node->method) . "', '" . str_replace("\\", "\\\\", $node->debugInfo) . "', {$params})";
+					}
 					break;		
 
 				case TierraTemplateASTNode::LITERAL_NODE:
@@ -428,8 +434,15 @@
 					$code[] =  $noEcho ? "true" : "echo true;";
 				else if ($expression->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE)
 					$code[] =  $this->emitOutputTemplate($expression, true);
-				else
-					$code[] =  $noEcho ? $this->emitExpression($expression) : "echo " . $this->emitExpression($expression) . ";";
+				else {
+					$emitedExpression = $this->emitExpression($expression);
+					if ($noEcho)
+						$code[] =  $emitedExpression;
+					else if ($expression->type == TierraTemplateASTNode::LITERAL_NODE)
+						$code[] = "echo $emitedExpression;";
+					else
+						$code[] = "\$this->__request->output({$emitedExpression});";
+				}
 			}
 			// if the generator explicitly has no output by using a trailing ? then just emit the expression
 			else if ($node->ifTrue && (count($node->ifTrue->elements) == 0) && (!$node->ifFalse || (count($node->ifFalse->elements) == 0)) && (count($node->conditionals) == 0)) {
@@ -454,8 +467,6 @@
 					$code[] = "else { " . $this->emitGenerator($node->ifFalse) . " }";
 				$code[] = "\$this->__runtime->endGenerator();";
 			}
-			
-			// TODO: add code generator decorator calls
 			
 			return implode(" ", $code);
 		}
@@ -487,37 +498,47 @@
 			$code = array();
 			
 			if (count($node->outputItems) > 0) {
-				$hasGenerator = false;
-				$output = array();
+				
+				// find out what we have in this template
+				$haveGenerator = false;
+				$haveConditionalGenerator = false;
+				foreach ($node->outputItems as $item) {
+					if ($item->type == TierraTemplateASTNode::GENERATOR_NODE) {
+						$haveGenerator = true;
+						if ($item->ifTrue || $item->ifFalse)
+							$haveConditionalGenerator = true;
+					}
+					if ($haveGenerator && $haveConditionalGenerator)
+						break;
+				}
+				
 				foreach ($node->outputItems as $item) {
 					if ($item->type == TierraTemplateASTNode::GENERATOR_NODE) {
 						if ($item->ifTrue || $item->ifFalse) {
-							// emit the output so far and then emit the generator
-							if (count($output) > 0) {
-								$code[] = "echo " . implode(" . ", $output) . ";";
-								$output = array();
-							}
 							$code[] = $this->emitGenerator($item);
-							$hasGenerator = true;
 						}
-						else
-							$output[] = $this->emitGenerator($item, true);
+						else {
+							$output = $this->emitGenerator($item, true);
+							$code[] = $echoOutput ? "\$this->__request->output({$output});" : $output;
+						}
 					}
-					else
-						$output[] = $this->emitExpression($item);
+					else {
+						$output = $this->emitExpression($item);
+						$code[] = $echoOutput || $haveGenerator ? "echo {$output};" : $output;
+					}
 				}
-				if (count($output) > 0)
-					$code[] = $echoOutput || $hasGenerator ? ("echo " . implode(" . ", $output) . ";") : implode(" . ", $output);
 					
-				// we wrap the output template in a function if we are not echoing the output and the template has at least one generator so we can return its value
-				if (!$echoOutput && $hasGenerator) {
+				// we wrap the output template in a function to create an expression if we are not echoing the output and there is a conditional generator
+				// since the non-wrapped code would be a statement and not an expression
+				if (!$echoOutput && $haveConditionalGenerator) {
 					$functionName = "otf_" . sha1(implode(" ", $code));
 					if (!isset($this->outputTemplateFunctions[$functionName]))
 						$this->outputTemplateFunctions[$functionName] = implode(" ", $code);
 					$code = array("{$functionName}(\$this)");
 				}
 					
-			}			
+			}		
+				
 			return implode(" ", $code);
 		}
 

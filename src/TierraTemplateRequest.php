@@ -8,6 +8,8 @@
 		private $__decorators;
 		private $__decoratorStack;
 		private $__guids;
+		public  $__escapeSettingStack;
+		
 		public $__scratchPad;
 		
 		public function __construct($settings=array()) {
@@ -32,7 +34,46 @@
 
 			// used by decorators as a namespace for temp variables
 			$this->__scratchPad = new stdClass;
+			
+			// set the base escape setting
+			$this->__escapeSettingStack = array();
+			$this->pushEscapeSetting($this->getSetting("autoEscapeOutput", true), false);
 		}
+		
+		public function rawOutput($text) {
+			echo $text;
+		}
+		
+		public function output($text) {
+			$escapeSetting = $this->getEscapeSetting();
+			echo $escapeSetting["escape"] ? htmlspecialchars($text) : $text;
+			if ($escapeSetting["autoPop"])
+				$this->popEscapeSetting();
+		}
+		
+		public function getEscapeSetting() {
+			return $this->__escapeSettingStack[count($this->__escapeSettingStack) - 1];
+		}
+		
+		public function pushEscapeSetting($escape, $autoPop) {
+			$this->__escapeSettingStack[] = array("escape" => $escape, "autoPop" => $autoPop);
+		}
+		
+		public function popEscapeSetting() {
+			// always keep the base escape setting
+			if (count($this->__escapeSettingStack) > 0)
+				array_pop($this->__escapeSettingStack);
+		}
+		
+		public function escape($text="") {
+			$this->pushEscapeSetting(true, true);
+			return $text;
+		}
+
+		public function noEscape($text="") {
+			$this->pushEscapeSetting(false, true);
+			return $text;
+		}		
 		
 		public function getGuid($vary="url") {
 			if (isset($this->__guids[$vary]))

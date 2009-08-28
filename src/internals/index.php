@@ -295,10 +295,25 @@
 		public static function Pluralize($var, $forOne, $forMany) {
 			return self::Total($var) == 1 ? $forOne : $forMany;
 		}
+		
 
 		//
 		// block decorators
 		//
+		
+		public function escapeDecorator($context) {
+			if ($context["isStart"])
+				return "if ({$context["guard"]}) \$this->__request->pushEscapeSetting(true, false);";
+			else if (!$context["isPage"])
+				return "if ({$context["guard"]}) \$this->__request->popEscapeSetting();";
+		}
+		
+		public function noEscapeDecorator($context) {
+			if ($context["isStart"])
+				return "if ({$context["guard"]}) \$this->__request->pushEscapeSetting(false, false);";
+			else if (!$context["isPage"])
+				return "if ({$context["guard"]}) \$this->__request->popEscapeSetting();";
+		}
 		
 		public function noCacheDecorator($context) {
 			if ($context["isStart"] && $context["isPage"])

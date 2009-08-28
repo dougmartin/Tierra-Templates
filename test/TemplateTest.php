@@ -77,7 +77,7 @@
 		public function testGeneratorConditional() {
 			$this->checkOutput("{@ 1 + 1 == 2 ? `yes` else `no` @}", "yes");
 		}
-		
+
 		public function testGeneratorArrayIndex() {
 			$this->checkOutput("{@ ['foo', 'bar', 'baz'][1] @}", "bar");
 		}
@@ -93,7 +93,7 @@
 		public function testAssign() {
 			$this->checkOutput("{@ foo = 'bar' @}", "bar");
 		}
-		
+
 		public function testAssignSimpleOutputTemplate() {
 			$this->checkOutput("{@ foo = `bar` @}", "bar");
 		}
@@ -143,12 +143,73 @@
 		}
 		
 		public function testBuiltinCalls() {
-			$this->checkOutput("{@ 'this is a test':link('http://google.com', {id: 'foo', class: 'bar'}) @}", '<a id="foo" class="bar" href="http://google.com">this is a test</a>');
+			$this->checkOutput("{@ 'this is a test':link('http://google.com', {id: 'foo', class: 'bar'}):noescape @}", '<a id="foo" class="bar" href="http://google.com">this is a test</a>');
 		}
 		
 		public function testDecoratorGuid() {
 			$this->checkOutput("[@ start foo do showguid() @] bar [@ end foo @]", "<p>guid for foo: 1f9e539887f123d934b77021a14ae3a9468f1f78</p> bar ");
 		}
 		
+		public function testEscapeOutputBlock() {
+			$this->checkOutput("{@ foo = '<test>'; `<test>{foo}` @}", "<test>&lt;test&gt;");
+			$this->checkOutput("{@ foo = `<test>` @}", "&lt;test&gt;");
+			$this->checkOutput("{@ `<test>` @}", "<test>");
+			
+			$this->checkOutput("{@ foo = '<test>'; `<test>{foo:noescape}` @}", "<test><test>");
+			$this->checkOutput("{@ foo = '<test>'; `<test>{foo:noescape}{foo}` @}", "<test><test>&lt;test&gt;");
+			$this->checkOutput("{@ foo = '<test>'; `<test>{foo:noescape}<test>{foo}` @}", "<test><test><test>&lt;test&gt;");
+			$this->checkOutput("{@ foo = '<test>'; `<test>{foo:noescape}<test>{foo}<test>` @}", "<test><test><test>&lt;test&gt;<test>");
+			$this->checkOutput("{@ foo = '<test>'; `<test>{foo:noescape}<test>{foo:escape}` @}", "<test><test><test>&lt;test&gt;");
+			$this->checkOutput("{@ foo = '<test>'; `<test>{foo:noescape}<test>{foo:noescape}` @}", "<test><test><test><test>");
+			$this->checkOutput("{@ foo = `<test>`:noescape @}", "<test>");
+		}
+		
+		public function testEscape() {
+			$this->checkOutput("{@ foo = '<test>'; foo @}", "&lt;test&gt;");
+			$this->checkOutput("{@ foo = '<test>' @}", "&lt;test&gt;");
+			$this->checkOutput("{@ '<test>' @}", "<test>");
+			$this->checkOutput("{@ foo = '<test>'; foo:escape @}", "&lt;test&gt;");
+			$this->checkOutput("{@ foo = '<test>'; escape(); foo @}", "&lt;test&gt;");
+		}
+		
+		public function testNoEscapeFilter() {
+			$this->checkOutput("{@ foo = '<test>'; foo:noescape @}", "<test>");
+			$this->checkOutput("{@ foo = '<test>'; noescape(); foo @}", "<test>");
+			$this->checkOutput("{@ foo = '<test>'; escape(); noescape(); foo @}", "<test>");
+		}
+		
+		public function testEscapeWithAutoEscapeOff() {
+			$this->options["request"]["autoEscapeOutput"] = false;
+			$this->checkOutput("{@ foo = '<test>'; foo @}", "<test>");
+			$this->checkOutput("{@ foo = '<test>'; foo:noescape @}", "<test>");
+			$this->checkOutput("{@ foo = '<test>'; foo:escape @}", "&lt;test&gt;");
+		}
+		
+		public function testEscapeBlocks() {
+			$this->checkOutput("[@ start test @]{@ foo = '<test>'; foo @}[@ end test @]", "&lt;test&gt;");
+			$this->options["request"]["autoEscapeOutput"] = false;
+			$this->checkOutput("[@ start test @]{@ foo = '<test>'; foo @}[@ end test @]", "<test>");
+			$this->checkOutput("[@ start test @]{@ foo = '<test>'; foo:escape @}[@ end test @]", "&lt;test&gt;");
+		}
+		
+		public function testEscapeBlockDecorators() {
+			$this->checkOutput("[@ start test do escape() @]{@ foo = '<test>'; foo @}[@ end test @]", "&lt;test&gt;");
+			$this->checkOutput("[@ start test do noescape() @]{@ foo = '<test>'; foo @}[@ end test @]", "<test>");
+			$this->checkOutput("[@ start test do noescape() @]{@ foo = '<test>'; foo:escape @}[@ end test @]", "&lt;test&gt;");
+		}
+		
+		public function testEscapePageDecorators() {
+			$this->checkOutput("[@ page do escape() @]{@ foo = '<test>'; foo @}", "&lt;test&gt;");
+			$this->checkOutput("[@ page do noescape() @]{@ foo = '<test>'; foo @}", "<test>");
+			$this->checkOutput("[@ page do noescape() @]{@ foo = '<test>'; foo @}[@ start test do escape() @]{@ foo @}[@ end test @]", "<test>&lt;test&gt;");
+			$this->checkOutput("[@ page do noescape() @]{@ foo = '<test>'; foo @}[@ start test do escape() @]{@ foo:noescape @}[@ end test @]", "<test><test>");
+		}
+		
+		public function testLoadTemplateObject() {
+			function getTestTemplate() {
+				return TierraTemplate::LoadDynamicTemplate("foo [@ echo bar @] baz", array("readFromCache" => false, "cacheDir" => "cache"));
+			}
+			$this->checkOutput("[@ extends getTestTemplate() @][@ start bar @]bam[@ end bar @]", "foo bam baz");
+		}
 	}
 	

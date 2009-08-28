@@ -17,8 +17,8 @@
 		public function __construct($options=array()) {
 			
 			// add the request object if not present to the options so it can be shared with parent templates
-			if (!isset($options["request"]))
-				$options["request"] = new TierraTemplateRequest($options);
+			if (!isset($options["requestObject"]))
+				$options["requestObject"] = new TierraTemplateRequest(isset($options["request"]) ? $options["request"] : array());
 				
 			$this->__options = $options;
 			
@@ -30,7 +30,7 @@
 				throw new TierraTemplateException("Missing baseTemplateDir option");
 			$baseTemplateDir = self::AddTrailingDirectorySeparator($baseTemplateDir);
 				
-			$this->__request = $this->getOption("request");
+			$this->__request = $this->getOption("requestObject");
 			$this->__runtime = new TierraTemplateRuntime($this->__request, $options);
 			$this->__templateFile = $templateFile;
 			$this->__baseTemplateDir = $baseTemplateDir;
@@ -86,10 +86,14 @@
 			list($options["templateFile"], $options["baseTemplateDir"]) = self::SaveDynamicTemplate($templateContents, $options);
 			self::RenderTemplate($options);
 		}
+
+		public static function LoadDynamicTemplate($templateContents, $options=array()) {
+			list($options["templateFile"], $options["baseTemplateDir"]) = self::SaveDynamicTemplate($templateContents, $options);
+			return self::LoadTemplate($options);
+		}
 		
 		public static function GetDynamicTemplateOutput($templateContents, $options=array()) {
-			list($options["templateFile"], $options["baseTemplateDir"]) = self::SaveDynamicTemplate($templateContents, $options);
-			$template = self::LoadTemplate($options);
+			$template = self::LoadDynamicTemplate($templateContents, $options);
 			return $template->getOutput();
 		}
 		
@@ -166,9 +170,27 @@
 			$output = ob_get_contents();
 			ob_end_clean();
 			return $output;
-		}		
+		}
+
+		public function setRequest($request) {
+			$this->__request = $request;
+		}
+		
+		public function getRequest() {
+			return $this->__request;
+		}
 		
 		public function includeTemplate($templateFile) {
+			
+			// allow passing of other template instances
+			if ($templateFile instanceof TierraTemplate) {
+				$request = $templateFile->getRequest(); 
+				$templateFile->setRequest($this->__request);
+				$templateFile->render();
+				$templateFile->setRequest($request);
+				return;
+			}
+			
 			if (($templateFile === false) || ($templateFile == ""))
 				throw new TierraTemplateException("No template name given in include");
 				

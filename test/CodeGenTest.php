@@ -204,29 +204,19 @@ HTML;
 			self::checkEmit($src, $code, "Block with nocache decorator");
 		}
 
-		public function testBlockWithWrapperDecorator() {
-			$src = "[@ start test do testWrapper('1') @] foo [@ end test @]";
-			self::checkEmit($src, "<?php if (!\$this->__request->echoBlock('test')) { if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(1) */'; ?> foo <?php if (\$this->__request->__endDecorator()) echo '/* end testwrapper(1) */'; }", "Block with test wrapper decorators");
-		}
-			
-		public function testBlockWithDoubleWrapperDecorator() {
-			$src = "[@ start test do testWrapper('1'), testWrapper('2') @] foo [@ end test @]";
-			self::checkEmit($src, "<?php if (!\$this->__request->echoBlock('test')) { if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(1) */'; if (\$this->__request->__startDecorator('append', 'testWrapper', 'test')) echo '/* start testwrapper(2) */'; ?> foo <?php if (\$this->__request->__endDecorator()) echo '/* end testwrapper(2) */'; if (\$this->__request->__endDecorator()) echo '/* end testwrapper(1) */'; }", "Block with two test wrapper decorators");
-		}
-		
 		public function testSimpleGenerator() {
 			$src = "{@ foo @}";
-			self::checkEmit($src, "<?php echo \$this->__runtime->identifier('foo');", "Simple generator");
+			self::checkEmit($src, "<?php \$this->__request->output(\$this->__runtime->identifier('foo'));", "Simple generator");
 		}
 
 		public function testMultiExpressionGenerator() {
 			$src = "{@ foo; bar @}";
-			self::checkEmit($src, "<?php \$this->__runtime->identifier('foo'); echo \$this->__runtime->identifier('bar');", "Simple generator with multiple expressions");
+			self::checkEmit($src, "<?php \$this->__runtime->identifier('foo'); \$this->__request->output(\$this->__runtime->identifier('bar'));", "Simple generator with multiple expressions");
 		}
 		
 		public function testSimpleGeneratorWithOutput() {
 			$src = "{@ foo ? bar @}";
-			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo \$this->__runtime->identifier('bar'); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Simple generator with output");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { \$this->__request->output(\$this->__runtime->identifier('bar')); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Simple generator with output");
 		}
 		
 		public function testGeneratorWithOneOutputTemplate() {
@@ -236,12 +226,12 @@ HTML;
 		
 		public function testGeneratorWithOneOutputTemplateWithSimpleGenerator() {
 			$src = "{@ foo ? `bar {baz} boom` @}";
-			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar ' . \$this->__runtime->identifier('baz') . ' boom'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template with simple generator");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar '; \$this->__request->output(\$this->__runtime->identifier('baz')); echo ' boom'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template with simple generator");
 		}			
 
 		public function testGeneratorWithOneOutputTemplateWithGenerator() {
 			$src = "{@ foo ? `bar {baz ? bam} boom` @}";
-			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar '; if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('baz'))) { do { echo \$this->__runtime->identifier('bam'); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator(); echo ' boom'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template with generator");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar '; if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('baz'))) { do { \$this->__request->output(\$this->__runtime->identifier('bam')); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator(); echo ' boom'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template with generator");
 		}		
 		
 		public function testGeneratorWithTwoOutputTemplates() {
@@ -251,7 +241,7 @@ HTML;
 		
 		public function testGeneratorWithTemplateAssignment() {
 			$src = "{@ foo = `bar {baz ? bam} boom` @}";
-			self::checkEmit($src, "<?php if (!function_exists('otf_25babf696a1f4e5644f774f8145ebb54f75d5671')) { function otf_25babf696a1f4e5644f774f8145ebb54f75d5671(\$__template) { ob_start(); echo 'bar '; if (\$__template->__runtime->startGenerator(\$__template->__runtime->identifier('baz'))) { do { echo \$__template->__runtime->identifier('bam'); } while (\$__template->__runtime->loop()); } \$__template->__runtime->endGenerator(); echo ' boom'; \$__output = ob_get_contents(); ob_end_clean(); return \$__output;} }; echo \$this->__request->setVar('foo', otf_25babf696a1f4e5644f774f8145ebb54f75d5671(\$this));", "Generator with template assignment");
+			self::checkEmit($src, "<?php if (!function_exists('otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e')) { function otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e(\$__template) { ob_start(); echo 'bar '; if (\$__template->__runtime->startGenerator(\$__template->__runtime->identifier('baz'))) { do { \$__template->__request->output(\$__template->__runtime->identifier('bam')); } while (\$__template->__runtime->loop()); } \$__template->__runtime->endGenerator(); echo ' boom'; \$__output = ob_get_contents(); ob_end_clean(); return \$__output;} }; \$this->__request->output(\$this->__request->setVar('foo', otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e(\$this)));", "Generator with template assignment");
 		}
 		
 		public function testGeneratorWithNoOutput() {
@@ -266,12 +256,12 @@ HTML;
 		
 		public function testMultipleConditionals() {
 			$src = "{@ foo if bar == 1 ? baz else if bam == 2 ? boom else foom @}";
-			self::checkEmit($src, "<?php \$this->__runtime->startGenerator(\$this->__runtime->identifier('foo')); if (\$this->__runtime->identifier('bar') == 1) { do { echo \$this->__runtime->identifier('baz'); } while (\$this->__runtime->loop()); } else if (\$this->__runtime->identifier('bam') == 2) { do { echo \$this->__runtime->identifier('boom'); } while (\$this->__runtime->loop()); } else { echo \$this->__runtime->identifier('foom'); } \$this->__runtime->endGenerator();", "Generator with multiple conditionals");
+			self::checkEmit($src, "<?php \$this->__runtime->startGenerator(\$this->__runtime->identifier('foo')); if (\$this->__runtime->identifier('bar') == 1) { do { \$this->__request->output(\$this->__runtime->identifier('baz')); } while (\$this->__runtime->loop()); } else if (\$this->__runtime->identifier('bam') == 2) { do { \$this->__request->output(\$this->__runtime->identifier('boom')); } while (\$this->__runtime->loop()); } else { \$this->__request->output(\$this->__runtime->identifier('foom')); } \$this->__runtime->endGenerator();", "Generator with multiple conditionals");
 		}
 		
 		public function testEmptyHeadGenerator() {
 			$src = "{@ if foo ? bar @}";
-			self::checkEmit($src, "<?php \$this->__runtime->startGenerator(true); if (\$this->__runtime->identifier('foo')) { do { echo \$this->__runtime->identifier('bar'); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with empty head");
+			self::checkEmit($src, "<?php \$this->__runtime->startGenerator(true); if (\$this->__runtime->identifier('foo')) { do { \$this->__request->output(\$this->__runtime->identifier('bar')); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with empty head");
 		}
 		
 		public function testOutputTemplateWithEscapedGenerator() {
@@ -286,17 +276,17 @@ HTML;
 
 		public function testExternalFilterCall() {
 			$src = "{@ 'test':foo::bar @}";
-			self::checkEmit($src, "<?php echo \$this->__runtime->externalCall('bar', 'foo', '', '', 'foo::bar on line 1', array('test'));", "External call filter");
+			self::checkEmit($src, "<?php \$this->__request->output(\$this->__runtime->externalCall('bar', 'foo', '', '', 'foo::bar on line 1', array('test')));", "External call filter");
 		}
 
 		public function testSimpleAttributeAssignment() {
 			$src = "{@ foo[baz + 1 ].bar = baz @}";
-			self::checkEmit($src, "<?php echo \$this->__request->setVar('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar'));", "Simple attribute assignment");
+			self::checkEmit($src, "<?php \$this->__request->output(\$this->__request->setVar('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar')));", "Simple attribute assignment");
 		}
 		
 		public function testAttributeAssignmentAndEcho() {
 			$src = "{@ baz = 3; foo[baz + 1 ].bar = baz; foo[baz + 1 ].bar @}";
-			self::checkEmit($src, "<?php \$this->__request->setVar('baz', 3); \$this->__request->setVar('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar')); echo \$this->__runtime->attr(\$this->__runtime->attr(\$this->__runtime->identifier('foo'), \$this->__runtime->identifier('baz') + 1), 'bar');", "Simple attribute assignment and echo");
+			self::checkEmit($src, "<?php \$this->__request->setVar('baz', 3); \$this->__request->setVar('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar')); \$this->__request->output(\$this->__runtime->attr(\$this->__runtime->attr(\$this->__runtime->identifier('foo'), \$this->__runtime->identifier('baz') + 1), 'bar'));", "Simple attribute assignment and echo");
 		}
 		
 		public function testStatementTag() {
@@ -318,9 +308,18 @@ HTML;
 		public function testEchoBlockWithConditional() {
 			self::checkEmit("[@ echo foo if bar @]", "<?php if (\$this->__runtime->identifier('bar')) { \$this->__request->echoBlock('foo'); }", "Echo block with conditional");
 		}
-		
+				
 		public function testEchoBlockWithConditionalAndDecorator() {
 			self::checkEmit("[@ echo foo if bar do testwrapper(1) @]", "<?php if (\$this->__runtime->identifier('bar')) { if (\$this->__request->__startDecorator('append', 'testwrapper', 'foo')) echo '/* start testwrapper(1) */'; \$this->__request->echoBlock('foo'); if (\$this->__request->__endDecorator()) echo '/* end testwrapper(1) */'; }", "Echo block with conditional and decorator");  
 		}
+		
+		public function testEscape() {
+			self::checkEmit("{@ foo = '<test>'; foo @}", "<?php \$this->__request->setVar('foo', '<test>'); \$this->__request->output(\$this->__runtime->identifier('foo'));", "Test escape");
+		}
+		
+		public function testNoEscapeFilter() {
+			self::checkEmit("{@ foo = '<test>'; foo:noescape @}", "<?php \$this->__request->setVar('foo', '<test>'); \$this->__request->output(\$this->__request->noescape(\$this->__runtime->identifier('foo')));", "Test no scape filter");
+		}		
+		
 	}
 	
