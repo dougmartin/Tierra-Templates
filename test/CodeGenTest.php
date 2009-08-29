@@ -324,4 +324,8 @@ HTML;
 		public function testCallWithRequest() {
 			self::checkEmit("{@ foo(request) @}", "<?php \$this->__request->output(\$this->__runtime->call('foo', 'foo on line 1', array(\$this->__request)));", "Call with request");
 		}
+		
+		public function testAssignRequestAttr() {
+			self::checkEmit("{@ request.foo = 1; foo @}", "<?php \$this->__request->setVar('foo', 1); \$this->__request->output(\$this->__runtime->identifier('foo'));", "Assign request attribute");
+		}	
 	}

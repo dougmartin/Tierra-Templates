@@ -282,8 +282,8 @@
 								if ($leftMostNode->type == TierraTemplateASTNode::IDENTIFIER_NODE) {
 									if ($leftMostNode->isExternal)
 										$this->tokenizer->matchError("External variables cannot be assigned values");
-									if (strtolower($leftMostNode->identifier) == "request")
-										$this->tokenizer->matchError("The request variable is special and cannot be assigned values");
+									if ((strtolower($leftMostNode->identifier) == "request") && ($leftMostNode == $leftNode))
+										$this->tokenizer->matchError("The request variable is special and cannot be reassigned");
 								}
 								else
 									$this->tokenizer->matchError("The left side of an assignment must be a variable");

@@ -328,6 +328,8 @@
 						case TierraTemplateTokenizer::EQUAL_TOKEN:
 							$attrs = array();
 							$identifier = $this->getIdentifier($node->leftNode, $attrs);
+							if (strtolower($identifier) == "'request'") 
+								$identifier = array_shift($attrs);
 							$code[] = "\$this->__request->setVar({$identifier}, " . $this->emitExpression($node->rightNode) . (count($attrs) > 0 ? ", array(" . implode(", ", $attrs) . ")" : "") . ")";
 							break;
 							
@@ -508,7 +510,7 @@
 			
 			if (count($node->outputItems) > 0) {
 				
-				// find out what we have in this template
+				// find out what we have in this template - if we have text before a generator then we need to output it later
 				$haveGenerator = false;
 				$haveConditionalGenerator = false;
 				foreach ($node->outputItems as $item) {

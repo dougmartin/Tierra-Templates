@@ -225,9 +225,17 @@
 		}
 		
 		public function testAssignRequestAttr() {
-			$this->setExpectedException("TierraTemplateException");
-			$this->checkOutput("{@ request.foo = 1 @}", "");
+			$this->checkOutput("{@ request.foo = 1; foo @}", "1");
 		}		
+
+		public function testAssignRequestAttr2() {
+			$this->checkOutput("{@ request.foo.bar = 'baz'; foo.bar @}", "baz");
+		}
+
+		public function testAssignRequestAttr3() {
+			$this->checkOutput("{@ request.foo.bar = 'baz'; request.foo.bar @}", "baz");
+		}		
+		
 
 	}
 	
