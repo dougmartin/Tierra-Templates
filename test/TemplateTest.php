@@ -211,5 +211,23 @@
 			}
 			$this->checkOutput("[@ extends getTestTemplate() @][@ start bar @]bam[@ end bar @]", "foo bam baz");
 		}
+		
+		public function testCallWithRequest() {
+			function testcall($request, $name, $value) {
+				$request->setVar($name, $value);
+			}
+			$this->checkOutput("{@ bar = 'bam'; testcall(request, 'foo', bar); foo @}", "bam");
+		}
+		
+		public function testAssignRequest() {
+			$this->setExpectedException("TierraTemplateException");
+			$this->checkOutput("{@ request = 1 @}", "");
+		}
+		
+		public function testAssignRequestAttr() {
+			$this->setExpectedException("TierraTemplateException");
+			$this->checkOutput("{@ request.foo = 1 @}", "");
+		}		
+
 	}
 	

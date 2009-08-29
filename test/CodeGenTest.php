@@ -319,7 +319,9 @@ HTML;
 		
 		public function testNoEscapeFilter() {
 			self::checkEmit("{@ foo = '<test>'; foo:noescape @}", "<?php \$this->__request->setVar('foo', '<test>'); \$this->__request->output(\$this->__request->noescape(\$this->__runtime->identifier('foo')));", "Test no scape filter");
-		}		
-		
+		}
+
+		public function testCallWithRequest() {
+			self::checkEmit("{@ foo(request) @}", "<?php \$this->__request->output(\$this->__runtime->call('foo', 'foo on line 1', array(\$this->__request)));", "Call with request");
+		}
 	}
-	

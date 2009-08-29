@@ -306,8 +306,11 @@
 					break;
 					
 				case TierraTemplateASTNode::IDENTIFIER_NODE:
-					if (in_array(strtolower($node->identifier), array("true", "false")))
+					$lowerIdentifier = strtolower($node->identifier);
+					if (in_array($lowerIdentifier, array("true", "false")))
 						$code[] = $node->identifier;
+					else if ($lowerIdentifier == "request")
+						$code[] = "\$this->__request";
 					else if ($node->isExternal)
 						$code[] = "\$this->__runtime->externalIdentifier('{$node->identifier}', '{$node->filename}', '{$node->virtualDir}', '" . str_replace("\\", "/", $node->subDir) . "', '" . str_replace("\\", "\\\\", $node->debugInfo) . "')";
 					else if ($node->identifier[0] == "$") 
