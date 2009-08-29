@@ -7,9 +7,11 @@
 		private $loopValue;
 		private $loopMod;
 		private $loopIndices;
+		private $parentFrame;
 		
-		public function __construct($expression) {
+		public function __construct($expression, $parentFrame=false) {
 			$this->expression = $expression;
+			$this->parentFrame = $parentFrame;
 			$this->loopIndex = 0;
 			$this->loopMod = 1;
 			if (is_array($expression)) {
@@ -98,7 +100,10 @@
 					break;
 					
 				default:
-					$value = false;
+					if (($index[0] == "$") && $this->parentFrame)
+						$value = $this->parentFrame->specialIdentifier(substr($index, 1));
+					else
+						$value = false;
 			}
 			return $value;
 		}

@@ -152,7 +152,7 @@
 				self::OR_TOKEN => '/(' . self::OR_TOKEN . ')/',
 				self::AND_TOKEN => '/(' . self::AND_TOKEN . ')/',			
 				self::FUNCTION_CALL_TOKEN => '/([A-Za-z_]([A-Za-z_0-9\\\\]*(::)*[A-Za-z_0-9\\\\]*)?)\(/',
-				self::IDENTIFIER_TOKEN => '/([$A-Za-z_]([A-Za-z_0-9\\\\]*(::)*[A-Za-z_0-9\\\\]*)?)/',
+				self::IDENTIFIER_TOKEN => '/([$A-Za-z_]([$A-Za-z_0-9\\\\]*(::)*[A-Za-z_0-9\\\\]*)?)/',
 				self::FLOAT_TOKEN => '/((\d+\.\d+))/',
 				self::INTEGER_TOKEN => '/(\d+)/',
 			);
