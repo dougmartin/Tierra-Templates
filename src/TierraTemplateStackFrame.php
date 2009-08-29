@@ -47,6 +47,10 @@
 			return $this->loopValue;
 		}
 		
+		public function currentIndex() {
+			return $this->loopIndex;
+		}
+		
 		public function specialIdentifier($index) {
 			switch ($index) {
 				case "":
@@ -57,8 +61,16 @@
 					$value = $this->loopIndex;
 					break;
 					
+				case "end0":
+					$value = $this->loopEndIndex - $this->loopIndex - 1; 
+					break;
+					
 				case "1":
 					$value = $this->loopIndex + 1;
+					break;
+					
+				case "end1":
+					$value = $this->loopEndIndex - $this->loopIndex;
 					break;
 					
 				case "key":
@@ -90,4 +102,5 @@
 			}
 			return $value;
 		}
+		
 	}

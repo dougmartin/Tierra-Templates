@@ -45,6 +45,8 @@
 			$this->assertEquals($frame->specialIdentifier(""), "foo");
 			$this->assertEquals($frame->specialIdentifier("0"), 0);
 			$this->assertEquals($frame->specialIdentifier("1"), 1);
+			$this->assertEquals($frame->specialIdentifier("end0"), 2);
+			$this->assertEquals($frame->specialIdentifier("end1"), 3);
 			$this->assertEquals($frame->specialIdentifier("key"), 0);
 			$this->assertTrue($frame->specialIdentifier("first"));
 			$this->assertFalse($frame->specialIdentifier("last"));
@@ -56,6 +58,8 @@
 			$this->assertEquals($frame->specialIdentifier(""), "bar");
 			$this->assertEquals($frame->specialIdentifier("0"), 1);
 			$this->assertEquals($frame->specialIdentifier("1"), 2);
+			$this->assertEquals($frame->specialIdentifier("end0"), 1);
+			$this->assertEquals($frame->specialIdentifier("end1"), 2);
 			$this->assertEquals($frame->specialIdentifier("key"), 1);
 			$this->assertFalse($frame->specialIdentifier("first"));
 			$this->assertFalse($frame->specialIdentifier("last"));
@@ -67,6 +71,8 @@
 			$this->assertEquals($frame->specialIdentifier(""), "baz");
 			$this->assertEquals($frame->specialIdentifier("0"), 2);
 			$this->assertEquals($frame->specialIdentifier("1"), 3);
+			$this->assertEquals($frame->specialIdentifier("end0"), 0);
+			$this->assertEquals($frame->specialIdentifier("end1"), 1);
 			$this->assertEquals($frame->specialIdentifier("key"), 2);
 			$this->assertFalse($frame->specialIdentifier("first"));
 			$this->assertTrue($frame->specialIdentifier("last"));

@@ -217,4 +217,10 @@
 			return $this->currentFrame->loop();
 		}
 		
+		public function cycle($values) {
+			if (count($values) == 0)
+				return false;
+			return $values[$this->currentFrame->currentIndex() % count($values)];
+		}
+		
 	}

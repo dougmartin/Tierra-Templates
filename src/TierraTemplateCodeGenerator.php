@@ -282,13 +282,16 @@
 			
 			switch ($node->type) {
 				case TierraTemplateASTNode::FUNCTION_CALL_NODE:
-					if (in_array(strtolower($node->method), array("escape", "noescape"))) {
+					$lowerMethod = strtolower($node->method);
+					if (in_array($lowerMethod, array("escape", "noescape"))) {
 						$firstParam = count($node->params) > 0 ? $this->emitExpression($node->params[0]) : "";
 						$code[] = "\$this->__request->" . strtolower($node->method) . "({$firstParam})";
 					}
 					else {
 						$params = $this->emitArray($node->params);
-						if (function_exists($node->method))
+						if ($lowerMethod == "cycle") 
+							$code[] = "\$this->__runtime->cycle({$params})";
+						else if (function_exists($node->method))
 							$code[] = "call_user_func_array('{$node->method}', {$params})";
 						else if ($node->isExternal)
 							$code[] = "\$this->__runtime->externalCall('{$node->method}', '{$node->filename}', '{$node->virtualDir}', '" . str_replace("\\", "/", $node->subDir) . "', '" . str_replace("\\", "\\\\", $node->debugInfo) . "', {$params})";

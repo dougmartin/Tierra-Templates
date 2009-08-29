@@ -234,7 +234,11 @@
 
 		public function testAssignRequestAttr3() {
 			$this->checkOutput("{@ request.foo.bar = 'baz'; request.foo.bar @}", "baz");
-		}		
+		}	
+
+		public function testCycle() {
+			$this->checkOutput("{@ range(1,5) ? cycle('foo','bar','baz') @}", "foobarbazfoobar");
+		}
 		
 
 	}
