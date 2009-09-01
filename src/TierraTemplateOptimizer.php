@@ -1,6 +1,6 @@
 <?php
 
-	require_once dirname(__FILE__) . "/../src/TierraTemplateAST.php";
+	require_once dirname(__FILE__) . "/TierraTemplateAST.php";
 	
 	class TierraTemplateOptimizer {
 		

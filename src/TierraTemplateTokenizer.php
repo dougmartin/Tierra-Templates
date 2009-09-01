@@ -1,6 +1,6 @@
 <?php
 
-	require_once dirname(__FILE__) . "/../src/TierraTemplateException.php";
+	require_once dirname(__FILE__) . "/TierraTemplateException.php";
 	
 	class TierraTemplateTokenizer {
 		

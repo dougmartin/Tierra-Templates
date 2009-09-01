@@ -1,8 +1,8 @@
 <?php
 
-	require_once dirname(__FILE__) . "/../src/TierraTemplateAST.php";
-	require_once dirname(__FILE__) . "/../src/TierraTemplateException.php";
-	require_once dirname(__FILE__) . "/../src/TierraTemplateRuntime.php";
+	require_once dirname(__FILE__) . "/TierraTemplateAST.php";
+	require_once dirname(__FILE__) . "/TierraTemplateException.php";
+	require_once dirname(__FILE__) . "/TierraTemplateRuntime.php";
 	
 	class TierraTemplateCodeGenerator {
 		
