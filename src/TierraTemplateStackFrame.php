@@ -59,6 +59,20 @@
 					$value = $this->loopValue;
 					break;
 					
+				case "previous":
+					if (is_array($this->expression))
+						$value = isset($this->loopIndices[$this->loopIndex - 1]) ? $this->expression[$this->loopIndices[$this->loopIndex - 1]] : false;
+					else
+						$value = false;
+					break;
+					
+				case "next":
+					if (is_array($this->expression))
+						$value = isset($this->loopIndices[$this->loopIndex + 1]) ? $this->expression[$this->loopIndices[$this->loopIndex + 1]] : false;
+					else
+						$value = false;
+					break;
+					
 				case "0":
 					$value = $this->loopIndex;
 					break;

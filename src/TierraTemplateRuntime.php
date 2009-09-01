@@ -214,7 +214,11 @@
 		}
 		
 		public function loop() {
-			return $this->currentFrame->loop();
+			return $this->currentFrame ? $this->currentFrame->loop() : false;
+		}
+		
+		public function currentValue() {
+			return $this->currentFrame ? $this->currentFrame->currentValue() : false;
 		}
 		
 		public function cycle($values) {

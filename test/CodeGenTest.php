@@ -261,7 +261,7 @@ HTML;
 		
 		public function testEmptyHeadGenerator() {
 			$src = "{@ if foo ? bar @}";
-			self::checkEmit($src, "<?php \$this->__runtime->startGenerator(true); if (\$this->__runtime->identifier('foo')) { do { \$this->__request->output(\$this->__runtime->identifier('bar')); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with empty head");
+			self::checkEmit($src, "<?php if (\$this->__runtime->identifier('foo')) { \$this->__request->output(\$this->__runtime->identifier('bar')); }", "Generator with empty head");
 		}
 		
 		public function testOutputTemplateWithEscapedGenerator() {

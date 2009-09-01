@@ -240,6 +240,9 @@
 			$this->checkOutput("{@ range(1,5) ? cycle('foo','bar','baz') @}", "foobarbazfoobar");
 		}
 		
+		public function testChanged() {
+			$this->checkOutput("{@ foo = 'bar'; `baz{foo}` if true @}", "bazbar");
+		}
 
 	}
 	
