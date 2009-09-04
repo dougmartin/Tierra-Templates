@@ -1,4 +1,18 @@
 <?php
+	/*
+	 * Tierra Templates - %VERSION%
+	 * 
+	 * http://tierratemplates.com/
+	 *
+	 * Copyright (c) 2009 Tierra Innovation (http://tierra-innovation.com)
+	 * 
+ 	 * This project is available for use in all personal or commercial projects under both MIT and GPL2 licenses. 
+ 	 * This means that you can choose the license that best suits your project, and use it accordingly.
+	 * 
+	 * MIT License: http://www.tierra-innovation.com/license/MIT-LICENSE.txt
+	 * GPL2 License: http://www.tierra-innovation.com/license/GPL-LICENSE.txt
+	 * 
+	 */
 
 	require_once 'PHPUnit/Framework.php';
 	require_once dirname(__FILE__) . "/../src/TierraTemplate.php";
@@ -66,23 +80,23 @@
 			$this->checkOutput(" ", " ");
 		}
 		
-		public function testGenerator() {
+		public function testConditerator() {
 			$this->checkOutput("{@ 'foo' @}", "foo");
 		}
 		
-		public function testGeneratorAddition() {
+		public function testConditeratorAddition() {
 			$this->checkOutput("{@ 1 + 1 @}", "2");
 		}
 		
-		public function testGeneratorConditional() {
+		public function testConditeratorConditional() {
 			$this->checkOutput("{@ 1 + 1 == 2 ? `yes` else `no` @}", "yes");
 		}
 
-		public function testGeneratorArrayIndex() {
+		public function testConditeratorArrayIndex() {
 			$this->checkOutput("{@ ['foo', 'bar', 'baz'][1] @}", "bar");
 		}
 		
-		public function testGeneratorArray() {
+		public function testConditeratorArray() {
 			$this->checkOutput("{@ ['foo', 'bar', 'baz'] ? $ @}", "foobarbaz");
 		}
 		
@@ -106,7 +120,7 @@
 			$this->checkOutput("{@ bam = 2; 'foo' if 1 > 3 ? 'baz' else if bam == 2 ? `boom` else $ @}", "boom");
 		}
 		
-		public function testEmptyHeadGenerator() {
+		public function testEmptyHeadConditerator() {
 			$this->checkOutput("{@ if 1 > 2 ? 'bar' else 'baz' @}", "baz");
 		}
 

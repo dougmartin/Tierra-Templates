@@ -1,4 +1,18 @@
 <?php
+	/*
+	 * Tierra Templates - %VERSION%
+	 * 
+	 * http://tierratemplates.com/
+	 *
+	 * Copyright (c) 2009 Tierra Innovation (http://tierra-innovation.com)
+	 * 
+ 	 * This project is available for use in all personal or commercial projects under both MIT and GPL2 licenses. 
+ 	 * This means that you can choose the license that best suits your project, and use it accordingly.
+	 * 
+	 * MIT License: http://www.tierra-innovation.com/license/MIT-LICENSE.txt
+	 * GPL2 License: http://www.tierra-innovation.com/license/GPL-LICENSE.txt
+	 * 
+	 */
 
 	require_once dirname(__FILE__) . "/TierraTemplateException.php";
 	
@@ -392,7 +406,7 @@
 					case self::HTML_MODE:
 						$this->startSelection();
 												
-						// get everything up to the next comment, block, generator, php or code start token
+						// get everything up to the next comment, block, conditerator, php or code start token
 						$curChar = $this->curChar(); 
 						$nextChar = $this->nextChar();
 						while (!$this->eof && !((($curChar == '[') || ($curChar == '{') || ($curChar == '<')) && (($nextChar == '#') || ($nextChar == '@')))) {
@@ -465,7 +479,7 @@
 									$this->popMode();
 								break;
 								
-							// normal output templates can use {...} or {@...@} to delimit generators
+							// normal output templates can use {...} or {@...@} to delimit conditerators
 							// strict output templates can only use {@...@}
 							case self::RIGHT_BRACE_TOKEN:
 								if (($mode == self::GENERATOR_MODE) && ($this->getPreviousMode() == self::OUTPUT_TEMPLATE_MODE))
@@ -501,7 +515,7 @@
 						break;
 
 					// the difference in the two modes is the delimiters `...` for normal and ~...~ for strict
-					// and the generator delimiters {...} and {@...@} for normal but just {@...@} for strict
+					// and the conditerator delimiters {...} and {@...@} for normal but just {@...@} for strict
 					// strict is used when including javascript with braces in a output template so you don't have to escape all the {} characters
 					case self::OUTPUT_TEMPLATE_MODE:
 						

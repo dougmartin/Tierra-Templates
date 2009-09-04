@@ -1,4 +1,18 @@
 <?php
+	/*
+	 * Tierra Templates - %VERSION%
+	 * 
+	 * http://tierratemplates.com/
+	 *
+	 * Copyright (c) 2009 Tierra Innovation (http://tierra-innovation.com)
+	 * 
+ 	 * This project is available for use in all personal or commercial projects under both MIT and GPL2 licenses. 
+ 	 * This means that you can choose the license that best suits your project, and use it accordingly.
+	 * 
+	 * MIT License: http://www.tierra-innovation.com/license/MIT-LICENSE.txt
+	 * GPL2 License: http://www.tierra-innovation.com/license/GPL-LICENSE.txt
+	 * 
+	 */
 
 	require_once 'PHPUnit/Framework.php';
 	require_once dirname(__FILE__) . "/../src/TierraTemplateTokenizer.php";
@@ -114,11 +128,11 @@ HTML;
 			self::checkLexemes($src, array("", "[#", $comment, "#]", ""), "Comment block only lexeme check");
 		}
 
-		public function testCommentGeneratorOnly() {
+		public function testCommentConditeratorOnly() {
 			$comment = "@ this is a comment ";
 			$src = "{#{$comment}@}";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::COMMENT_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Commented generator only is HTML + COMMENT + EOF");
-			self::checkLexemes($src, array("", "{#", $comment, "@}", ""), "Commented generator only lexeme check");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::COMMENT_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Commented conditerator only is HTML + COMMENT + EOF");
+			self::checkLexemes($src, array("", "{#", $comment, "@}", ""), "Commented conditerator only lexeme check");
 		}
 
 		public function testEmptyCommentBlock() {
@@ -128,11 +142,11 @@ HTML;
 			self::checkLexemes($src, array("", "[#", "#]", ""), "Empty comment block lexeme check");
 		}
 		
-		public function testEmptyCommentGenerator() {
+		public function testEmptyCommentConditerator() {
 			$comment = "";
 			$src = "{#{$comment}@}";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Empty commented generator is HTML + COMMENT + EOF");
-			self::checkLexemes($src, array("", "{#", "@}", ""), "Empty commented generator lexeme check");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Empty commented conditerator is HTML + COMMENT + EOF");
+			self::checkLexemes($src, array("", "{#", "@}", ""), "Empty commented conditerator lexeme check");
 		}		
 		
 		public function testUnterminatedCommentBlock() {
@@ -142,11 +156,11 @@ HTML;
 			self::checkLexemes($src, array("", "[#", $comment, ""), "Unterminated comment block lexeme check");
 		}
 
-		public function testUnterminatedCommentGenerator() {
+		public function testUnterminatedCommentConditerator() {
 			$comment = " this is a comment ";
 			$src = "{#{$comment}";
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Unterminated commented generator is HTML + COMMENT + EOF");
-			self::checkLexemes($src, array("", "{#", $comment, ""), "Unterminated commented generator lexeme check");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::COMMENT_START_TOKEN, TierraTemplateTokenizer::COMMENT_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Unterminated commented conditerator is HTML + COMMENT + EOF");
+			self::checkLexemes($src, array("", "{#", $comment, ""), "Unterminated commented conditerator lexeme check");
 		}		
 
 		public function testCommentBlockWithHTML() {
@@ -278,9 +292,9 @@ HTML;
 			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "`", "foo", "{", "bar", "}", "`", "@]", ""), "Output template lexeme check");
 		}
 		
-		public function testBlockWithOutputTemplateWithStartGenerators() {
+		public function testBlockWithOutputTemplateWithStartConditerators() {
 			$src = "[@ include foo if `foo{@ bar @}` @]";	
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::BACKTICK_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::GENERATOR_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::GENERATOR_END_TOKEN, TierraTemplateTokenizer::BACKTICK_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Output block");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::BACKTICK_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::Conditerator_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::Conditerator_END_TOKEN, TierraTemplateTokenizer::BACKTICK_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Output block");
 			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "`", "foo", "{@", "bar", "@}", "`", "@]", ""), "Output template lexeme check");
 		}
 		
@@ -290,9 +304,9 @@ HTML;
 			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "~", "foo{bar}", "~", "@]", ""), "Strict output block lexeme check");
 		}
 					
-		public function testBlockWithStrictOutputTemplateWithStartGenerators() {
+		public function testBlockWithStrictOutputTemplateWithStartConditerators() {
 			$src = "[@ include foo if ~foo{@ bar @}~ @]";	
-			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::TILDE_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::GENERATOR_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::GENERATOR_END_TOKEN, TierraTemplateTokenizer::TILDE_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Output block");
+			self::checkMatches($src, array(TierraTemplateTokenizer::HTML_TOKEN, TierraTemplateTokenizer::BLOCK_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::TILDE_TOKEN, TierraTemplateTokenizer::STRING_TOKEN, TierraTemplateTokenizer::Conditerator_START_TOKEN, TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::Conditerator_END_TOKEN, TierraTemplateTokenizer::TILDE_TOKEN, TierraTemplateTokenizer::BLOCK_END_TOKEN, TierraTemplateTokenizer::EOF_TOKEN), "Output block");
 			self::checkLexemes($src, array("", "[@", "include", "foo", "if", "~", "foo", "{@", "bar", "@}", "~", "@]", ""), "Output template lexeme check");
 		}
 		

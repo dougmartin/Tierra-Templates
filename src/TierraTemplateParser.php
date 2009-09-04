@@ -1,4 +1,18 @@
 <?php
+	/*
+	 * Tierra Templates - %VERSION%
+	 * 
+	 * http://tierratemplates.com/
+	 *
+	 * Copyright (c) 2009 Tierra Innovation (http://tierra-innovation.com)
+	 * 
+ 	 * This project is available for use in all personal or commercial projects under both MIT and GPL2 licenses. 
+ 	 * This means that you can choose the license that best suits your project, and use it accordingly.
+	 * 
+	 * MIT License: http://www.tierra-innovation.com/license/MIT-LICENSE.txt
+	 * GPL2 License: http://www.tierra-innovation.com/license/GPL-LICENSE.txt
+	 * 
+	 */
 
 	require_once dirname(__FILE__) . "/TierraTemplateTokenizer.php";
 	require_once dirname(__FILE__) . "/TierraTemplateAST.php";
@@ -110,7 +124,7 @@
 					case TierraTemplateTokenizer::GENERATOR_START_TOKEN:
 						$this->tokenizer->matchIf(TierraTemplateTokenizer::GENERATOR_START_TOKEN);
 						if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::GENERATOR_END_TOKEN))
-							$this->ast->addNode($this->generatorNode());
+							$this->ast->addNode($this->conditeratorNode());
 						$this->tokenizer->match(TierraTemplateTokenizer::GENERATOR_END_TOKEN);
 						break;
 						
@@ -216,7 +230,7 @@
 		private function expressionNode() {
 			$expressions[] = $this->expressionOperatorNode(0);
 			while ($this->tokenizer->matchIf(TierraTemplateTokenizer::SEMICOLON_TOKEN)) {
-				// for valueless generators
+				// for valueless conditerators
 				if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN))
 					break;
 				$expressions[] = $this->expressionOperatorNode(0);
@@ -424,12 +438,12 @@
 						}
 						else if ($this->tokenizer->matchIf(TierraTemplateTokenizer::LEFT_BRACE_TOKEN)) {
 							if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::RIGHT_BRACE_TOKEN))
-								$node->outputItems[] = $this->generatorNode();
+								$node->outputItems[] = $this->conditeratorNode();
 							$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_BRACE_TOKEN);
 						}
 						else if ($this->tokenizer->matchIf(TierraTemplateTokenizer::GENERATOR_START_TOKEN)) {
 							if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::GENERATOR_END_TOKEN))
-								$node->outputItems[] = $this->generatorNode();
+								$node->outputItems[] = $this->conditeratorNode();
 							$this->tokenizer->match(TierraTemplateTokenizer::GENERATOR_END_TOKEN);
 						}
 						else {
@@ -453,7 +467,7 @@
 						}
 						else if ($this->tokenizer->matchIf(TierraTemplateTokenizer::GENERATOR_START_TOKEN)) {
 							if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::GENERATOR_END_TOKEN))
-								$node->outputItems[] = $this->generatorNode();
+								$node->outputItems[] = $this->conditeratorNode();
 							$this->tokenizer->match(TierraTemplateTokenizer::GENERATOR_END_TOKEN);
 						}
 						else {
@@ -496,11 +510,11 @@
 			return $node;
 		}
 		
-		private function generatorNode() {
+		private function conditeratorNode() {
 			
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::GENERATOR_NODE);
 			
-			// generator heads are optional if there is a conditional
+			// conditerator heads are optional if there is a conditional
 			$node->expression = $this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN) ? false : $this->expressionNode();
 			
 			$node->ifTrue = false;
@@ -513,28 +527,28 @@
 					$this->tokenizer->match(TierraTemplateTokenizer::IF_TOKEN);
 					$conditionalNode = new TierraTemplateASTNode(TierraTemplateASTNode::CONDITIONAL_NODE);
 					$conditionalNode->expression = $this->expressionNode();
-					$conditionalNode->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->conditionalGeneratorNode() : false;
+					$conditionalNode->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->conditionalconditeratorNode() : false;
 					$conditionalNode->ifFalse = false;
 					$node->conditionals[] = $conditionalNode;
 
 					if (($conditionalNode->ifTrue !== false) && $this->tokenizer->matchIf(TierraTemplateTokenizer::ELSE_TOKEN)) {
 						if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN)) {
-							$node->ifFalse = $this->generatorNode();
+							$node->ifFalse = $this->conditeratorNode();
 							break;
 						}
 					}
 				}
 			}
 			else {
-				$node->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->conditionalGeneratorNode() : false;
+				$node->ifTrue = $this->tokenizer->matchIf(TierraTemplateTokenizer::QUESTION_MARK_TOKEN) ? $this->conditionalconditeratorNode() : false;
 				// we only match else with ifs and don't allow only elses so that the IF_TOKEN loop code above can use the ELSE_TOKEN as a terminator
-				$node->ifFalse = ($node->ifTrue !== false) && $this->tokenizer->matchIf(TierraTemplateTokenizer::ELSE_TOKEN) ? $this->generatorNode() : false;
+				$node->ifFalse = ($node->ifTrue !== false) && $this->tokenizer->matchIf(TierraTemplateTokenizer::ELSE_TOKEN) ? $this->conditeratorNode() : false;
 			}
 			
 			return $node;
 		}
 		
-		private function conditionalGeneratorNode() {
+		private function conditionalconditeratorNode() {
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::CONDITIONAL_GENERATOR_NODE);
 			$node->elements = array();
 			
@@ -548,7 +562,7 @@
 					break;
 				} 
 				
-				$node->elements[] = $this->generatorNode();
+				$node->elements[] = $this->conditeratorNode();
 					
 				if ($hasParen)
 					$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);

@@ -1,4 +1,19 @@
 <?php
+	/*
+	 * Tierra Templates - %VERSION%
+	 * 
+	 * http://tierratemplates.com/
+	 *
+	 * Copyright (c) 2009 Tierra Innovation (http://tierra-innovation.com)
+	 * 
+ 	 * This project is available for use in all personal or commercial projects under both MIT and GPL2 licenses. 
+ 	 * This means that you can choose the license that best suits your project, and use it accordingly.
+	 * 
+	 * MIT License: http://www.tierra-innovation.com/license/MIT-LICENSE.txt
+	 * GPL2 License: http://www.tierra-innovation.com/license/GPL-LICENSE.txt
+	 * 
+	 */
+
 	require_once dirname(__FILE__) . "/TierraTemplateStackFrame.php";
 	
 	class TierraTemplateRuntime {
@@ -106,7 +121,7 @@
 			return isset($this->loadedIdentifiers[$signature][$name]) ? $this->loadedIdentifiers[$signature][$name] : false; 
 		}
 		
-		public function startGenerator($expression) {
+		public function startConditerator($expression) {
 			$this->currentFrame = new TierraTemplateStackFrame($expression);
 			$this->stackFrame[] = $this->currentFrame;
 			
@@ -122,7 +137,7 @@
 			return $result;			
 		}
 		
-		public function endGenerator() {
+		public function endConditerator() {
 			array_pop($this->stackFrame);
 			$this->currentFrame = count($this->stackFrame) > 0 ? $this->stackFrame[count($this->stackFrame) - 1] : false;
 		}

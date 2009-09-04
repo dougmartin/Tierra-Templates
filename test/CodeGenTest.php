@@ -1,4 +1,18 @@
 <?php
+	/*
+	 * Tierra Templates - %VERSION%
+	 * 
+	 * http://tierratemplates.com/
+	 *
+	 * Copyright (c) 2009 Tierra Innovation (http://tierra-innovation.com)
+	 * 
+ 	 * This project is available for use in all personal or commercial projects under both MIT and GPL2 licenses. 
+ 	 * This means that you can choose the license that best suits your project, and use it accordingly.
+	 * 
+	 * MIT License: http://www.tierra-innovation.com/license/MIT-LICENSE.txt
+	 * GPL2 License: http://www.tierra-innovation.com/license/GPL-LICENSE.txt
+	 * 
+	 */
 
 	require_once 'PHPUnit/Framework.php';
 	require_once dirname(__FILE__) . "/../src/TierraTemplateCodeGenerator.php";
@@ -204,72 +218,72 @@ HTML;
 			self::checkEmit($src, $code, "Block with nocache decorator");
 		}
 
-		public function testSimpleGenerator() {
+		public function testSimpleConditerator() {
 			$src = "{@ foo @}";
-			self::checkEmit($src, "<?php \$this->__request->output(\$this->__runtime->identifier('foo'));", "Simple generator");
+			self::checkEmit($src, "<?php \$this->__request->output(\$this->__runtime->identifier('foo'));", "Simple conditerator");
 		}
 
-		public function testMultiExpressionGenerator() {
+		public function testMultiExpressionConditerator() {
 			$src = "{@ foo; bar @}";
-			self::checkEmit($src, "<?php \$this->__runtime->identifier('foo'); \$this->__request->output(\$this->__runtime->identifier('bar'));", "Simple generator with multiple expressions");
+			self::checkEmit($src, "<?php \$this->__runtime->identifier('foo'); \$this->__request->output(\$this->__runtime->identifier('bar'));", "Simple conditerator with multiple expressions");
 		}
 		
-		public function testSimpleGeneratorWithOutput() {
+		public function testSimpleConditeratorWithOutput() {
 			$src = "{@ foo ? bar @}";
-			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { \$this->__request->output(\$this->__runtime->identifier('bar')); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Simple generator with output");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startConditerator(\$this->__runtime->identifier('foo'))) { do { \$this->__request->output(\$this->__runtime->identifier('bar')); } while (\$this->__runtime->loop()); } \$this->__runtime->endConditerator();", "Simple conditerator with output");
 		}
 		
-		public function testGeneratorWithOneOutputTemplate() {
+		public function testConditeratorWithOneOutputTemplate() {
 			$src = "{@ foo ? `bar` @}";
-			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startConditerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar'; } while (\$this->__runtime->loop()); } \$this->__runtime->endConditerator();", "Conditerator with one output template");
 		}
 		
-		public function testGeneratorWithOneOutputTemplateWithSimpleGenerator() {
+		public function testConditeratorWithOneOutputTemplateWithSimpleConditerator() {
 			$src = "{@ foo ? `bar {baz} boom` @}";
-			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar '; \$this->__request->output(\$this->__runtime->identifier('baz')); echo ' boom'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template with simple generator");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startConditerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar '; \$this->__request->output(\$this->__runtime->identifier('baz')); echo ' boom'; } while (\$this->__runtime->loop()); } \$this->__runtime->endConditerator();", "Conditerator with one output template with simple conditerator");
 		}			
 
-		public function testGeneratorWithOneOutputTemplateWithGenerator() {
+		public function testConditeratorWithOneOutputTemplateWithConditerator() {
 			$src = "{@ foo ? `bar {baz ? bam} boom` @}";
-			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar '; if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('baz'))) { do { \$this->__request->output(\$this->__runtime->identifier('bam')); } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator(); echo ' boom'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template with generator");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startConditerator(\$this->__runtime->identifier('foo'))) { do { echo 'bar '; if (\$this->__runtime->startConditerator(\$this->__runtime->identifier('baz'))) { do { \$this->__request->output(\$this->__runtime->identifier('bam')); } while (\$this->__runtime->loop()); } \$this->__runtime->endConditerator(); echo ' boom'; } while (\$this->__runtime->loop()); } \$this->__runtime->endConditerator();", "Conditerator with one output template with conditerator");
 		}		
 		
-		public function testGeneratorWithTwoOutputTemplates() {
+		public function testConditeratorWithTwoOutputTemplates() {
 			$src = "{@ foo ? `bar` `baz` @}";
-			self::checkEmit($src, "<?php if (\$this->__runtime->startGenerator(\$this->__runtime->identifier('foo'))) { echo 'bar'; do { echo 'baz'; } while (\$this->__runtime->loop()); } \$this->__runtime->endGenerator();", "Generator with one output template");
+			self::checkEmit($src, "<?php if (\$this->__runtime->startConditerator(\$this->__runtime->identifier('foo'))) { echo 'bar'; do { echo 'baz'; } while (\$this->__runtime->loop()); } \$this->__runtime->endConditerator();", "Conditerator with one output template");
 		}
 		
-		public function testGeneratorWithTemplateAssignment() {
+		public function testConditeratorWithTemplateAssignment() {
 			$src = "{@ foo = `bar {baz ? bam} boom` @}";
-			self::checkEmit($src, "<?php if (!function_exists('otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e')) { function otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e(\$__template) { ob_start(); echo 'bar '; if (\$__template->__runtime->startGenerator(\$__template->__runtime->identifier('baz'))) { do { \$__template->__request->output(\$__template->__runtime->identifier('bam')); } while (\$__template->__runtime->loop()); } \$__template->__runtime->endGenerator(); echo ' boom'; \$__output = ob_get_contents(); ob_end_clean(); return \$__output;} }; \$this->__request->output(\$this->__request->setVar('foo', otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e(\$this)));", "Generator with template assignment");
+			self::checkEmit($src, "<?php if (!function_exists('otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e')) { function otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e(\$__template) { ob_start(); echo 'bar '; if (\$__template->__runtime->startConditerator(\$__template->__runtime->identifier('baz'))) { do { \$__template->__request->output(\$__template->__runtime->identifier('bam')); } while (\$__template->__runtime->loop()); } \$__template->__runtime->endConditerator(); echo ' boom'; \$__output = ob_get_contents(); ob_end_clean(); return \$__output;} }; \$this->__request->output(\$this->__request->setVar('foo', otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e(\$this)));", "Conditerator with template assignment");
 		}
 		
-		public function testGeneratorWithNoOutput() {
+		public function testConditeratorWithNoOutput() {
 			$src = "{@ foo ? @}";
-			self::checkEmit($src, "<?php \$this->__runtime->identifier('foo');", "Generator with no output");
+			self::checkEmit($src, "<?php \$this->__runtime->identifier('foo');", "Conditerator with no output");
 		}
 
-		public function testGeneratorWithNoOutputAndAssignment() {
+		public function testConditeratorWithNoOutputAndAssignment() {
 			$src = "{@ foo = 1 ? @}";
-			self::checkEmit($src, "<?php \$this->__request->setVar('foo', 1);", "Generator with no output and assignment");
+			self::checkEmit($src, "<?php \$this->__request->setVar('foo', 1);", "Conditerator with no output and assignment");
 		}
 		
 		public function testMultipleConditionals() {
 			$src = "{@ foo if bar == 1 ? baz else if bam == 2 ? boom else foom @}";
-			self::checkEmit($src, "<?php \$this->__runtime->startGenerator(\$this->__runtime->identifier('foo')); if (\$this->__runtime->identifier('bar') == 1) { do { \$this->__request->output(\$this->__runtime->identifier('baz')); } while (\$this->__runtime->loop()); } else if (\$this->__runtime->identifier('bam') == 2) { do { \$this->__request->output(\$this->__runtime->identifier('boom')); } while (\$this->__runtime->loop()); } else { \$this->__request->output(\$this->__runtime->identifier('foom')); } \$this->__runtime->endGenerator();", "Generator with multiple conditionals");
+			self::checkEmit($src, "<?php \$this->__runtime->startConditerator(\$this->__runtime->identifier('foo')); if (\$this->__runtime->identifier('bar') == 1) { do { \$this->__request->output(\$this->__runtime->identifier('baz')); } while (\$this->__runtime->loop()); } else if (\$this->__runtime->identifier('bam') == 2) { do { \$this->__request->output(\$this->__runtime->identifier('boom')); } while (\$this->__runtime->loop()); } else { \$this->__request->output(\$this->__runtime->identifier('foom')); } \$this->__runtime->endConditerator();", "Conditerator with multiple conditionals");
 		}
 		
-		public function testEmptyHeadGenerator() {
+		public function testEmptyHeadConditerator() {
 			$src = "{@ if foo ? bar @}";
-			self::checkEmit($src, "<?php if (\$this->__runtime->identifier('foo')) { \$this->__request->output(\$this->__runtime->identifier('bar')); }", "Generator with empty head");
+			self::checkEmit($src, "<?php if (\$this->__runtime->identifier('foo')) { \$this->__request->output(\$this->__runtime->identifier('bar')); }", "Conditerator with empty head");
 		}
 		
-		public function testOutputTemplateWithEscapedGenerator() {
+		public function testOutputTemplateWithEscapedConditerator() {
 			$src = "{@ `\\{foo}\\{@ bar @}` @}";
 			self::checkEmit($src, "<?php echo '{foo}{@ bar @}';", "Escaped output template");
 		}		
 		
-		public function testStrictOutputTemplateWithEscapedGenerator() {
+		public function testStrictOutputTemplateWithEscapedConditerator() {
 			$src = "{@ ~\\{@ bar @}~ @}";
 			self::checkEmit($src, "<?php echo '{@ bar @}';", "Escaped output template");
 		}

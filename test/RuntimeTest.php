@@ -1,4 +1,18 @@
 <?php
+	/*
+	 * Tierra Templates - %VERSION%
+	 * 
+	 * http://tierratemplates.com/
+	 *
+	 * Copyright (c) 2009 Tierra Innovation (http://tierra-innovation.com)
+	 * 
+ 	 * This project is available for use in all personal or commercial projects under both MIT and GPL2 licenses. 
+ 	 * This means that you can choose the license that best suits your project, and use it accordingly.
+	 * 
+	 * MIT License: http://www.tierra-innovation.com/license/MIT-LICENSE.txt
+	 * GPL2 License: http://www.tierra-innovation.com/license/GPL-LICENSE.txt
+	 * 
+	 */
 
 	require_once 'PHPUnit/Framework.php';
 	require_once dirname(__FILE__) . "/../src/TierraTemplateRuntime.php";
@@ -65,7 +79,7 @@
 		}
 		
 		public function testIdentifier() {
-			$this->runtime->startGenerator(array(array("foo" => "bar", "bam" => "boom")));
+			$this->runtime->startConditerator(array(array("foo" => "bar", "bam" => "boom")));
 			$this->assertEquals($this->runtime->identifier("foo"), "bar");
 			$this->assertEquals($this->runtime->identifier("bam"), "boom");
 		}
@@ -77,7 +91,7 @@
 		}
 		
 		public function testSpecialValues() {
-			$this->runtime->startGenerator(array("foo", "bar", "baz"));
+			$this->runtime->startConditerator(array("foo", "bar", "baz"));
 			$this->assertEquals($this->runtime->specialIdentifier("count"), 3);
 			$this->assertEquals($this->runtime->specialIdentifier("this is a garbage value"), false);
 			
@@ -114,53 +128,53 @@
 			$this->assertFalse($this->runtime->specialIdentifier("odd"));			
 		}
 		
-		public function testStartEmptyGenerators() {
-			$this->assertFalse($this->runtime->startGenerator(array()));
-			$this->assertFalse($this->runtime->startGenerator(""));
-			$this->assertFalse($this->runtime->startGenerator(0));
-			$this->assertFalse($this->runtime->startGenerator(false));
+		public function testStartEmptyConditerators() {
+			$this->assertFalse($this->runtime->startConditerator(array()));
+			$this->assertFalse($this->runtime->startConditerator(""));
+			$this->assertFalse($this->runtime->startConditerator(0));
+			$this->assertFalse($this->runtime->startConditerator(false));
 		}
 		
-		public function testStartNonEmptyGenerators() {
-			$this->assertTrue($this->runtime->startGenerator(array("foo")));
-			$this->assertTrue($this->runtime->startGenerator("foo"));
-			$this->assertTrue($this->runtime->startGenerator(1));
-			$this->assertTrue($this->runtime->startGenerator(true));
+		public function testStartNonEmptyConditerators() {
+			$this->assertTrue($this->runtime->startConditerator(array("foo")));
+			$this->assertTrue($this->runtime->startConditerator("foo"));
+			$this->assertTrue($this->runtime->startConditerator(1));
+			$this->assertTrue($this->runtime->startConditerator(true));
 		}
 
-		public function testMultipleGenerators() {
+		public function testMultipleConditerators() {
 			$this->assertFalse($this->runtime->identifier("foo"));
 			$this->assertFalse($this->runtime->identifier("bam"));
-			$this->runtime->startGenerator(array(array("foo" => "bar", "bam" => "boom")));
+			$this->runtime->startConditerator(array(array("foo" => "bar", "bam" => "boom")));
 				$this->assertEquals($this->runtime->identifier("foo"), "bar");
 				$this->assertEquals($this->runtime->identifier("bam"), "boom");
-				$this->runtime->startGenerator(array(array("foo" => "bar2")));
+				$this->runtime->startConditerator(array(array("foo" => "bar2")));
 					$this->assertEquals($this->runtime->identifier("foo"), "bar2");
 					$this->assertEquals($this->runtime->identifier("bam"), "boom");
-					$this->runtime->startGenerator(array(array("bam" => "boom2")));
+					$this->runtime->startConditerator(array(array("bam" => "boom2")));
 						$this->assertEquals($this->runtime->identifier("foo"), "bar2");
 						$this->assertEquals($this->runtime->identifier("bam"), "boom2");
-					$this->runtime->endGenerator();
+					$this->runtime->endConditerator();
 					$this->assertEquals($this->runtime->identifier("foo"), "bar2");
 					$this->assertEquals($this->runtime->identifier("bam"), "boom");
-				$this->runtime->endGenerator();
+				$this->runtime->endConditerator();
 				$this->assertEquals($this->runtime->identifier("foo"), "bar");
 				$this->assertEquals($this->runtime->identifier("bam"), "boom");
-			$this->runtime->endGenerator();
+			$this->runtime->endConditerator();
 			$this->assertFalse($this->runtime->identifier("foo"));
 			$this->assertFalse($this->runtime->identifier("bam"));
 		}
 		
-		public function testAssignWithGeneratorStack() {
+		public function testAssignWithConditeratorStack() {
 			$this->request->setVar("foo", "bar");
 			$this->assertEquals($this->request->foo, "bar");
 			$this->assertEquals($this->runtime->identifier("foo"), "bar");
 			
-			$this->runtime->startGenerator(array(array("foo" => "baz2", "bam" => "boom")));
+			$this->runtime->startConditerator(array(array("foo" => "baz2", "bam" => "boom")));
 				$this->assertEquals($this->request->foo, "bar");
 				$this->assertEquals($this->runtime->identifier("foo"), "baz2");
 				
-				$this->runtime->startGenerator(array(array("foo" => "baz3")));
+				$this->runtime->startConditerator(array(array("foo" => "baz3")));
 					$this->assertEquals($this->request->foo, "bar");
 					$this->assertEquals($this->runtime->identifier("foo"), "baz3");
 				
@@ -168,14 +182,14 @@
 					$this->request->setVar("bam", "boomboom");
 					$this->assertEquals($this->request->bam, "boomboom");
 					$this->assertEquals($this->runtime->identifier("bam"), "boom");
-				$this->runtime->endGenerator();
+				$this->runtime->endConditerator();
 				
 				$this->assertEquals($this->request->foo, "bar");
 				$this->assertEquals($this->runtime->identifier("foo"), "baz2");
 				$this->assertEquals($this->request->bam, "boomboom");
 				$this->assertEquals($this->runtime->identifier("bam"), "boom");
 				
-			$this->runtime->endGenerator();
+			$this->runtime->endConditerator();
 			
 			$this->assertEquals($this->request->foo, "bar");
 			$this->assertEquals($this->runtime->identifier("foo"), "bar");

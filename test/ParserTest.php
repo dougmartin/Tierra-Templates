@@ -1,4 +1,18 @@
 <?php
+	/*
+	 * Tierra Templates - %VERSION%
+	 * 
+	 * http://tierratemplates.com/
+	 *
+	 * Copyright (c) 2009 Tierra Innovation (http://tierra-innovation.com)
+	 * 
+ 	 * This project is available for use in all personal or commercial projects under both MIT and GPL2 licenses. 
+ 	 * This means that you can choose the license that best suits your project, and use it accordingly.
+	 * 
+	 * MIT License: http://www.tierra-innovation.com/license/MIT-LICENSE.txt
+	 * GPL2 License: http://www.tierra-innovation.com/license/GPL-LICENSE.txt
+	 * 
+	 */
 
 	require_once 'PHPUnit/Framework.php';
 	require_once dirname(__FILE__) . "/../src/TierraTemplateParser.php";
@@ -324,9 +338,9 @@
 			self::checkSyntax($src, "Block with output template with braces");
 		}
 		
-		public function testBlockWithOutputTemplateWithStartGenerators() {
+		public function testBlockWithOutputTemplateWithStartConditerators() {
 			$src = "[@ include foo if `foo{@ bar @}` @]";	
-			self::checkSyntax($src, "Block with output template with start generators");
+			self::checkSyntax($src, "Block with output template with start conditerators");
 		}
 		
 		public function testBlockWithStrictOutputTemplateWithBraces() {
@@ -334,37 +348,37 @@
 			self::checkSyntax($src, "Block with strict output template with braces");
 		}
 					
-		public function testBlockWithStrictOutputTemplateWithStartGenerators() {
+		public function testBlockWithStrictOutputTemplateWithStartConditerators() {
 			$src = "[@ include foo if ~foo{@ bar @}~ @]";	
-			self::checkSyntax($src, "Block with strict output template with start generators");
+			self::checkSyntax($src, "Block with strict output template with start conditerators");
 		}
 		
-		public function testBlockWithGeneratorHead() {
+		public function testBlockWithConditeratorHead() {
 			$src = "[@ include foo if `foo {bar ? baz}` @]";	
-			self::checkSyntax($src, "Block with generator head");
+			self::checkSyntax($src, "Block with conditerator head");
 		}
 		
-		public function testBlockWithGeneratorSingleConditional() {
+		public function testBlockWithConditeratorSingleConditional() {
 			$src = "[@ include foo if `foo {bar if bam ? baz}` @]";	
-			self::checkSyntax($src, "Block with generator single conditional");
+			self::checkSyntax($src, "Block with conditerator single conditional");
 		}
 
-		public function testBlockWithGeneratorSingleConditionalExpression() {
+		public function testBlockWithConditeratorSingleConditionalExpression() {
 			$src = "[@ include foo if `foo {bar if bam || boom ? baz}` @]";	
-			self::checkSyntax($src, "Block with generator single conditional expression");
+			self::checkSyntax($src, "Block with conditerator single conditional expression");
 		}		
 
-		public function testBlockWithGeneratorMultipleConditional() {
+		public function testBlockWithConditeratorMultipleConditional() {
 			$src = "[@ include foo if `foo {bar if bam ? baz if boom ? floom if whim ? wham else kaboom}` @]";	
-			self::checkSyntax($src, "Block with generator mulitple conditionals");
+			self::checkSyntax($src, "Block with conditerator mulitple conditionals");
 		}
 		
-		public function testBlockWithGeneratorSingleConditionalAndFilter() {
+		public function testBlockWithConditeratorSingleConditionalAndFilter() {
 			$src = "[@ include foo if `foo {bar if bam ? baz:boom else foom}` @]";	
-			self::checkSyntax($src, "Block with generator single conditional and filter");
+			self::checkSyntax($src, "Block with conditerator single conditional and filter");
 		}
 
-		public function testBlockWithGeneratorComplexConditionals() {
+		public function testBlockWithConditeratorComplexConditionals() {
 			$src = <<<SRC
 [@ include foo if `foo {@ user 
 	if type == 1 ? (foo 
@@ -379,30 +393,30 @@
 	else `flam`
 @}` @]
 SRC;
-			self::checkSyntax($src, "Block with generator complex conditionals");
+			self::checkSyntax($src, "Block with conditerator complex conditionals");
 		}		
 		
-		public function testBareGenerator() {
+		public function testBareConditerator() {
 			$src = "{@ foo @}";	
-			self::checkSyntax($src, "Bare generator");
+			self::checkSyntax($src, "Bare conditerator");
 		}
 		
-		public function testGeneratorDoubleParens() {
+		public function testConditeratorDoubleParens() {
 			$src = "{@ foo ? (bar ? baz) (bam ? boom else foom) kaboom @}";	
-			self::checkSyntax($src, "Generator with double parens");
+			self::checkSyntax($src, "Conditerator with double parens");
 		}
 		
-		public function testGeneratorMultipleParens() {
+		public function testConditeratorMultipleParens() {
 			$src = "{@ foo ? ((((bar)))) @}";	
-			self::checkSyntax($src, "Generator with multiple parens");
+			self::checkSyntax($src, "Conditerator with multiple parens");
 		}
 		
-		public function testGeneratorExpressionParens() {
+		public function testConditeratorExpressionParens() {
 			$src = "{@ (foo + bar) - baz > 0 ? bam @}";	
-			self::checkSyntax($src, "Generator with expression parens");
+			self::checkSyntax($src, "Conditerator with expression parens");
 		}
 		
-		public function testGeneratorWithMultipleOutputTemplates() {
+		public function testConditeratorWithMultipleOutputTemplates() {
 			$src = <<<SRC
 {@ users ?
 	`<p>{name}`
@@ -410,10 +424,10 @@ SRC;
 	`</p>`
 @}
 SRC;
-			self::checkSyntax($src, "Generator with multiple output templates");
+			self::checkSyntax($src, "Conditerator with multiple output templates");
 		}
 		
-		public function testGeneratorWithScript() {
+		public function testConditeratorWithScript() {
 			$src = <<<SRC
 {@ foo ?
 	~<script>
@@ -425,17 +439,17 @@ SRC;
 @}
 SRC;
 
-			self::checkSyntax($src, "Generator with script");
+			self::checkSyntax($src, "Conditerator with script");
 		}		
 		
-		public function testGeneratorWithFilter() {
+		public function testConditeratorWithFilter() {
 			$src = "{@ foo:1,2 @}";	
-			self::checkSyntax($src, "Generator with filter");
+			self::checkSyntax($src, "Conditerator with filter");
 		}
 		
-		public function testGeneratorWithMultipleStatements() {
+		public function testConditeratorWithMultipleStatements() {
 			$src = "{@ foo; bar ? bam @}";	
-			self::checkSyntax($src, "Generator with multiple statements");
+			self::checkSyntax($src, "Conditerator with multiple statements");
 		}		
 		
 		public function testExternalFilterCall() {

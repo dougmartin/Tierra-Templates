@@ -1,4 +1,18 @@
 <?php
+	/*
+	 * Tierra Templates - %VERSION%
+	 * 
+	 * http://tierratemplates.com/
+	 *
+	 * Copyright (c) 2009 Tierra Innovation (http://tierra-innovation.com)
+	 * 
+ 	 * This project is available for use in all personal or commercial projects under both MIT and GPL2 licenses. 
+ 	 * This means that you can choose the license that best suits your project, and use it accordingly.
+	 * 
+	 * MIT License: http://www.tierra-innovation.com/license/MIT-LICENSE.txt
+	 * GPL2 License: http://www.tierra-innovation.com/license/GPL-LICENSE.txt
+	 * 
+	 */
 
 	require_once dirname(__FILE__) . "/TierraTemplateAST.php";
 	require_once dirname(__FILE__) . "/TierraTemplateException.php";
@@ -88,7 +102,7 @@
 						break;
 						
 					case TierraTemplateASTNode::GENERATOR_NODE:
-						$code = $this->emitGenerator($node);
+						$code = $this->emitConditerator($node);
 						break;
 						
 					case TierraTemplateASTNode::CODE_NODE:
@@ -424,8 +438,8 @@
 			return "array(" . implode(", ", $code) . ")";
 		}		
 
-		// noEcho is used when emit generators from without an output template
-		public function emitGenerator($node, $echoOutput=true) {
+		// noEcho is used when emit conditerators from without an output template
+		public function emitConditerator($node, $echoOutput=true) {
 			$code = array();
 
 			// the expression can be empty, eg {@ if foo ? bar @}
@@ -436,7 +450,7 @@
 					$code[] = $this->emitExpression($preExpression) . ";";
 			}
 			
-			// if this generator has no output then output the head
+			// if this conditerator has no output then output the head
 			if (($node->ifTrue === false) && ($node->ifFalse === false) && (count($node->conditionals) == 0)) {
 				if (!$expression)
 					$code[] =  $echoOutput ? "echo true;" : "true";
@@ -446,76 +460,76 @@
 					$emitedExpression = $this->emitExpression($expression);
 					if (!$echoOutput)
 						$code[] =  $emitedExpression;
-					else if ($this->isLiteralGeneratorValue($expression))
+					else if ($this->isLiteralConditeratorValue($expression))
 						$code[] = "echo $emitedExpression;";
 					else
 						$code[] = "\$this->__request->output({$emitedExpression});";
 				}
 			}
-			// if the generator explicitly has no output by using a trailing ? then just emit the expression
+			// if the conditerator explicitly has no output by using a trailing ? then just emit the expression
 			else if ($node->ifTrue && (count($node->ifTrue->elements) == 0) && (!$node->ifFalse || (count($node->ifFalse->elements) == 0)) && (count($node->conditionals) == 0)) {
 				$code[] = ($expression ? $this->emitExpression($expression) : "true") . ";";
 			}
 			else if (count($node->conditionals) > 0) {
 				if ($expression) {
 					$emitedExpression = $expression->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE ? $this->emitOutputTemplate($expression, false, true) : $this->emitExpression($expression);
-					$code[] = "\$this->__runtime->startGenerator({$emitedExpression});";
+					$code[] = "\$this->__runtime->startConditerator({$emitedExpression});";
 				}
 				else
 					$emitedExpression = "";
 				$ifs = array();
 				foreach ($node->conditionals as $conditional)
-					$ifs[] = "if (" .  $this->emitExpression($conditional->expression) .  ") { " . ($conditional->ifTrue !== false ? $this->emitGeneratorOutput($conditional->ifTrue, $expression !== false) : "echo \$this->__runtime->currentValue();") . " }";
+					$ifs[] = "if (" .  $this->emitExpression($conditional->expression) .  ") { " . ($conditional->ifTrue !== false ? $this->emitConditeratorOutput($conditional->ifTrue, $expression !== false) : "echo \$this->__runtime->currentValue();") . " }";
 				if ($node->ifFalse !== false)
-					$ifs[] = "{ " . $this->emitGenerator($node->ifFalse) . " }";
+					$ifs[] = "{ " . $this->emitConditerator($node->ifFalse) . " }";
 				$code[] = implode(" else ", $ifs);
 				if ($expression)
-					$code[] = "\$this->__runtime->endGenerator();";
+					$code[] = "\$this->__runtime->endConditerator();";
 			}
 			else {
-				$code[] = "if (\$this->__runtime->startGenerator(" .  ($expression ? $this->emitExpression($expression) : "true") .  ")) {";
+				$code[] = "if (\$this->__runtime->startConditerator(" .  ($expression ? $this->emitExpression($expression) : "true") .  ")) {";
 				if ($node->ifTrue !== false)
-					$code[] = $this->emitGeneratorOutput($node->ifTrue);
+					$code[] = $this->emitConditeratorOutput($node->ifTrue);
 				$code[] = "}";
 				if ($node->ifFalse !== false)
-					$code[] = "else { " . $this->emitGenerator($node->ifFalse) . " }";
-				$code[] = "\$this->__runtime->endGenerator();";
+					$code[] = "else { " . $this->emitConditerator($node->ifFalse) . " }";
+				$code[] = "\$this->__runtime->endConditerator();";
 			}
 			
 			return implode(" ", $code);
 		}
 		
-		public function isLiteralGeneratorValue($node) {
+		public function isLiteralConditeratorValue($node) {
 			if (($node->type == TierraTemplateASTNode::OPERATOR_NODE) && in_array($node->op, array(TierraTemplateTokenizer::LEFT_BRACKET_TOKEN, TierraTemplateTokenizer::DOT_TOKEN, TierraTemplateTokenizer::COLON_TOKEN)))
-				return $this->isLiteralGeneratorValue($node->leftNode);
+				return $this->isLiteralConditeratorValue($node->leftNode);
 			return $node->type == TierraTemplateASTNode::LITERAL_NODE;
 		}
 		
-		public function emitGeneratorOutput($node, $loop=true) {
+		public function emitConditeratorOutput($node, $loop=true) {
 			$code = array();
 			$numElements = count($node->elements);
 			
 			$preElement = ($numElements > 1 ? $node->elements[0] : false);
 			if ($preElement)
-				$code[] = $this->emitGeneratorOrOutputTemplate($preElement);
+				$code[] = $this->emitConditeratorOrOutputTemplate($preElement);
 				
 			$loopElement = ($numElements > 1 ? $node->elements[1] : ($numElements > 0 ? $node->elements[0] : false));
 			if ($loopElement) {
 				if ($loop)
-					$code[] = "do { " . $this->emitGeneratorOrOutputTemplate($loopElement) ." } while (\$this->__runtime->loop());";
+					$code[] = "do { " . $this->emitConditeratorOrOutputTemplate($loopElement) ." } while (\$this->__runtime->loop());";
 				else
-					$code[] = $this->emitGeneratorOrOutputTemplate($loopElement);
+					$code[] = $this->emitConditeratorOrOutputTemplate($loopElement);
 			}
 			
 			$postElement = ($numElements > 2 ? $node->elements[2] : false);
 			if ($postElement)
-				$code[] = $this->emitGeneratorOrOutputTemplate($postElement);
+				$code[] = $this->emitConditeratorOrOutputTemplate($postElement);
 
 			return implode(" ", $code);
 		}
 		
-		public function emitGeneratorOrOutputTemplate($node) {
-			return $node->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE ? $this->emitOutputTemplate($node, true) : $this->emitGenerator($node);
+		public function emitConditeratorOrOutputTemplate($node) {
+			return $node->type == TierraTemplateASTNode::OUTPUT_TEMPLATE_NODE ? $this->emitOutputTemplate($node, true) : $this->emitConditerator($node);
 		}
 		
 		public function emitOutputTemplate($node, $echoOutput, $wrapInFunction=false) {
@@ -523,38 +537,38 @@
 			
 			if (count($node->outputItems) > 0) {
 				
-				// find out what we have in this template - if we have text before a generator then we need to output it later
-				$haveGenerator = false;
-				$haveConditionalGenerator = false;
+				// find out what we have in this template - if we have text before a conditerator then we need to output it later
+				$haveConditerator = false;
+				$haveConditionalConditerator = false;
 				foreach ($node->outputItems as $item) {
 					if ($item->type == TierraTemplateASTNode::GENERATOR_NODE) {
-						$haveGenerator = true;
+						$haveConditerator = true;
 						if ($item->ifTrue || $item->ifFalse)
-							$haveConditionalGenerator = true;
+							$haveConditionalConditerator = true;
 					}
-					if ($haveGenerator && $haveConditionalGenerator)
+					if ($haveConditerator && $haveConditionalConditerator)
 						break;
 				}
 				
 				foreach ($node->outputItems as $item) {
 					if ($item->type == TierraTemplateASTNode::GENERATOR_NODE) {
 						if ($item->ifTrue || $item->ifFalse) {
-							$code[] = $this->emitGenerator($item);
+							$code[] = $this->emitConditerator($item);
 						}
 						else {
-							$output = $this->emitGenerator($item, false);
+							$output = $this->emitConditerator($item, false);
 							$code[] = $echoOutput || $wrapInFunction ? "\$this->__request->output({$output});" : $output;
 						}
 					}
 					else {
 						$output = $this->emitExpression($item);
-						$code[] = $echoOutput || $haveGenerator || $wrapInFunction ? "echo {$output};" : $output;
+						$code[] = $echoOutput || $haveConditerator || $wrapInFunction ? "echo {$output};" : $output;
 					}
 				}
 					
-				// we wrap the output template in a function to create an expression if we are not echoing the output and there is a conditional generator
+				// we wrap the output template in a function to create an expression if we are not echoing the output and there is a conditional conditerator
 				// since the non-wrapped code would be a statement and not an expression
-				if ($wrapInFunction || (!$echoOutput && $haveConditionalGenerator)) {
+				if ($wrapInFunction || (!$echoOutput && $haveConditionalConditerator)) {
 					$functionName = "otf_" . sha1(implode(" ", $code));
 					if (!isset($this->outputTemplateFunctions[$functionName]))
 						$this->outputTemplateFunctions[$functionName] = implode(" ", $code);
