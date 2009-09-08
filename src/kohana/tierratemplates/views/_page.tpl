@@ -18,6 +18,7 @@
 	</style>
 </head>
 <body>
+	[# this is the main block that the children of this template will override #]
 	[@ start content @]
 		this is the default content
 	[@ end content @]

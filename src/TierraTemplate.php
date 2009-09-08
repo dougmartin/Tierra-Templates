@@ -168,6 +168,10 @@
 			unset($this->__request->$name);
 		}
 		
+		public function setVars($map) {
+			$this->__request->setVars($map);
+		}
+		
 		public function getOption($name, $default=false) {
 			return self::StaticGetOption($this->__options, $name, $default);
 		}

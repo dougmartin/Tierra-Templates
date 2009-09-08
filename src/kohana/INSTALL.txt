@@ -1,3 +1,3 @@
-Place 'tierratemplate' in your 'modules' directory.
+Place 'tierratemplates' in your 'modules' directory.
 
-Add "MODPATH . 'tierratemplate'," to the last line of the "$config['modules']" array.
+Add "MODPATH . 'tierratemplates'," to the last line of the "$config['modules']" array.
