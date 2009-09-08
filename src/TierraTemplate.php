@@ -219,8 +219,8 @@
 				$templateFile = dirname($this->$templateFile) . "/" . $templateFile;
 				
 			$info = pathinfo($templateFile);
-			if (!isset($info["extension"]) && $this->getOption("autoAddHtmlExtension", true))
-				$templateFile .= ".html";
+			if (!isset($info["extension"]) && $this->getOption("addMissingTemplateExtension", true))
+				$templateFile .= $this->getOption("templateExtension", ".html");
 				
 			$this->__options["templateFile"] = $templateFile;
 			
