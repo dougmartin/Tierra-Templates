@@ -35,8 +35,8 @@
 		
 		const BLOCK_START_TOKEN = "[@";
 		const BLOCK_END_TOKEN = "@]";
-		const GENERATOR_START_TOKEN = "{@";
-		const GENERATOR_END_TOKEN = "@}";
+		const CONDITERATOR_START_TOKEN = "{@";
+		const CONDITERATOR_END_TOKEN = "@}";
 		const CODE_START_TOKEN = "<@";
 		const CODE_END_TOKEN = "@>";
 		const COMMENT_START_TOKEN = "comment start";
@@ -81,7 +81,7 @@
 		const HTML_MODE = "HTML_MODE";
 		const COMMENT_MODE = "COMMENT_MODE";
 		const BLOCK_MODE = "BLOCK_MODE";
-		const GENERATOR_MODE = "GENERATOR_MODE";
+		const CONDITERATOR_MODE = "CONDITERATOR_MODE";
 		const CODE_MODE = "CODE_MODE";
 		const OUTPUT_TEMPLATE_MODE = "OUTPUT_TEMPLATE_MODE";
 		const STRICT_OUTPUT_TEMPLATE_MODE = "STRICT_OUTPUT_TEMPLATE_MODE";
@@ -122,8 +122,8 @@
 				self::GREATER_THAN_OR_EQUAL_TOKEN,
 				self::BLOCK_START_TOKEN,
 				self::BLOCK_END_TOKEN,
-				self::GENERATOR_START_TOKEN,
-				self::GENERATOR_END_TOKEN,
+				self::CONDITERATOR_START_TOKEN,
+				self::CONDITERATOR_END_TOKEN,
 				self::CODE_START_TOKEN,
 				self::CODE_END_TOKEN,
 			);
@@ -428,7 +428,7 @@
 							else if ($curChar == '[')
 								$this->pushMode(self::BLOCK_MODE);
 							else if ($curChar == '{')
-								$this->pushMode(self::GENERATOR_MODE);
+								$this->pushMode(self::CONDITERATOR_MODE);
 							else if ($curChar == '<')
 								$this->pushMode(self::CODE_MODE);
 						}						
@@ -465,7 +465,7 @@
 						
 					// these two modes are combined to share the common code for switching to the output template modes
 					case self::BLOCK_MODE:
-					case self::GENERATOR_MODE:
+					case self::CONDITERATOR_MODE:
 						$this->advanceToken();
 						
 						switch ($this->nextToken) {
@@ -474,15 +474,15 @@
 									$this->popMode();
 								break;
 								
-							case self::GENERATOR_END_TOKEN:
-								if ($mode == self::GENERATOR_MODE)
+							case self::CONDITERATOR_END_TOKEN:
+								if ($mode == self::CONDITERATOR_MODE)
 									$this->popMode();
 								break;
 								
 							// normal output templates can use {...} or {@...@} to delimit conditerators
 							// strict output templates can only use {@...@}
 							case self::RIGHT_BRACE_TOKEN:
-								if (($mode == self::GENERATOR_MODE) && ($this->getPreviousMode() == self::OUTPUT_TEMPLATE_MODE))
+								if (($mode == self::CONDITERATOR_MODE) && ($this->getPreviousMode() == self::OUTPUT_TEMPLATE_MODE))
 									$this->popMode();
 								break;
 								
@@ -530,8 +530,8 @@
 						}
 						else if ($curChar == self::LEFT_BRACE_TOKEN) {
 							$nextChar = $this->nextChar();
-							if ($curChar . $nextChar == self::GENERATOR_START_TOKEN) {
-								$this->nextToken = self::GENERATOR_START_TOKEN;
+							if ($curChar . $nextChar == self::CONDITERATOR_START_TOKEN) {
+								$this->nextToken = self::CONDITERATOR_START_TOKEN;
 								$this->nextLexeme = $curChar . $nextChar;
 								$this->advanceChar(2);
 							}
@@ -541,7 +541,7 @@
 								$this->advanceChar();
 							}
 							
-							$this->pushMode(self::GENERATOR_MODE);
+							$this->pushMode(self::CONDITERATOR_MODE);
 						}
 						else {
 							while (!$this->eof && ($curChar != self::BACKTICK_TOKEN) && ($curChar != self::LEFT_BRACE_TOKEN)) {
@@ -565,15 +565,15 @@
 							$this->advanceChar();
 							$this->popMode();
 						}
-						else if ($curChar . $nextChar == self::GENERATOR_START_TOKEN) {
-							$this->nextToken = self::GENERATOR_START_TOKEN;
-							$this->nextLexeme = self::GENERATOR_START_TOKEN;
+						else if ($curChar . $nextChar == self::CONDITERATOR_START_TOKEN) {
+							$this->nextToken = self::CONDITERATOR_START_TOKEN;
+							$this->nextLexeme = self::CONDITERATOR_START_TOKEN;
 							$this->advanceChar(2);
 							
-							$this->pushMode(self::GENERATOR_MODE);
+							$this->pushMode(self::CONDITERATOR_MODE);
 						}
 						else {
-							while (!$this->eof && ($curChar != self::TILDE_TOKEN) && ($curChar . $nextChar != self::GENERATOR_START_TOKEN)) {
+							while (!$this->eof && ($curChar != self::TILDE_TOKEN) && ($curChar . $nextChar != self::CONDITERATOR_START_TOKEN)) {
 								$chars[] = $curChar;
 								$curChar = $this->skipSlash($this->advanceChar(), $chars);
 								$nextChar = $this->nextChar();

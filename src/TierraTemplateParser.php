@@ -121,11 +121,11 @@
 						$this->tokenizer->match(TierraTemplateTokenizer::BLOCK_END_TOKEN);
 						break;
 						
-					case TierraTemplateTokenizer::GENERATOR_START_TOKEN:
-						$this->tokenizer->matchIf(TierraTemplateTokenizer::GENERATOR_START_TOKEN);
-						if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::GENERATOR_END_TOKEN))
+					case TierraTemplateTokenizer::CONDITERATOR_START_TOKEN:
+						$this->tokenizer->matchIf(TierraTemplateTokenizer::CONDITERATOR_START_TOKEN);
+						if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::CONDITERATOR_END_TOKEN))
 							$this->ast->addNode($this->conditeratorNode());
-						$this->tokenizer->match(TierraTemplateTokenizer::GENERATOR_END_TOKEN);
+						$this->tokenizer->match(TierraTemplateTokenizer::CONDITERATOR_END_TOKEN);
 						break;
 						
 					case TierraTemplateTokenizer::CODE_START_TOKEN:
@@ -441,10 +441,10 @@
 								$node->outputItems[] = $this->conditeratorNode();
 							$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_BRACE_TOKEN);
 						}
-						else if ($this->tokenizer->matchIf(TierraTemplateTokenizer::GENERATOR_START_TOKEN)) {
-							if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::GENERATOR_END_TOKEN))
+						else if ($this->tokenizer->matchIf(TierraTemplateTokenizer::CONDITERATOR_START_TOKEN)) {
+							if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::CONDITERATOR_END_TOKEN))
 								$node->outputItems[] = $this->conditeratorNode();
-							$this->tokenizer->match(TierraTemplateTokenizer::GENERATOR_END_TOKEN);
+							$this->tokenizer->match(TierraTemplateTokenizer::CONDITERATOR_END_TOKEN);
 						}
 						else {
 							$item = new TierraTemplateASTNode(TierraTemplateASTNode::LITERAL_NODE);
@@ -465,10 +465,10 @@
 						if ($this->tokenizer->getNextToken() == TierraTemplateTokenizer::TILDE_TOKEN) {
 							break;
 						}
-						else if ($this->tokenizer->matchIf(TierraTemplateTokenizer::GENERATOR_START_TOKEN)) {
-							if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::GENERATOR_END_TOKEN))
+						else if ($this->tokenizer->matchIf(TierraTemplateTokenizer::CONDITERATOR_START_TOKEN)) {
+							if (!$this->tokenizer->nextIs(TierraTemplateTokenizer::CONDITERATOR_END_TOKEN))
 								$node->outputItems[] = $this->conditeratorNode();
-							$this->tokenizer->match(TierraTemplateTokenizer::GENERATOR_END_TOKEN);
+							$this->tokenizer->match(TierraTemplateTokenizer::CONDITERATOR_END_TOKEN);
 						}
 						else {
 							$item = new TierraTemplateASTNode(TierraTemplateASTNode::LITERAL_NODE);
@@ -512,7 +512,7 @@
 		
 		private function conditeratorNode() {
 			
-			$node = new TierraTemplateASTNode(TierraTemplateASTNode::GENERATOR_NODE);
+			$node = new TierraTemplateASTNode(TierraTemplateASTNode::CONDITERATOR_NODE);
 			
 			// conditerator heads are optional if there is a conditional
 			$node->expression = $this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN) ? false : $this->expressionNode();
@@ -549,14 +549,14 @@
 		}
 		
 		private function conditionalconditeratorNode() {
-			$node = new TierraTemplateASTNode(TierraTemplateASTNode::CONDITIONAL_GENERATOR_NODE);
+			$node = new TierraTemplateASTNode(TierraTemplateASTNode::CONDITIONAL_CONDITERATOR_NODE);
 			$node->elements = array();
 			
 			for ($i=0; $i<3; $i++) {
 				$hasParen = $this->tokenizer->nextIs(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
 				$this->tokenizer->matchIf(TierraTemplateTokenizer::LEFT_PAREN_TOKEN);
 
-				if ($this->tokenizer->nextIn(array(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN, TierraTemplateTokenizer::ELSE_TOKEN, TierraTemplateTokenizer::RIGHT_BRACE_TOKEN, TierraTemplateTokenizer::GENERATOR_END_TOKEN))) {
+				if ($this->tokenizer->nextIn(array(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN, TierraTemplateTokenizer::ELSE_TOKEN, TierraTemplateTokenizer::RIGHT_BRACE_TOKEN, TierraTemplateTokenizer::CONDITERATOR_END_TOKEN))) {
 					if ($hasParen)
 						$this->tokenizer->match(TierraTemplateTokenizer::RIGHT_PAREN_TOKEN);
 					break;

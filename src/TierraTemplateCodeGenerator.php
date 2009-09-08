@@ -101,7 +101,7 @@
 						$code = $this->emitBlock($node);
 						break;
 						
-					case TierraTemplateASTNode::GENERATOR_NODE:
+					case TierraTemplateASTNode::CONDITERATOR_NODE:
 						$code = $this->emitConditerator($node);
 						break;
 						
@@ -541,7 +541,7 @@
 				$haveConditerator = false;
 				$haveConditionalConditerator = false;
 				foreach ($node->outputItems as $item) {
-					if ($item->type == TierraTemplateASTNode::GENERATOR_NODE) {
+					if ($item->type == TierraTemplateASTNode::CONDITERATOR_NODE) {
 						$haveConditerator = true;
 						if ($item->ifTrue || $item->ifFalse)
 							$haveConditionalConditerator = true;
@@ -551,7 +551,7 @@
 				}
 				
 				foreach ($node->outputItems as $item) {
-					if ($item->type == TierraTemplateASTNode::GENERATOR_NODE) {
+					if ($item->type == TierraTemplateASTNode::CONDITERATOR_NODE) {
 						if ($item->ifTrue || $item->ifFalse) {
 							$code[] = $this->emitConditerator($item);
 						}

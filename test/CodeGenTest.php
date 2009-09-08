@@ -255,7 +255,7 @@ HTML;
 		
 		public function testConditeratorWithTemplateAssignment() {
 			$src = "{@ foo = `bar {baz ? bam} boom` @}";
-			self::checkEmit($src, "<?php if (!function_exists('otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e')) { function otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e(\$__template) { ob_start(); echo 'bar '; if (\$__template->__runtime->startConditerator(\$__template->__runtime->identifier('baz'))) { do { \$__template->__request->output(\$__template->__runtime->identifier('bam')); } while (\$__template->__runtime->loop()); } \$__template->__runtime->endConditerator(); echo ' boom'; \$__output = ob_get_contents(); ob_end_clean(); return \$__output;} }; \$this->__request->output(\$this->__request->setVar('foo', otf_96ee959a0a4f10f5f569fdddcd090e4fe9982c9e(\$this)));", "Conditerator with template assignment");
+			self::checkEmit($src, "<?php if (!function_exists('otf_d62ad31c69028b589111e50b50ad0f443cf105a1')) { function otf_d62ad31c69028b589111e50b50ad0f443cf105a1(\$__template) { ob_start(); echo 'bar '; if (\$__template->__runtime->startConditerator(\$__template->__runtime->identifier('baz'))) { do { \$__template->__request->output(\$__template->__runtime->identifier('bam')); } while (\$__template->__runtime->loop()); } \$__template->__runtime->endConditerator(); echo ' boom'; \$__output = ob_get_contents(); ob_end_clean(); return \$__output;} }; \$this->__request->output(\$this->__request->setVar('foo', otf_d62ad31c69028b589111e50b50ad0f443cf105a1(\$this)));", "Conditerator with template assignment");
 		}
 		
 		public function testConditeratorWithNoOutput() {
