@@ -120,6 +120,8 @@
 		}
 		
 		public function uri($startIndex=0, $length=false) {
+			$addSlash = ($startIndex == 0);
+			
 			$parts = explode("/", $this->getParam("REQUEST_URI", "/", "server"));
 			array_shift($parts);
 			$numParts = count($parts);
@@ -131,7 +133,7 @@
 			if ($length === false)
 				$length = $numParts;
 
-			return ($startIndex == 0 ? "/" : "") . implode("/", array_slice($parts, $startIndex, $length));
+			return ($addSlash ? "/" : "") . implode("/", array_slice($parts, $startIndex, $length));
 		}
 		
 		public function getParam($name, $default=false, $from="request") {

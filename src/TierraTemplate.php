@@ -22,6 +22,7 @@
 	
 	class TierraTemplate {
 		
+		public $__foundTemplate;
 		public $__options;
 		public $__templateFile;
 		public $__baseTemplateDir;
@@ -57,10 +58,16 @@
 			$cachedTemplateInfo = @stat($this->__cachedTemplatePath);
 			
 			$useCachedTemplate = $this->getOption("readFromCache", true) && ($cachedTemplateInfo !== false) && ($cachedTemplateInfo['mtime'] > $rawTemplateInfo['mtime']);
-						
+
+			$this->__foundTemplate = ($rawTemplatePath !== false) || $useCachedTemplate;
+			
 			if (!$useCachedTemplate) {
-				if (!$rawTemplateInfo)
-					throw new TierraTemplateException("Template not found: {$templateFile}");
+				if (!$rawTemplateInfo) {
+					if ($this->getOption("throwTemplateNotFoundException", false))
+						throw new TierraTemplateException("Template not found: {$templateFile}");
+					return;
+				}
+				
 				$templateContents = @file_get_contents($rawTemplatePath);
 				if ($templateContents === false)
 					throw new TierraTemplateException("Cannot read template: {$rawTemplatePath}");
@@ -168,6 +175,10 @@
 			unset($this->__request->$name);
 		}
 		
+		public function foundTemplate() {
+			return $this->__foundTemplate;
+		}
+		
 		public function setVars($map) {
 			$this->__request->setVars($map);
 		}
@@ -177,7 +188,7 @@
 		}
 		
 		public function render() {
-			if ($this->__cachedTemplatePath)
+			if ($this->__foundTemplate && $this->__cachedTemplatePath)
 				include $this->__cachedTemplatePath;
 		}
 		
