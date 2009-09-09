@@ -284,7 +284,7 @@
 		public function emitCode($node) {
 			if ($node->code->type == TierraTemplateASTNode::MULTI_EXPRESSION_NODE) {
 				$code = array();
-				foreach ($node->code as $expression)
+				foreach ($node->code->expressions as $expression)
 					$code[] = $this->emitExpression($expression) . ";";
 				return implode(" ", $code);
 			}

@@ -60,7 +60,7 @@
 						
 			if (!$useCachedTemplate) {
 				if (!$rawTemplateInfo)
-					throw new TierraTemplateException("Template not found: {$rawTemplatePath}");
+					throw new TierraTemplateException("Template not found: {$templateFile}");
 				$templateContents = @file_get_contents($rawTemplatePath);
 				if ($templateContents === false)
 					throw new TierraTemplateException("Cannot read template: {$rawTemplatePath}");
@@ -216,7 +216,7 @@
 			if (substr($templateFile, 0, 1) == "/")
 				$templateFile = substr($templateFile, 1);
 			else 
-				$templateFile = dirname($this->$templateFile) . "/" . $templateFile;
+				$templateFile = dirname($this->__templateFile) . "/" . $templateFile;
 				
 			$info = pathinfo($templateFile);
 			if (!isset($info["extension"]) && $this->getOption("addMissingTemplateExtension", true))

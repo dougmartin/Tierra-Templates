@@ -230,8 +230,8 @@
 		private function expressionNode() {
 			$expressions[] = $this->expressionOperatorNode(0);
 			while ($this->tokenizer->matchIf(TierraTemplateTokenizer::SEMICOLON_TOKEN)) {
-				// for valueless conditerators
-				if ($this->tokenizer->nextIs(TierraTemplateTokenizer::IF_TOKEN))
+				// for valueless conditerators and empty statements
+				if ($this->tokenizer->nextIn(array(TierraTemplateTokenizer::IF_TOKEN, TierraTemplateTokenizer::CONDITERATOR_END_TOKEN, TierraTemplateTokenizer::CODE_END_TOKEN)))
 					break;
 				$expressions[] = $this->expressionOperatorNode(0);
 			}
