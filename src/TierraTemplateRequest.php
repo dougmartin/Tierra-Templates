@@ -119,6 +119,21 @@
 			return $this->__guids[$vary];
 		}
 		
+		public function uri($startIndex=0, $length=false) {
+			$parts = explode("/", $this->getParam("REQUEST_URI", "/", "server"));
+			array_shift($parts);
+			$numParts = count($parts);
+			if ($startIndex < 0)
+				$startIndex = max($numParts + $startIndex, 0);
+			else
+				$startIndex = min($startIndex, $numParts - 1);
+				
+			if ($length === false)
+				$length = $numParts;
+
+			return ($startIndex == 0 ? "/" : "") . implode("/", array_slice($parts, $startIndex, $length));
+		}
+		
 		public function getParam($name, $default=false, $from="request") {
 			$source = $this->getSetting($from);
 			if ($source)
