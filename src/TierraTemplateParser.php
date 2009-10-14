@@ -271,8 +271,8 @@
 								$rightNode->params = array();
 							}
 							
-							if (($op == TierraTemplateTokenizer::COLON_TOKEN) && ($rightNode->type != TierraTemplateASTNode::FUNCTION_CALL_NODE))
-								throw new TierraTemplateException("Right hand side of a function chain operator (:) needs to be a function");
+							if (($op == TierraTemplateTokenizer::COLON_TOKEN) && !in_array($rightNode->type, array(TierraTemplateASTNode::FUNCTION_CALL_NODE, TierraTemplateASTNode::OPERATOR_NODE, TierraTemplateASTNode::LITERAL_NODE)))
+								throw new TierraTemplateException("Right hand side of a function chain operator (:) needs to be a function or limit");
 							
 							$leftNode = new TierraTemplateASTNode(TierraTemplateASTNode::OPERATOR_NODE, array("op" => $op, "leftNode" => $leftNode, "rightNode" => $rightNode, "binary" => true));
 						}
