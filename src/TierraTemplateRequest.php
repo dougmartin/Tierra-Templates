@@ -59,6 +59,8 @@
 		}
 		
 		public function output($text) {
+			if (!is_string($text))
+				$text = json_encode($text);
 			$escapeSetting = $this->getEscapeSetting();
 			echo $escapeSetting["escape"] ? htmlspecialchars($text) : $text;
 			if ($escapeSetting["autoPop"])

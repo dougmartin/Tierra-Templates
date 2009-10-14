@@ -122,7 +122,7 @@
 		}
 		
 		public function startConditerator($expression) {
-			$this->currentFrame = new TierraTemplateStackFrame($expression);
+			$this->currentFrame = new TierraTemplateStackFrame($expression, $this->currentFrame);
 			$this->stackFrame[] = $this->currentFrame;
 			
 			$result = false;
