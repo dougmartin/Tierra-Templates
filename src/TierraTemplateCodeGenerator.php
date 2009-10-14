@@ -165,6 +165,14 @@
 						$code[] = "}";
 					break;
 					
+				case "rawinclude":
+					if (isset($node->conditional))
+						$code[] = "if (" . $this->emitExpression($node->conditional) . ") {";
+					$code[] = "\$this->rawInclude(" . $this->emitExpression($node->filename) . ");";
+					if (isset($node->conditional))
+						$code[] = "}";
+					break;
+					
 				case "echo":
 					if (isset($node->conditional))
 						$code[] = "if (" . $this->emitExpression($node->conditional) . ") {";

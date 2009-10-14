@@ -342,4 +342,8 @@ HTML;
 		public function testAssignRequestAttr() {
 			self::checkEmit("{@ request.foo = 1; foo @}", "<?php \$this->__request->setVar('foo', 1); \$this->__request->output(\$this->__runtime->identifier('foo'));", "Assign request attribute");
 		}	
+		
+		public function testRawInclude() {
+			self::checkEmit("[@ rawinclude 'foo' @]", "<?php \$this->rawInclude('foo');", "Raw include");
+		}
 	}

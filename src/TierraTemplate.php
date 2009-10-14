@@ -238,6 +238,14 @@
 			$includedTemplate = self::LoadTemplate($this->__options);
 			$includedTemplate->render();
 		}	
+		
+		public function rawInclude($filename) {
+			
+			if (($filename === false) || ($filename == ""))
+				throw new TierraTemplateException("No filename given in rawinclude");
+				
+			echo @file_get_contents($filename);
+		}			
 
 	}
 	

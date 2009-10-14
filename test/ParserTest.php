@@ -461,6 +461,11 @@ SRC;
 			$src = "<@ foo @>";
 			self::checkSyntax($src, "Code block");
 		}
+		
+		public function testRawInclude() {
+			$src = "[@ rawinclude 'foo' @]";
+			self::checkSyntax($src, "Raw include");
+		}
 				
 
 	}

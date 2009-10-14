@@ -257,6 +257,13 @@
 		public function testChanged() {
 			$this->checkOutput("{@ foo = 'bar'; `baz{foo}` if true @}", "bazbar");
 		}
+		
+		public function testRawInclude() {
+			$this->checkOutput("[@ rawinclude 'includes/rawinclude.txt' @]", "This is a raw include");
+		}
 
+		public function testRawIncludeUrl() {
+			$this->checkOutput("[@ rawinclude 'http://tierratemplates.com/favicon.ico' @]", base64_decode("AAABAAEAEBAAAAEAGABoAwAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAABMLAAATCwAAAAAAAAAAAAD/+v3//v///v/7//+5wcF5hYVpendnendyeoGIk5emtrXI2dXz//74//z/+/3//P///v///v/p6+xrb3A/R0dBS0tlcXF6iIeTlp6QmZ2eqqqgr6u9y8fr8u///v/89vv5/v3m6+peY2JCRkcaHyBJTk+jqKvW297f3ufCxcqyurqWoZ6Pmpe8xcLq7/D6/f/6//5ob2wrMTApLS6FiYrq6+/9/v/39/3y7/j9/f/w9PXAx8SLlJF+iYa0vr71/v++xcAvNjEmKyl8gYD5+/z9/f///f9dWmNLSlPs7PL9///z9vTAxcN4f3yGkJDM2Np6fHYoKiQ7Pjzs7u78/f/7/v/z9f1TVF4rMTjz9/z9//////7x8vCVmJaBhoe1vL9NSkIqJiF8eXX////3+v76/f/4/f9LUVw1QUfw+f3w9PX///7///7Mysmpq6y4u78+NC0jGxSloJ39+/v7/v/2/P/0/f9MVmAoO0Du+v76//////7/+vn07+7a19nGxck6LC4wJCKjmpb+/PT///z2+f34+/9PU2Y2O0r4+//6+//9/P//+v3/9vD56Nv/69pURkcqHhx8dnH8+fT9//+5v8aaobA8Q1YhMUKNmqiqs7z7//////v//PH99Oby6NeOgX8tIh4xKybn5eT2+vtJUFkbJDIUHjAOJjgQIzBIVFbr8Of///Xw7tzu69zw7+Hi19NNREAzLitlY2P4+//a4OfEzde/yNW7y9u9yc/S08////T16tbp38307+D+/PL/+/bKxL9gW1ovKitnZGbo6uv2+Pn7////+/////z/+u7/8Nvn0Lry3s3/8ej//vr//fn///zY09KWkZCNhoOGf3bd1cj2797//O3028vdwq7hxrHky7f35Nf/9vD//v79//729/X//v/u5eLk18/GtqXQwKPg0KznyabkyKbjy6/s18H15tb//PP///z//v76///7/f3//v///vr/8uX548ry27Xv2Kry1KPu1anx3rv/+OD///X8//r0+vn2//8AAPADAAAIAAAAAAAAAP//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"));
+		}
 	}
 	

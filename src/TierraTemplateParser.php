@@ -177,6 +177,10 @@
 					// nothing to do here
 					break;
 					
+				case "rawinclude":
+					$node->filename = $this->expressionNode();
+					break;
+					
 				default:
 					$this->tokenizer->matchError("Unknown block command - '{$node->command}'");
 			}
