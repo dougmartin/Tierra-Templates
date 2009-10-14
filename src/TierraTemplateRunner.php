@@ -37,6 +37,8 @@
 				self::$options = $filteredOptions;
 				  
 			self::$request = new TierraTemplateRequest(self::$options);
+			
+			self::runHook("onRequestCreated");
 				
 			// validate the options
 			if (!isset(self::$options["baseTemplateDir"]))
@@ -64,9 +66,16 @@
 					self::$finalUri .= ".html";	
 			}
 			
-			if ($filteredTemplatePath = self::runHook("filterTemplatePath", self::$templatePath))
-				self::$templatePath = self::getRealpath($filteredTemplatePath);
-			
+			if ($filteredTemplatePath = self::runHook("filterTemplatePath", self::$templatePath)) {
+				self::$finalUri = $filteredTemplatePath; 
+				self::$templatePath = self::getRealpath(self::$options["baseTemplateDir"] . self::$finalUri);
+				if (!self::$templatePath) {
+					self::$templatePath = self::getRealpath(self::$options["baseTemplateDir"] . self::$finalUri . ".html");
+					if (self::$templatePath)
+						self::$finalUri .= ".html";	
+				}
+			}
+				
 			// if the template is not found look for the 404 template
 			if (self::$templatePath === false) {
 				if (!self::runHook("onSet404Header"))

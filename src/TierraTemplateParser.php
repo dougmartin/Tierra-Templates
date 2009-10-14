@@ -151,7 +151,7 @@
 		
 		private function blockNode() {
 			$node = new TierraTemplateASTNode(TierraTemplateASTNode::BLOCK_NODE);
-			$node->command = strtolower($this->tokenizer->match(TierraTemplateTokenizer::IDENTIFIER_TOKEN, "Expected block command"));
+			$node->command = strtolower($this->tokenizer->matches(array(TierraTemplateTokenizer::IDENTIFIER_TOKEN, TierraTemplateTokenizer::ELSE_TOKEN), "Expected block command"));
 			$node->blockName = false;
 			
 			switch ($node->command) {
@@ -270,6 +270,9 @@
 								unset($rightNode->identifier);
 								$rightNode->params = array();
 							}
+							
+							if (($op == TierraTemplateTokenizer::COLON_TOKEN) && ($rightNode->type != TierraTemplateASTNode::FUNCTION_CALL_NODE))
+								throw new TierraTemplateException("Right hand side of a function chain operator (:) needs to be a function");
 							
 							$leftNode = new TierraTemplateASTNode(TierraTemplateASTNode::OPERATOR_NODE, array("op" => $op, "leftNode" => $leftNode, "rightNode" => $rightNode, "binary" => true));
 						}
@@ -497,7 +500,7 @@
 					break;
 					
 				default:
-					$this->tokenizer->matchError("Expected value not found");
+					$this->tokenizer->matchError("Expected value not found - found " . $this->tokenizer->getNextToken());
 					break;
 			}
 			

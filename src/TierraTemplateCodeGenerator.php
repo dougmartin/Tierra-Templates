@@ -186,13 +186,40 @@
 					break;
 					
 				case "else":
+					
+					$previousNode = array_pop($this->blockStack);
+					$node->blockName = $previousNode->blockName;
+					 
+					switch ($previousNode->command) {
+						case "else":
+						case "start":
+							if ($node->blockName !== false) {
+								// saved the buffered blocks in child templates
+								if ($this->isChildTemplate) {
+									$code[] = "\$this->__request->setBlock('{$node->blockName}', ob_get_contents()); ob_end_clean();";
+									// output blocks within blocks so it is buffered in the outer block
+									if ((count($this->blockStack) > 0) && $node->blockName)
+										$code[] = "\$this->__request->echoBlock('{$node->blockName}');";
+								}
+								$code[] = "}";
+							}
+							break;
+							
+						case "prepend":
+						case "append":
+						case "set":
+							$code[] = "\$this->__request->{$previousNode->command}Block('{$node->blockName}', ob_get_contents()); ob_end_clean();";
+							if (!$this->isChildTemplate)
+								$code[] = "\$this->__request->echoBlock('{$node->blockName}');";
+							break;
+					}
+										
 					if (isset($node->conditional))
 						$code[] = "} elseif (" . $this->emitExpression($node->conditional) . ") {";
 					else
 						$code[] = "} else {";
 						
 					// replace the previous block
-					array_pop($this->blockStack);
 					$this->blockStack[] = $node;
 					break;
 					
@@ -246,6 +273,9 @@
 						$code[] = $decoratorCode;
 				}
 				
+				if ($openingBlock->command == "else")
+					$code[] = "}";
+					
 				switch ($openingBlock->command) {
 					case "else":
 					case "start":
@@ -351,6 +381,11 @@
 							break;
 							
 						case TierraTemplateTokenizer::LEFT_BRACKET_TOKEN:
+							$leftExpression = $this->emitExpression($node->leftNode);
+							$rightExpression = $this->emitExpression($node->rightNode);
+							$code[] = "\$this->__runtime->attr({$leftExpression}, {$rightExpression})";
+							break;
+							
 						case TierraTemplateTokenizer::DOT_TOKEN:
 							$leftExpression = $this->emitExpression($node->leftNode);
 							$rightExpression = ($node->rightNode->type == TierraTemplateASTNode::IDENTIFIER_NODE ? "'{$node->rightNode->identifier}'" : $this->emitExpression($node->rightNode)); 

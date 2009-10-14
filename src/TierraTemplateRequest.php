@@ -136,20 +136,34 @@
 			return ($addSlash ? "/" : "") . implode("/", array_slice($parts, $startIndex, $length));
 		}
 		
-		public function getParam($name, $default=false, $from="request") {
+		public function getParam($name, $default=false, $from="request", $trim=true) {
 			$source = $this->getSetting($from);
+			$value = $default;
 			if ($source)
-				return isset($source[$name]) ? $source[$name] : $default; 
-			return $default;
+				$value = isset($source[$name]) ? $source[$name] : (isset($source->$name) ? $source->$name : $default); 
+			return $trim ? trim($value) : $value;
 		}
 		
 		public function setParam($name, $value, $to="request") {
-			return $this->__settings[$to][$name] = $value;
+			if (is_object($this->__settings[$to]))
+				return $this->__settings[$to]->$name = $value;
+			else
+				return $this->__settings[$to][$name] = $value;
 		}
 		
-		public function getParams($from="request") {
+		public function getParams($names=false, $from="request", $trim=true) {
 			$source = $this->getSetting($from);
-			return $source ? array_slice($source, 0) : array();
+			if ($names === false)
+				return $source ? array_slice($source, 0) : array();
+				
+			$values = array();
+			foreach ($names as $name => $value) {
+				$key = is_int($name) ? $value : $name;
+				$default = is_int($name) ? $value : false;
+				$value = isset($source[$key]) ? $source[$key] : (isset($source->$key) ? $source->$key : $default);
+				$values[] = $trim ? trim($value) : $value;
+			}
+			return $values;
 		}
 		
 		public function setVar($name, $value, $attrs=array()) {
@@ -263,6 +277,14 @@
 		
 		function redirect($url) {
 			header("Location: {$url}");
+		}
+		
+		function redirectToReferrer() {
+			if (!isset($_SERVER["HTTP_REFERER"]))
+				return;
+			$parts = parse_url($_SERVER["HTTP_REFERER"]);
+			if ($parts["path"] != $_SERVER["REQUEST_URI"])
+				header("Location: " . $_SERVER["HTTP_REFERER"]);
 		}
 		
 		function reload() {
