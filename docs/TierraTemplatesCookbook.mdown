@@ -1,0 +1,63 @@
+Tierra Templates Cookbook
+=========================
+
+**How do I assign a variable?**
+
+	<@ foo = "Hello, world" @>
+
+**How do I truncate text?**
+
+
+
+	{@ "Hello, world":truncate(5) @}
+	=> Hello
+	
+	{@ "Hello, world":truncate(3) @}
+	=> Hello
+	
+**How do I truncate HTML?**
+
+	{@ "<b>Hello, world</b>":truncateHTML(5) @}
+	=> Hello
+
+**How do I chain function calls?**  
+**How do I make the page title dynamic?**  
+**How do I add a custom style rule from a child page?**  
+**How can I customize a sidebar for a section of my site?**  
+**How can I loop with a loop?**  
+**How do I call functions from within a template?**  
+**How can I use constants within a template?**  
+**How can I cache a fragment of a page?**  
+**How can I cache an entire page?**  
+**How can I cache different content per user?**  
+**How do I use conditionals with conditerators?**  
+**How can I wrap a loop with html?**  
+**How do I use variables in strings?**  
+**How do I access array elements within a loop?**  
+**How do I stripe a table?**  
+**How can I select a portion of an array?**  
+**What is "false" in a conditerator?**  
+**How do I turn off auto escaping of html?**  
+**Can I use any php function in a template?**  
+**Can I embed php code directly in a template?**  
+**What is a virtual directory? How do I set one up?**  
+**What operators are available?**  
+**Does the operator precedence match PHP's operator precedence?**  
+**What happens to html outside of a block in a child template?**  
+**How can I add a comment?**  
+**How can I comment out template code?**  
+**How is the template code cached?**  
+**Where can I see the compiled template code?**  
+**How can I conditionally include a block of code/html?**
+
+Full Examples
+-------------
+
+Output a list of blog posts
+
+Output a list of A to Z links
+
+
+
+
+

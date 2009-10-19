@@ -1,0 +1,278 @@
+Tierra Templates Notes
+======================
+
+Setting variables
+-----------------
+Variables don't start with `$` like PHP  
+
+	<@ foo = 'bar' @>  
+	or  
+	{@ foo = 'bar' ? @}  
+	
+Printing a variable
+-------------------  
+	{@ foo @}
+	
+Conditionals + Iterators = Conditerators!
+-----------------------------------------
+	* {@ “foo” @}  
+	=> foo
+
+	* {@ bar = false; “foo” if bar else “bam” @}   
+	=> bam
+
+	* {@ bar = 1; “foo” if ((bar * 3) < 2) ? bar else if ((bar * 3 < 10) “bam” else “boom” @}   
+	=> bam
+
+	* {@ bar = 1; if bar < 2 ? “foo” else “bam” @}   
+	=> foo
+	
+	* {@ [1,2,3,4] ? $ @}    
+	=> 1234
+	
+	* {@ [1,2,3,4] ? “Numbers: ” $ @}    
+	=> Numbers: 1234
+	
+	* {@ [1,2,3,4] ? “” $ ” – after” @}  
+	=> 1234 – after
+	
+	* {@ [1,2,3,4] ? “foo” @}   
+		=> foofoofoofoo
+
+	* {@ [1,2,3,4] ? `<p>{$}</p>` @}   
+		=> <p>1</p><p>2</p><p>3</p><p>4</p>
+
+	* {@ [[1,2,3],4,[5,6]] ? (count($) > 1 ? “foo” else $) @}   
+		=> foo4foo
+
+**Special Variables in Conditerators**  
+  
+	"previous" - previous value in the loop, returns false if it's the first item
+
+	"next" - next value in the loop, returns false if it's the last item
+
+	"0" - the zero-based loop index
+
+	"end0" - the zero-based last loop index
+
+	"1" - the loop index where the first is 1
+
+	"end1" - the last loop index where the first is 1
+
+	"key" - the key for the array
+
+	"first" - the first value of the array
+
+	"last" - the last value of the array
+
+	"even" - is the loop index even?
+
+	"odd" - is the loop index odd?
+
+	"count" - the number of elements in the array
+
+Includes
+--------
+	[@ include "/template_file" @]  
+	[@ include "/subdirectory_in_template_root/template_file" @]
+	
+	[@ include function_returning_template_name() @]
+	[@ include function_returning_a_template_object() @]
+	[@ include variable_holding_a_template_name @]
+
+Extending a Template
+--------------------
+	[@ extends "_page.html" @]
+	
+	[@ extends function_returning_template_name() @]
+	[@ extends function_returning_a_template_object() @]
+	[@ extends variable_holding_a_template_name @]
+
+* Inherits all variables from the parent template
+* Can change the value of any variable in the parent template
+
+Blocks
+------  
+base template  
+
+	<html>
+	  <head><title>Example.com {@ pageTitle ? `- {$}` @}</title></head>
+	  <body>
+	    [@ start content @]
+	      this is the default content
+	    [@ end content @]
+	  </body>
+	</html>
+	
+child template  
+
+	[@ extends "_page.html" @]
+	<@ pageTitle = "Homepage" @>
+	[@ start content @]
+	  Welcome to example.com!
+	[@ end content @]  
+	
+yields  
+	
+	<html>
+	  <head><title>Example.com - Homepage</title></head>
+	  <body>
+	    Welcome to example.com!
+	  </body>
+	</html>
+	
+**Prepending and Appending Blocks**  
+  
+base template
+
+	<html>
+	  <head>
+	    [@ prepend pageHead @]
+	      <title>Test</title>
+	    [@ end pageHead @]
+	  </head>
+	</html>
+	
+child template
+
+	[@ extends "_page.html" @]
+
+	[@ prepend pageHead @]
+	  <style>
+	    a {text-decoration: none; }
+	  </style>
+	[@ end pageHead @]
+	
+yields  
+
+	<head>
+	  <title>Test</title>
+	  <style>
+	    a {text-decoration: none; }
+	  </style>
+	</head>
+
+**Echoing Blocks**  
+
+	[@ echo content @]  
+
+instead of  
+
+	[@ start content @][@ end content @]
+
+**Conditional Blocks**  
+
+	<@ userLevel = getUserLevel() @>
+	[@ start if userLevel == "admin" @]
+	  you are an admin
+	[@ else if (userLevel == "editor") || (userLevel == "copyeditor") @]
+	  you are an editor or copy editor
+	[@ else @]
+	  you are a normal user
+	[@ end @]
+
+**Block Decorators**
+
+	[@ start sidebar do memcache({for: "30 minutes", vary: "session['user_id']"}) @]
+	  {@ runHugeQueryToGetSidebarLinks() ? "<ul>" `<li><a href="{link}">{text}</a></li>` "</ul>" @}
+	[@ end sidebar @]
+
+**Custom Block Decorators**  
+
+custom function
+
+
+	function addHtmlCommentDecorator($context, $comment) {
+	  if (!$context["guard"])
+	    return "";
+	  return "<!-- " . ($context["isStart"] ? "start" : "end") . " {$comment} -->";
+	}
+
+usage
+
+	[@ start copyright do addHtmlComment("copyright") @] &copy; {@ date("Y") @} [@ end copyright @]
+	
+yields
+
+	<!-- start copyright --> &copy; 2009 <!-- end copyright -->
+
+to override
+
+	[@ start copyright do remove addHtmlComment @]
+	  &copy; {@ date("Y") @}
+	[@ end sidebar @]
+	
+running a block decorator on the whole page
+
+	[@ page do memcache({for: "until midnight", vary: "get, session['username']"}), addHtmlComment("page") @]
+	
+Built in Functions
+------------------
+
+Functions can be used as a filter with the : character, eg:  
+
+	{@ foo:truncate(100) @}  
+
+Filters automatically pass the
+value of the variable as the first parameter.  You can also chain functions together using the : character, eg:  
+
+	{@ foo = "this is a test"; foo:replace("test", "real test"):truncate(100): @}.  
+
+
+Truncate($text, $max_length = -1, $more = "...")
+
+TruncateHTML($text, $max_length = -1, $more = "...")
+
+DateFormat($date, $format)
+
+EscapeQuotes($text)
+
+EscapeSingleQuotes($text)
+
+EscapeDoubleQuotes($text)
+
+Replace($subject, $search, $replace)
+
+UTF8($text)
+
+nl2brmerge($text)
+
+wrap($text, $start, $end, $find=false)
+
+idify($text, $replaceSpace="_")
+
+concat()
+
+Lorem($count)
+
+AnyNonEmptyStrings()
+
+AnySet()
+
+AllSet()
+
+Set($var)
+
+JSON($var)
+
+Hashify($var, $index)
+
+Total($var)
+
+Sum()
+
+RandomPick($array, $count=1)
+
+slice($array, $offset, $length=false)
+
+select($val, $options)
+
+filter($vals, $on, $options)
+
+find($val, $options)
+
+FlipACoin()
+
+Coalesce()
+
+Pluralize($var, $forOne, $forMany)
