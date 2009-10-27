@@ -20,9 +20,11 @@
 			#header {
 				margin: 10px 0 0 10px;
 			}
-			#input,
-			#output {
+			#input {
 				margin: 10px;
+			}
+			#output {
+				margin: 10px 10px 10px 0;
 			}
 			textarea#code {
 				height: 700px;
@@ -37,7 +39,7 @@
 	</head>
 	<body>
 		<form name="template" method="post">
-			<table width="100%" height="100%">
+			<table width="100%">
 				<tr>
 					<td width="50%" valign="top">
 						<div id="header">
