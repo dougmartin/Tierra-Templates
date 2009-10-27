@@ -15,34 +15,34 @@ Printing a variable
 	
 Conditionals + Iterators = Conditerators!
 -----------------------------------------
-* {@ “foo” @}  
+* {@ "foo" @}  
 => foo
 
-* {@ bar = false; “foo” if bar else “bam” @}   
+* {@ bar = false; "foo" if bar else "bam" @}   
 => bam
 
-* {@ bar = 1; “foo” if ((bar * 3) < 2) ? bar else if ((bar * 3 < 10) “bam” else “boom” @}   
+* {@ bar = 1; "foo" if ((bar * 3) < 2) ? bar else if ((bar * 3 < 10) "bam" else "boom" @}   
 => bam
 
-* {@ bar = 1; if bar < 2 ? “foo” else “bam” @}   
+* {@ bar = 1; if bar < 2 ? "foo" else "bam" @}   
 => foo
 
 * {@ [1,2,3,4] ? $ @}    
 => 1234
 
-* {@ [1,2,3,4] ? “Numbers: ” $ @}    
+* {@ [1,2,3,4] ? "Numbers: " $ @}    
 => Numbers: 1234
 
-* {@ [1,2,3,4] ? “” $ ” – after” @}  
+* {@ [1,2,3,4] ? "" $ " – after" @}  
 => 1234 – after
 
-* {@ [1,2,3,4] ? “foo” @}   
+* {@ [1,2,3,4] ? "foo" @}   
 	=> foofoofoofoo
 
 * {@ [1,2,3,4] ? `<p>{$}</p>` @}   
 	=> <p>1</p><p>2</p><p>3</p><p>4</p>
 
-* {@ [[1,2,3],4,[5,6]] ? (count($) > 1 ? “foo” else $) @}   
+* {@ [[1,2,3],4,[5,6]] ? (count($) > 1 ? "foo" else $) @}   
 	=> foo4foo
 
 **Special Variables in Conditerators**  
