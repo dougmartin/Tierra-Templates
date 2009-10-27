@@ -4,7 +4,13 @@
 	$output = "";
 	$code = isset($_POST["code"]) ? $_POST["code"] : false;
 	if ($code !== false) {
-		$output = "<div id='results-body'>" . TierraTemplate::GetDynamicTemplateOutput($code) . "</div>";
+		try {
+			$output = TierraTemplate::GetDynamicTemplateOutput($code);
+		}
+		catch (Exception $e) {
+			$output = "Oops! " . $e->getMessage();
+		}
+		$output = "<div id='results-body'>{$output}</div>";
 	}
 ?>
 <html>
