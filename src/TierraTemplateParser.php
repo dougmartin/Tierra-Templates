@@ -14,6 +14,9 @@
 	 * 
 	 */
 
+	// set the xdebug max nesting depth higher for recursive calls into expressionOperatorNode()
+	ini_set("xdebug.max_nesting_level", 1024);
+	 
 	require_once dirname(__FILE__) . "/TierraTemplateTokenizer.php";
 	require_once dirname(__FILE__) . "/TierraTemplateAST.php";
 	require_once dirname(__FILE__) . "/TierraTemplateCodeGenerator.php";
