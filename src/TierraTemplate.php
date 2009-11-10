@@ -57,7 +57,7 @@
 			$this->__cachedTemplatePath = self::GetCacheDir($options) . $templateFile . ".php";
 			$cachedTemplateInfo = @stat($this->__cachedTemplatePath);
 			
-			$useCachedTemplate = $this->getOption("readFromCache", true) && ($cachedTemplateInfo !== false) && ($cachedTemplateInfo['mtime'] > $rawTemplateInfo['mtime']);
+			$useCachedTemplate = ($rawTemplateInfo !== false) && $this->getOption("readFromCache", true) && ($cachedTemplateInfo !== false) && ($cachedTemplateInfo['mtime'] > $rawTemplateInfo['mtime']);
 
 			$this->__foundTemplate = ($rawTemplatePath !== false) || $useCachedTemplate;
 			
