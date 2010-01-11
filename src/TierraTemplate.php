@@ -104,8 +104,8 @@
 			return $template->getOutput();
 		}
 		
-		public static function RenderDynamicTemplate($templateContents, $options=array()) {
-			list($options["templateFile"], $options["baseTemplateDir"]) = self::SaveDynamicTemplate($templateContents, $options);
+		public static function RenderDynamicTemplate($templateContents, $options=array(), $templateDir=false) {
+			list($options["templateFile"], $options["baseTemplateDir"]) = self::SaveDynamicTemplate($templateContents, $options, $templateDir);
 			self::RenderTemplate($options);
 		}
 
@@ -119,11 +119,11 @@
 			return $template->getOutput();
 		}
 		
-		public static function SaveDynamicTemplate($templateContents, $options) {
-			$cacheDir = self::GetCacheDir($options);
+		public static function SaveDynamicTemplate($templateContents, $options, $templateDir=false) {
+			$templateDir = self::AddTrailingDirectorySeparator($templateDir ? $templateDir : self::GetCacheDir($options));
 			
-			$templateFile = self::AddTrailingDirectorySeparator(self::StaticGetOption($options, "dynamicTemplateDir", "_dtt")) . "dtt_" . sha1($templateContents) . ".html";
-			$templatePath = $cacheDir . $templateFile;
+			$templateFile = self::AddTrailingDirectorySeparator(self::StaticGetOption($options, "dynamicTemplateDir", "__dynamic_templates")) . sha1($templateContents) . ".html";
+			$templatePath = $templateDir . $templateFile;
 			@mkdir(dirname($templatePath), self::StaticGetOption($options, "cacheDirPerms", 0777), true);
 			if (!file_exists($templatePath)) {
 				$handle = @fopen($templatePath, "w");
@@ -136,7 +136,7 @@
 					throw new TierraTemplateException("Cannot create dynamic template: {$templatePath}");			
 			}
 			
-			return array($templateFile, $cacheDir);
+			return array($templateFile, $templateDir);
 		}
 		
 		public static function StaticGetOption($options, $name, $default=false) {
