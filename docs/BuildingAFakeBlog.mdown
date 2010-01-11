@@ -1,0 +1,238 @@
+Building a fake blog with Tierra Templates
+==========================================
+
+Why build a blog?
+-----------------
+
+Every website framework seems to use building a blog as the sample project so we thought why not do the same thing?.
+Since Tierra Templates is not a full MVC framework [^1] we'll fake out the data but we'll use the Tierra Template's runner to route the urls.
+
+
+Setting up the environment
+--------------------------
+
+1. Download the "empty site using only public directories" ZIP file from the [download page](http://www.tierratemplates.com/download)
+2. Extract the ZIP somewhere onto your computer where it is accessible from the webserver.
+3. Inside the extracted directory make the cache directory writable.
+
+Step 1. Creating your blog homepage
+-----------------------------------
+
+Let's not worry about template inheritence or template conditerators [^2] right now and lets go ahead and build out a static blog homepage.
+Create a file named index.html inside the empty templates subdirectory of the ZIP you extracted in the setup process.  Once it's created add
+the following to it:
+
+    <html>
+      <head>
+        <title>Home: My Awesome Blog</title>
+      </head>
+      <body>
+        <h1>Home: My Awesome Blog</h1>
+		
+		<p>I have 2 awesome posts for you...</p>
+		
+		<h2>First Post</h2>
+		<p>This is the first post of my awesome blog.</p>
+
+		<h2>Second Post</h2>
+		<p>This is the contents of the second post to my awesome blog.</p>
+      </body>
+    </html> 
+	
+You can see the result [here](/docs/samples/fakeblog/step1/index.html).
+
+Step 2. Using JSON and conditerators
+------------------------------------
+
+Support for native JSON is one of the great features of Tierra Templates.  With native JSON support and conditerators you can fake
+data in your templates which lets you decouple your front end template work with your back end model building and queries.
+
+In step 1 we added a couple of fake blog posts.  We'll want to display those posts individually in the single post page so lets convert
+the raw html into native JSON and use a conditerator to create the html.
+
+First create a file named posts.json in the templates subdirectory.  We'll be sharing this data with other pages so it make senses to 
+create it in an external file.  Inside of posts.json add the following:
+
+    <@ 
+      posts = {
+        {title: "First Post", contents: "This is the first post of my awesome blog."},
+	    {title: "Second Post", contents: "This is the contents of the second post to my awesome blog."}
+      }; 
+    @>
+	
+The &lt;@ tag marks the start of one or more statements that don't output anything.  You'll normally use &lt;@ ... @&gt; regions to assign
+values to variables within the templates that you want to use later.
+
+Once the posts.json file is created change index.html to look like this:
+
+    [@ include "posts.json" @]
+
+    <html>
+      <head>
+        <title>Home: My Awesome Blog</title>
+      </head>
+      <body>
+        <h1>Home: My Awesome Blog</h1>
+		
+		{@ posts ? 
+		     `<p>I have {count(posts)} awesome posts for you...</p>`
+		     `<h2>{title}</h2>
+		      <p>{contents}</p>`
+		   else
+		      "Sorry, no posts in my awesome blog at the momment."
+		@}
+      </body>
+    </html> 
+
+The {@ tag marks the start of a conditerator.  Conditerators start with one or more statements with the last statement evaluated as
+an expression.  The result of the evaluation determine if the true (?) or false (else) part of the conditerator is used.  If the expression
+evaluates to true then the true part loops over the expression otherwise the else part of the conditerator is output.  Note if the expression
+is not an array then it still loops but just once.
+
+The true part of the conditerator can have up three blocks.  If there is just one block it is output for each expression value.  If there
+are two then the first block is output once and the second is looped over and if there are three the first is output, the second is looped
+over and then the third is output.  This gives you an easy way to output "wrappers" around values.
+
+The {title} and {contents} variables are the value of the current loop over the posts.  The templates use dynamic scoping of variables and
+will "walk up" the contexts until it finds the named variable.  If the variable can't be found then false is returned.
+
+You'll also see that you can call built-in PHP functions from within the templates.  You can also define "virtual directories" and setup
+callbacks into externally loaded code.
+	
+You can see the result [here](/docs/samples/fakeblog/step2/index.html). Looks the same as step 1 doesn't it?
+
+Step 3. Building the single post page
+-------------------------------------
+
+Now that we have the homepage building from dynamic data lets link each entry to an individual post page.  Change index.html to look like this:
+
+    [@ include "posts.json" @]
+
+    <html>
+      <head>
+        <title>Home: My Awesome Blog</title>
+      </head>
+      <body>
+        <h1>Home: My Awesome Blog</h1>
+		
+		{@ posts ? 
+		     `<p>I have {count(posts)} awesome posts for you...</p>`
+		     `<h2><a href="post.html?id={$1}">{title}</a></h2>
+		      <p>{contents}</p>`
+		   else
+		      "Sorry, no posts in my awesome blog at the momment."
+		@}
+      </body>
+    </html> 
+
+The {$1} variable is a special variable meaning the 1-based index of the current loop.  We are sort of cheating making the ids
+the same as the array indicies of the posts JSON.  Normally you would use an id field from a query of a posts table in your blogs database.
+
+Next create a file named post.html and add the following:
+
+    [@ include "posts.json" @]
+
+    <@
+      id = request::getParam("id") - 1;
+      post = posts:id,1;  
+    @>
+
+    <html>
+      <head>
+	    <title>{@ post.title @}: My Awesome Blog</title>
+      </head>
+      <body>
+	    <h1><a href="index.html">Home</a>: My Awesome Blog</h1>
+	
+	    {@ post ? 
+		     `<h2>{title}</h2>
+		      <p>{contents}</p>`
+    	   else
+	    	  "Sorry, the post id is not valid."
+    	@}
+      </body>
+    </html> 
+
+This page uses the getParam() function in the request object.  The request object is wired in but you can add other objects using
+virtual directories.
+	
+Finally to test it out load a post from [here](/docs/samples/fakeblog/step3/index.html).
+	
+Step 4. Using template inheritence
+----------------------------------
+
+We have a lot of duplicate html in our two templates, lets fix that using Tierra Template's template inheritence support.
+First create a file named _page.html in the templates directory.  And then add this:
+
+    <html>
+      <head>
+	    <title>{@ pageTitle @}: My Awesome Blog</title>
+      </head>
+      <body>
+	    <h1>{@ request::uri(-1) == "index.html" ? "Home" else "<a href='index.html'>Home</a>" @}: My Awesome Blog</h1>
+	
+    	[@ start content @]
+	    	default content
+    	[@ end content @]
+      </body>
+    </html> 
+
+then edit index.html to use and following:
+	
+    [@ extends "_page.html" @]
+
+    [@ include "posts.json" @]
+
+    <@ pageTitle = "Home" @>
+
+    [@ start content @]
+	    {@ posts ? 
+		     `<p>I have {count(posts)} awesome posts for you...</p>`
+    		 `<h2><a href="post.html?id={$1}">{title}</a></h2>
+	    	  <p>{contents}</p>`
+    	   else
+	    	  "Sorry, no posts in my awesome blog at the momment."
+    	@}
+    [@ end content @]
+	
+and finally change post.html to use:
+	
+    [@ extends "_page.html" @]
+
+    [@ include "posts.json" @]
+
+    <@
+      id = request::getParam("id") - 1;
+      post = posts:id,1;  
+      pageTitle = post.title;
+    @>
+
+    [@ start content @]
+	    {@ post ? 
+		     `<h2>{title}</h2>
+    		  <p>{contents}</p>`
+	       else
+		      "Sorry, the post id is not valid."
+    	@}
+    [@ end content @]
+
+To test it out load a post from [here](/docs/samples/fakeblog/step4/index.html).
+
+Template inheritence uses the concept of overridden "blocks" in parent templates.  In our example we just have one level of inheritence
+but there is no limit on the number of levels you can use in your site.  By convention we name "glue" templates with a leading underscore
+but there is no support currently in the template runner to hide those pages from direct loading.
+
+You'll note that we have to load poss.json twice.  This is because the templates are evaluated form the "bottom up", that is post.html
+is evaluated, the block contents are stored and then _page.html is evaluated.  Output starts when the final template is evaluated.
+
+Conclusion
+----------
+
+We hope you learned a little bit about Tierra Templates with this example.  We'll be builing more complex examples as time goes on and
+we hope you'll try out Tierra Templates on your next project!
+	
+	
+[^1]: Tierra Templates is a big V little c framework.  It's meant to allow you to easily add views to your application and includes
+a hookable "template runner" that you can use as the controller for simple sites.
+
+[^2]: Template conditerators are Tierra Template's "special sauce" - they let you check for the existance and loop over data in a single statement.
