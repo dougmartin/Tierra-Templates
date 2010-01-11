@@ -165,11 +165,11 @@ HTML;
 		}		
 		
 		public function testBlockWithOperator() {
-			self::checkEmit("[@ include 'foo' if x < 3 @]", "<?php if (\$this->__runtime->identifier('x') < 3) { \$this->includeTemplate('foo'); }", "Block with operator");
+			self::checkEmit("[@ include 'foo' if x < 3 @]", "<?php if ((\$this->__runtime->identifier('x') < 3)) { \$this->includeTemplate('foo'); }", "Block with operator");
 		}
 
 		public function testBlockWithAssign() {
-			self::checkEmit("[@ include 'foo' if x = 1 < 3 @]", "<?php if (\$this->__request->setVar('x', 1 < 3)) { \$this->includeTemplate('foo'); }", "Block with assignment");
+			self::checkEmit("[@ include 'foo' if x = 1 < 3 @]", "<?php if (\$this->__request->setVar('x', (1 < 3))) { \$this->includeTemplate('foo'); }", "Block with assignment");
 		}
 
 		public function testBlockWithIndex() {
@@ -270,7 +270,7 @@ HTML;
 		
 		public function testMultipleConditionals() {
 			$src = "{@ foo if bar == 1 ? baz else if bam == 2 ? boom else foom @}";
-			self::checkEmit($src, "<?php \$this->__runtime->startConditerator(\$this->__runtime->identifier('foo')); if (\$this->__runtime->identifier('bar') == 1) { do { \$this->__request->output(\$this->__runtime->identifier('baz')); } while (\$this->__runtime->loop()); } else if (\$this->__runtime->identifier('bam') == 2) { do { \$this->__request->output(\$this->__runtime->identifier('boom')); } while (\$this->__runtime->loop()); } else { \$this->__request->output(\$this->__runtime->identifier('foom')); } \$this->__runtime->endConditerator();", "Conditerator with multiple conditionals");
+			self::checkEmit($src, "<?php \$this->__runtime->startConditerator(\$this->__runtime->identifier('foo')); if ((\$this->__runtime->identifier('bar') == 1)) { do { \$this->__request->output(\$this->__runtime->identifier('baz')); } while (\$this->__runtime->loop()); } else if ((\$this->__runtime->identifier('bam') == 2)) { do { \$this->__request->output(\$this->__runtime->identifier('boom')); } while (\$this->__runtime->loop()); } else { \$this->__request->output(\$this->__runtime->identifier('foom')); } \$this->__runtime->endConditerator();", "Conditerator with multiple conditionals");
 		}
 		
 		public function testEmptyHeadConditerator() {
@@ -295,12 +295,12 @@ HTML;
 
 		public function testSimpleAttributeAssignment() {
 			$src = "{@ foo[baz + 1 ].bar = baz @}";
-			self::checkEmit($src, "<?php \$this->__request->output(\$this->__request->setVar('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar')));", "Simple attribute assignment");
+			self::checkEmit($src, "<?php \$this->__request->output(\$this->__request->setVar('foo', \$this->__runtime->identifier('baz'), array((\$this->__runtime->identifier('baz') + 1), 'bar')));", "Simple attribute assignment");
 		}
 		
 		public function testAttributeAssignmentAndEcho() {
 			$src = "{@ baz = 3; foo[baz + 1 ].bar = baz; foo[baz + 1 ].bar @}";
-			self::checkEmit($src, "<?php \$this->__request->setVar('baz', 3); \$this->__request->setVar('foo', \$this->__runtime->identifier('baz'), array(\$this->__runtime->identifier('baz') + 1, 'bar')); \$this->__request->output(\$this->__runtime->attr(\$this->__runtime->attr(\$this->__runtime->identifier('foo'), \$this->__runtime->identifier('baz') + 1), 'bar'));", "Simple attribute assignment and echo");
+			self::checkEmit($src, "<?php \$this->__request->setVar('baz', 3); \$this->__request->setVar('foo', \$this->__runtime->identifier('baz'), array((\$this->__runtime->identifier('baz') + 1), 'bar')); \$this->__request->output(\$this->__runtime->attr(\$this->__runtime->attr(\$this->__runtime->identifier('foo'), (\$this->__runtime->identifier('baz') + 1)), 'bar'));", "Simple attribute assignment and echo");
 		}
 		
 		public function testStatementTag() {

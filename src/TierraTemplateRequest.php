@@ -143,7 +143,7 @@
 			$value = $default;
 			if ($source)
 				$value = isset($source[$name]) ? $source[$name] : (isset($source->$name) ? $source->$name : $default); 
-			return $trim ? trim($value) : $value;
+			return $trim && is_string($value) ? trim($value) : $value;
 		}
 		
 		public function setParam($name, $value, $to="request") {

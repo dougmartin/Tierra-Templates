@@ -417,7 +417,7 @@
 							
 						default:
 							if ($node->binary)
-								$code[] = $this->emitExpression($node->leftNode) . " " . $node->op . " " . $this->emitExpression($node->rightNode);
+								$code[] = "(" . $this->emitExpression($node->leftNode) . " " . $node->op . " " . $this->emitExpression($node->rightNode) . ")";
 							else  
 								$code[] = $node->op . $this->emitExpression($node->rightNode);
 							break;
