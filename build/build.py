@@ -6,9 +6,9 @@ release_dir = "releases"
 
 def main(params):
 	if len(params) != 2:
-		print "usage: %s (all|empty_runner|sample_runner) <version>" % sys.argv[0]
+		print "usage: %s <version> [all|empty_runner|sample_runner]" % sys.argv[0]
 		exit()
-	(product, version) = params
+	(version, product) = params
 			
 	make_dir("releases")
 	
@@ -36,7 +36,7 @@ def build_empty_runner(version):
 	pass
 	
 def build_sample_runner(version):
-	print "build samplew runner not implemented"
+	print "build sample runner not implemented"
 	pass
 
 def get_filename(product, version):
@@ -70,7 +70,7 @@ def update_version_text(product, version):
 def create_zip(product, version):
 	print "building zip file"
 	curdir = os.getcwd()
-	zip = zipfile.ZipFile("releases/tierratemplates-" + get_filename(product, version) + ".zip", "w")
+	zip = zipfile.ZipFile("releases/" + get_filename(product, version) + ".zip", "w")
 	os.chdir("release.tmp")
 	for root, dirs, files in os.walk(''):
 		for file in files:
