@@ -217,7 +217,7 @@
 						case "append":
 						case "set":
 							$code[] = "\$this->__request->{$previousNode->command}Block('{$node->blockName}', ob_get_contents()); ob_end_clean();";
-							if (!$this->isChildTemplate)
+							if (!$this->isChildTemplate && ($previousNode->command != "set"))
 								$code[] = "\$this->__request->echoBlock('{$node->blockName}');";
 							break;
 					}
@@ -303,7 +303,7 @@
 					case "append":
 					case "set":
 						$code[] = "\$this->__request->{$openingBlock->command}Block('{$node->blockName}', ob_get_contents()); ob_end_clean();";
-						if ((count($this->blockStack) > 0) || !$this->isChildTemplate)
+						if (((count($this->blockStack) > 0) || !$this->isChildTemplate) && ($openingBlock->command != "set"))
 							$code[] = "\$this->__request->echoBlock('{$node->blockName}');";
 						break;
 				}

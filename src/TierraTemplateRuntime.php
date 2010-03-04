@@ -60,7 +60,7 @@
 		}
 		
 		public function attr($var, $name) {
-			$value = false;
+			$value = "";
 			if (is_array($var) && isset($var[$name]))
 				$value = $var[$name];
 			else if (is_object($var) && isset($var->$name))
@@ -81,7 +81,7 @@
 				return $this->request->getVar($name);
 				
 			// finally look in the blocks
-			return $this->request->getBlock($name, false);
+			return $this->request->getBlock($name, "");
 		}
 		
 		public function specialIdentifier($name) {
