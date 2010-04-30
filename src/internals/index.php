@@ -310,6 +310,64 @@
 			return self::Total($var) == 1 ? $forOne : $forMany;
 		}
 		
+		public static function FakeData($description, $options) {
+		
+			// get the count
+			if (isset($options["min"])) {
+				$min = max(intval($options["min"]), 1);
+				$max = max(intval(isset($options["max"]) ? $options["max"] : $min + 1), $min + 1);
+				$count = mt_rand($min, $max);
+			}
+			else if (isset($options["countVar"])) {
+				$count = max(isset($_REQUEST[$options["countVar"]]) ? intval($_REQUEST[$options["countVar"]]) : 1, 1);
+			}
+			else
+				$count = isset($options["count"]) ? $options["count"] : 1;
+			
+			// generate the data
+			$data = array();
+			for ($i=0; $i < $count; $i++) {
+				$row = array();
+				foreach ($description as $fieldName => $fieldOptions) {
+					switch ($fieldOptions["type"]) {
+						case "autoIncrement":
+							$prefix = isset($fieldOptions["prefix"]) ? $fieldOptions["prefix"] : "";
+							$row[$fieldName] = $prefix . ($i + 1);
+							break;
+							
+						case "lorem":
+							$loremCount = isset($fieldOptions["count"]) ? intval($fieldOptions["count"]) : 50;
+							$row[$fieldName] = self::Lorem($loremCount);
+							break;
+							
+						case "randomNumber":
+							$min = isset($fieldOptions["min"]) ? intval($fieldOptions["min"]) : 1;
+							$max = isset($fieldOptions["max"]) ? intval($fieldOptions["max"]) : $min + 1;
+							$row[$fieldName] = mt_rand($min, $max);
+							break;
+							
+						case "randomPick":
+							$values = isset($fieldOptions["values"]) ? $fieldOptions["values"] : array();
+							$row[$fieldName] = self::RandomPick($values, isset($fieldOptions["count"]) ? intval($fieldOptions["count"]) : 1);
+							break;
+					}
+				}
+				$data[] = $row;
+			}
+			
+			// see if it needs to be sorted
+			$sortField = isset($options["sortField"]) ? $options["sortField"] : false;
+			if (($sortField === false) && isset($options["sortFieldVar"]))
+				$sortField = isset($_REQUEST[$options["sortFieldVar"]]) ? $_REQUEST[$options["sortFieldVar"]] : false;
+			if (($sortField !== false) && isset($description[$sortField])) {
+				$sortDirection = isset($options["sortDirection"]) ? $options["sortDirection"] : "ascending";
+				$sortFunction = 'return $a["' . $sortField . '"] == $b["' . $sortField . '"] ? 0 : ($a["' . $sortField . '"] ' . ($sortDirection == "ascending" ? "<" : ">") . ' $b["' . $sortField . '"] ? -1 : 1);';
+				usort($data, create_function('$a, $b', $sortFunction));
+			}
+			
+			return $data;
+		}
+		
 
 		//
 		// block decorators
