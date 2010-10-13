@@ -211,7 +211,7 @@
 			return $result;
 		}
 		
-		public static function Set($var) {
+		public static function Set($expression) {
 			if (is_array($expression) || is_object($expression))
 				return count($expression) > 0;
 			if (is_string($expression))
@@ -289,6 +289,17 @@
 					return $value;
 			}
 			return false;
+		}
+		
+		public static function extractValues($array, $key) {
+			$values = array();
+			foreach ($array as $item) {
+				if (is_object($item) && isset($item->$key))
+					$values[] = $item->$key;
+				else if (is_array($item) && isset($item[$key]))
+					$values[] = $item[$key];
+			}
+			return $values;
 		}
 		
 		public static function FlipACoin() {
